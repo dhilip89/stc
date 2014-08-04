@@ -1,0 +1,76 @@
+object frmProgress: TfrmProgress
+  Left = 0
+  Top = 0
+  AlphaBlendValue = 240
+  BorderStyle = bsNone
+  Caption = 'frmProgress'
+  ClientHeight = 289
+  ClientWidth = 740
+  Color = clWhite
+  TransparentColor = True
+  TransparentColorValue = clWhite
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -11
+  Font.Name = 'Tahoma'
+  Font.Style = []
+  FormStyle = fsStayOnTop
+  OldCreateOrder = False
+  Position = poDesigned
+  OnClose = FormClose
+  OnHide = FormHide
+  OnResize = FormResize
+  OnShow = FormShow
+  PixelsPerInch = 96
+  TextHeight = 13
+  object RzPanel1: TRzPanel
+    Left = 0
+    Top = 0
+    Width = 740
+    Height = 289
+    Align = alClient
+    BorderOuter = fsNone
+    Color = 15395562
+    TabOrder = 0
+    Transparent = True
+    object progress: TAdvCircularProgress
+      Left = 24
+      Top = 95
+      Width = 60
+      Height = 60
+      Hint = '60'
+      Appearance.BackGroundColor = clNone
+      Appearance.BorderColor = clNone
+      Appearance.ActiveSegmentColor = 16512
+      Appearance.InActiveSegmentColor = 7895160
+      Appearance.TransitionSegmentColor = 4210816
+      Appearance.ProgressSegmentColor = 4194432
+      Interval = 200
+    end
+    object RzMemo1: TRzMemo
+      Left = 90
+      Top = 95
+      Width = 650
+      Height = 145
+      BorderStyle = bsNone
+      Color = clWhite
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clMaroon
+      Font.Height = -40
+      Font.Name = #21326#25991#26999#20307
+      Font.Style = []
+      Lines.Strings = (
+        #12288#31995#32479#27491#22312#21551#21160#20013#65292#35831#31245#21518'...')
+      ParentFont = False
+      ReadOnly = True
+      TabOrder = 0
+      ReadOnlyColor = clWhite
+    end
+  end
+  object Timer1: TTimer
+    Interval = 5000
+    OnTimer = Timer1Timer
+    Left = 416
+    Top = 24
+  end
+end
