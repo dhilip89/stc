@@ -17397,8 +17397,8 @@ object frmMain: TfrmMain
     Top = 24
   end
   object Timer3: TTimer
-    Enabled = False
-    Interval = 10000
+    Interval = 180000
+    OnTimer = Timer3Timer
     Left = 72
     Top = 48
   end

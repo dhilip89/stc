@@ -55,8 +55,6 @@ type
 
   TGateWayServerCom = class
   private
-    FComVer: TVer;
-    FClientVer: TVer;
     FSocket: TClientSocketThread;
     FActive: Boolean;
     FAutoLogin: Boolean;
@@ -95,6 +93,9 @@ type
     procedure dealCmdGetMac2Rsp(buf: array of Byte);
     procedure SetOnGetMac2(const Value: TOnGetMac2);
 
+    procedure initCmd(var cmdHead: TSTHead; cmdId: Word; var cmdEnd: TSTEnd;
+        cmdMinSize: Integer);
+
     function LoginToServer: Boolean;
   protected
     function DirectSend(var buf; ABufSize: Integer): Boolean; //调用内部的发送函数直接发送数据
@@ -106,6 +107,7 @@ type
     procedure ResendData(var buf; ABufSize: Integer; tip: string);
     procedure SendHeartbeat;
     procedure SendCmdGetMac2(chargeAmount: Integer; chargeTime, fakeRandom, mac1: string);
+    procedure SendCmdUploadModuleStatus(moduleStatus: array of Byte);
 
     procedure SetFTimerEnabled(enabled: Boolean);
 
@@ -145,9 +147,6 @@ constructor TGateWayServerCom.Create;
 begin
   FLog := TSystemLog.Create;
   FLog.LogFile := ExePath + 'Log\Gateway\data';
-
-  FComVer.MajorVer := COM_MAJOR_VER;
-  FComVer.MinorVer := COM_MINOR_VER;
 
   FSocket := TClientSocketThread.Create(True);
   FSocket.OnSocketEvent := FSocketSocketEvent;
@@ -377,7 +376,7 @@ function TGateWayServerCom.LoginToServer: Boolean; // 用户登录网关服务器
 var
   cmd: TCmdLoginC2S;
 begin
-  initCmd(cmd.CmdHead, GlobalParam.TerminalId, C2S_LOGIN, GetMaxCmdSNo, cmd.CmdEnd, SizeOf(TCmdLoginC2S));
+  initCmd(cmd.CmdHead, C2S_LOGIN, cmd.CmdEnd, SizeOf(TCmdLoginC2S));
   cmd.Ver := ByteOderConvert_Word(VER);
   Result := DirectSend(cmd, SizeOf(TCmdLoginC2S));
 end;
@@ -393,7 +392,7 @@ var
   cmd: TCmdGetMac2ForChargeC2S;
   tempBuf: TByteDynArray;
 begin
-  initCmd(cmd.CmdHead, GlobalParam.TerminalId, C2S_GET_MAC2, GetMaxCmdSNo, cmd.CmdEnd, SizeOf(TCmdGetMac2ForChargeC2S));
+  initCmd(cmd.CmdHead, C2S_GET_MAC2, cmd.CmdEnd, SizeOf(TCmdGetMac2ForChargeC2S));
   cmd.ChargeAmount := ByteOderConvert_LongWord(chargeAmount);
 //  cmd.BizFlag := 0;
   tempBuf := hexStrToBytes(chargeTime);
@@ -403,6 +402,30 @@ begin
   tempBuf := hexStrToBytes(mac1);
   CopyMemory(@cmd.Mac1[0], @tempBuf[0], Min(Length(cmd.Mac1), Length(tempBuf)));
   DirectSend(cmd, SizeOf(TCmdGetMac2ForChargeC2S));
+end;
+
+procedure TGateWayServerCom.SendCmdUploadModuleStatus(
+  moduleStatus: array of Byte);
+var
+  cmd: TCmdTerminalModuleStatusC2S;
+  tempBuf: TByteDynArray;
+  index, count: Integer;
+begin
+  initCmd(cmd.CmdHead, C2S_TERMINAL_MODULE_STATUS, cmd.CmdEnd, SizeOf(TCmdTerminalModuleStatusC2S) + Length(moduleStatus));
+  cmd.ModuleCount := Length(moduleStatus) div 2;
+  SetLength(tempBuf, Length(moduleStatus) + SizeOf(TCmdTerminalModuleStatusC2S));
+
+  index := 0;
+  count := SizeOf(TCmdTerminalModuleStatusC2S) - SizeOf(TSTEnd);
+  CopyMemory(@tempBuf[index], @cmd, count);
+  Inc(index, count);
+
+  count := Length(moduleStatus);
+  CopyMemory(@tempBuf[index], @moduleStatus[0], count);
+  Inc(index, count);
+
+  tempBuf[index] := CMD_END_FLAG;
+  DirectSend(tempBuf[0], Length(tempBuf));
 end;
 
 procedure TGateWayServerCom.SetActive(const Value: Boolean);
@@ -449,6 +472,25 @@ begin
   FUserPass := Value;
 end;
 
+procedure TGateWayServerCom.initCmd(var cmdHead: TSTHead; cmdId: Word;
+  var cmdEnd: TSTEnd; cmdMinSize: Integer);
+var
+  terminalIdBuf: TByteDynArray;
+  cmdSNo: Word;
+begin
+  cmdSNo := GetMaxCmdSNo;
+  cmdHead.StartFlag := CMD_START_FLAG;
+  cmdHead.CmdId := ByteOderConvert_Word(cmdId);
+  cmdHead.ClientType := 0;
+
+  terminalIdBuf := hexStrToByteBuf(getFixedLenStr(GlobalParam.TerminalId, 12, '0'), False);
+  CopyMemory(@(cmdHead.TerminalId[0]), @terminalIdBuf[0], SizeOf(cmdHead.TerminalId));
+  cmdHead.BodySize := ByteOderConvert_Word(cmdMinSize - SizeOf(TSTHead) - SizeOf(TSTEnd));
+  cmdHead.CmdSNo := ByteOderConvert_Word(cmdSNo);
+  cmdEnd.CheckSum := 0;
+  cmdEnd.EndFlag := CMD_END_FLAG;
+end;
+
 function TGateWayServerCom.isActive: boolean;
 begin
   Result := Active;
@@ -459,8 +501,7 @@ procedure TGateWayServerCom.SendHeartbeat;
 var
   cmd: TCmdHeartbeatC2S;
 begin
-  initCmd(cmd.CmdHead, GlobalParam.TerminalId, C2S_HEARTBEAT, GetMaxCmdSNo,
-    cmd.CmdEnd, SizeOf(TCmdHeartbeatC2S));
+  initCmd(cmd.CmdHead, C2S_HEARTBEAT, cmd.CmdEnd, SizeOf(TCmdHeartbeatC2S));
 
   DirectSend(cmd, SizeOf(TCmdHeartbeatC2S));
 end;

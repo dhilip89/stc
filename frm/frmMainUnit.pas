@@ -257,6 +257,7 @@ type
     procedure AdvSmoothButton41Click(Sender: TObject);
     procedure AdvSmoothButton42Click(Sender: TObject);
     procedure AdvSmoothButton44Click(Sender: TObject);
+    procedure Timer3Timer(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -294,6 +295,7 @@ type
     procedure initMain;
     procedure loadParam;
     procedure connectToGateway;
+    function isCheckModuleStatusOk: Boolean;
     procedure testTimer(Sender: TObject);
     procedure WaitForCityCardTimer(Sender: TObject);
     procedure waitForCashTimer(Sender: TObject);
@@ -339,7 +341,8 @@ var
 implementation
 
 uses
-  System.DateUtils, uGloabVar, drv_unit, GatewayServerUnit, FrmWaitingUnit;
+  System.DateUtils, uGloabVar, drv_unit, GatewayServerUnit, FrmWaitingUnit,
+  CmdStructUnit;
 
 {$R *.dfm}
 
@@ -1000,6 +1003,11 @@ begin
   connectToGateway;
 end;
 
+function TfrmMain.isCheckModuleStatusOk: Boolean;
+begin
+  Result := False;
+end;
+
 procedure TfrmMain.loadParam;
 begin
   GlobalParam.LoadFromFile('st.config');
@@ -1161,6 +1169,36 @@ begin
   if Notebook1.ActivePage = 'pageSelfPay' then
   begin
   end;
+end;
+
+//定时上报终端各模块的状态
+{
+  模块1:市民卡读写模块
+  模块2:现金模块
+  模块3:银联模块
+  模块4:打印模块
+  模块5:身份证读取模块
+  模块6:密码键盘模块
+  ...   ...
+  .模块n:xxxx
+
+  当前先传模块1、2、4
+}
+procedure TfrmMain.Timer3Timer(Sender: TObject);
+var
+  moduleStatus: array of Byte;
+begin
+  if not isCheckModuleStatusOk then
+    Exit;
+
+  SetLength(moduleStatus, 3 * 2);
+  moduleStatus[0] := $01;
+  moduleStatus[1] := MODULE_STATUS_OK;
+  moduleStatus[2] := $02;
+  moduleStatus[3] := MODULE_STATUS_OK;
+  moduleStatus[4] := $04;
+  moduleStatus[5] := MODULE_STATUS_OK;
+  DataServer.SendCmdUploadModuleStatus(moduleStatus);
 end;
 
 procedure TfrmMain.waitForBankCardPassTimer(Sender: TObject);
