@@ -424,7 +424,8 @@ begin
   CopyMemory(@tempBuf[index], @moduleStatus[0], count);
   Inc(index, count);
 
-  tempBuf[index] := CMD_END_FLAG;
+  tempBuf[index] := $00;
+  tempBuf[index + 1] := CMD_END_FLAG;
   DirectSend(tempBuf[0], Length(tempBuf));
 end;
 

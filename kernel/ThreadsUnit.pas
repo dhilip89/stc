@@ -48,7 +48,7 @@ type
     FAmountRead: Integer;
   protected
     function doTask: Boolean;override;
-    procedure doOnTaskTimeout;override;
+    procedure DoOnTaskTimeout;override;
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; cashAmount: Integer);
   end;
@@ -69,6 +69,15 @@ type
     procedure noticeMac2Got(mac2: string);
 
     property BalanceAfterCharge: Integer read FBalanceAfterCharge;
+  end;
+
+  TThreadModuleChecker = class(TThread)
+  private
+  protected
+    procedure Execute;
+  public
+    constructor Create(CreateSuspended:Boolean);
+    destructor Destroy; override;
   end;
 
 implementation
@@ -101,7 +110,6 @@ var
   recvBuf: array[0..512] of AnsiChar;
   ret: SmallInt;
   sendHexStr: ansistring;
-  recvHexStr: AnsiString;
   tempStr: AnsiString;
   offset:Integer;
   tempInt: Integer;
@@ -289,7 +297,7 @@ begin
   FCashAmount := cashAmount;
 end;
 
-procedure TGetCashAmount.doOnTaskTimeout;
+procedure TGetCashAmount.DoOnTaskTimeout;
 begin
   if FAmountRead > 0 then
   begin
@@ -319,6 +327,7 @@ begin
   totalAmount := FCashAmount;
   FAmountRead := 0;
   cashAmount[0] := 0;
+  tempAmount := 0;
 
   //设置串口参数
   sspCmd.SSPAddress := 0;
@@ -497,7 +506,6 @@ var
   recvBuf: array[0..512] of AnsiChar;
   ret: SmallInt;
   sendHexStr: ansistring;
-  recvHexStr: AnsiString;
   tempStr: AnsiString;
   offset: Integer;
   lw: LongWord;
@@ -603,6 +611,24 @@ begin
     Break;
   end;
   Result := not isTimeout;
+end;
+
+{ TThreadModuleChecker }
+
+constructor TThreadModuleChecker.Create(CreateSuspended: Boolean);
+begin
+  inherited Create(CreateSuspended);
+end;
+
+destructor TThreadModuleChecker.Destroy;
+begin
+  inherited;
+  FreeOnTerminate := False;
+end;
+
+procedure TThreadModuleChecker.Execute;
+begin
+
 end;
 
 end.

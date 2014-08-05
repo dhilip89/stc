@@ -258,6 +258,7 @@ type
     procedure AdvSmoothButton42Click(Sender: TObject);
     procedure AdvSmoothButton44Click(Sender: TObject);
     procedure Timer3Timer(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -269,12 +270,9 @@ type
     publicFeeType: Byte; // 公共缴费类型 0:水 1:电 2:煤
     cityCardBizType: Byte; // 市民卡业务类型 0:充值 1:余额查询
 
-    WaitForCityCardTimerFlag: Byte; // 0:初始  1：已读取市民卡信息
-    WaitForCashTimerFlag: Byte; // 0:初始  1：已读取
     WaitForInsertBankCardFlag: Byte; // 0:初始  1：已读取
     waitForBankCardPassFlag: Byte; // 0:  1:
     waitForBankCardSuccessFlag: Byte; // 0:  1:
-    waitForCityCardBalanceFlag: Byte; // 0:  1:
     waitForIDCardReadFlag: Byte; // 0:  1:
 //    waitForNewCardReadFlag: Byte; // 0:  1:
     WaitForCityCardWhenPayTimerFlag: Byte; //
@@ -295,14 +293,14 @@ type
     procedure initMain;
     procedure loadParam;
     procedure connectToGateway;
-    function isCheckModuleStatusOk: Boolean;
-    procedure testTimer(Sender: TObject);
-    procedure WaitForCityCardTimer(Sender: TObject);
-    procedure waitForCashTimer(Sender: TObject);
+    function isCheckModuleStatusOk: Boolean;//当下是否可以检测模块状态，防止检测过程中数据冲突
+    function getD8Status: Byte;
+    function getBillAcceptorStatus: Byte;
+    function getPrinterStatus: Byte;
+
     procedure waitForInsertBankCard(Sender: TObject);
     procedure waitForBankCardPassTimer(Sender: TObject);
     procedure WaitForBankCardSuccessTimer(Sender: TObject);
-    procedure waitForCityCardBalanceTimer(Sender: TObject);
     procedure waitForIDCardReadTimer(Sender: TObject);
     procedure WaitForCityCardWhenPayTimer(Sender: TObject);
     procedure waitForInputPhoneNumberTimer(Sender: TObject);
@@ -314,7 +312,10 @@ type
       overTimeSeconds: Integer = 60);
     procedure setPanelInvisible;
     procedure iniForm;
-    function initDev: Boolean;
+    procedure initDev;
+    function initD8: Boolean;
+    function initBillAcceptor: Boolean;
+    function initPrinter: Boolean;
     procedure setTimeInfo();
     procedure setPanelInitPos;
     procedure setCompentInParentCenter(comp: TWinControl);
@@ -342,7 +343,7 @@ implementation
 
 uses
   System.DateUtils, uGloabVar, drv_unit, GatewayServerUnit, FrmWaitingUnit,
-  CmdStructUnit;
+  CmdStructUnit, itlssp;
 
 {$R *.dfm}
 
@@ -938,6 +939,11 @@ begin
   initMain;
 end;
 
+procedure TfrmMain.FormDestroy(Sender: TObject);
+begin
+  CloseSSPComPort;
+end;
+
 procedure TfrmMain.FormResize(Sender: TObject);
 begin
   iniForm;
@@ -950,10 +956,48 @@ begin
   pnlBottom.SetFocus;
   for i := Notebook1.Pages.Count - 1 downto 0 do
     Notebook1.PageIndex := i;
-  if not initDev then
+
+  initDev;
+end;
+
+function TfrmMain.getBillAcceptorStatus: Byte;
+var
+  sspCmd: TSSP_Command;
+  sspCmdInfo: TSSP_Command_Info;
+  i: Integer;
+begin
+  Result := MODULE_STATUS_FAULT;
+
+  sspCmd.SSPAddress := 0;
+  sspCmd.BaudRate := 9600;
+  sspCmd.Timeout := 10000;
+  sspCmd.PortNumber := GlobalParam.ITLPort;
+  sspCmd.EncryptionStatus := 0;
+
+  //发送 0x11 号命令查找识币器是否连接
+  sspCmd.CommandData[0] := $11;
+  sspCmd.CommandDataLength := 1;
+  if SSPSendCommand(@sspCmd, @sspCmdInfo) = 0then
   begin
-    Close;
+    Exit;
   end;
+
+  Result := MODULE_STATUS_OK
+end;
+
+function TfrmMain.getD8Status: Byte;
+begin
+  if icdev > 0 then
+    Result := MODULE_STATUS_OK
+  else
+    Result := MODULE_STATUS_FAULT;
+
+end;
+
+function TfrmMain.getPrinterStatus: Byte;
+begin
+  Result := MODULE_STATUS_FAULT;
+  Result := MODULE_STATUS_OK;
 end;
 
 procedure TfrmMain.iniForm;
@@ -980,18 +1024,55 @@ begin
   setPanelInitPos;
 end;
 
-function TfrmMain.initDev: Boolean;
+function TfrmMain.initBillAcceptor: Boolean;
+var
+  sspCmd: TSSP_Command;
+  sspCmdInfo: TSSP_Command_Info;
+  i: Integer;
+begin
+  Result := False;
+
+  sspCmd.SSPAddress := 0;
+  sspCmd.BaudRate := 9600;
+  sspCmd.Timeout := 10000;
+  sspCmd.PortNumber := GlobalParam.ITLPort;
+  sspCmd.EncryptionStatus := 0;
+  //打开串口
+  i := OpenSSPComPort(@sspCmd);
+  if (i = 0) then
+  begin
+    Exit;
+  end;
+
+  //发送 0x11 号命令查找识币器是否连接
+  sspCmd.CommandData[0] := $11;
+  sspCmd.CommandDataLength := 1;
+  if SSPSendCommand(@sspCmd, @sspCmdInfo) = 0then
+  begin
+    Exit;
+  end;
+
+  Result := True;
+end;
+
+function TfrmMain.initD8: Boolean;
 begin
   Result := False;
   icdev := dc_init(GlobalParam.D8ComPort, GlobalParam.D8BaudRate);
   if icdev < 0 then
   begin
-    ShowMessage('市民卡读卡器初始化失败');
     Exit;
   end;
-  //dc_beep(icdev, 15);
+  dc_beep(icdev, 15);
 
   Result := True;
+end;
+
+procedure TfrmMain.initDev;
+begin
+  initD8;
+  initBillAcceptor;
+  initPrinter;
 end;
 
 procedure TfrmMain.initMain;
@@ -1003,9 +1084,14 @@ begin
   connectToGateway;
 end;
 
+function TfrmMain.initPrinter: Boolean;
+begin
+  Result := True;
+end;
+
 function TfrmMain.isCheckModuleStatusOk: Boolean;
 begin
-  Result := False;
+  Result := True;
 end;
 
 procedure TfrmMain.loadParam;
@@ -1053,12 +1139,6 @@ begin
   begin
     btnTime.Caption := cap;
   end;
-end;
-
-procedure TfrmMain.testTimer(Sender: TObject);
-begin
-  pnlClient.Enabled := True;
-  FDlgProgress.Hide;
 end;
 
 procedure TfrmMain.setBtnPayTypeVisible(btnCityCardVisible, btnBankCardVisible,
@@ -1193,11 +1273,11 @@ begin
 
   SetLength(moduleStatus, 3 * 2);
   moduleStatus[0] := $01;
-  moduleStatus[1] := MODULE_STATUS_OK;
+  moduleStatus[1] := getD8Status;
   moduleStatus[2] := $02;
-  moduleStatus[3] := MODULE_STATUS_OK;
+  moduleStatus[3] := getBillAcceptorStatus;
   moduleStatus[4] := $04;
-  moduleStatus[5] := MODULE_STATUS_OK;
+  moduleStatus[5] := getPrinterStatus;
   DataServer.SendCmdUploadModuleStatus(moduleStatus);
 end;
 
@@ -1239,54 +1319,6 @@ begin
       FloatToStr(cityCardBalance) + '元';
   end;
   Notebook1.ActivePage := 'pageMobileTopUpSuccess';
-end;
-
-procedure TfrmMain.waitForCashTimer(Sender: TObject);
-begin
-  if WaitForCashTimerFlag = 0 then
-  begin
-    FDlgProgress.RzMemo1.Text := '　　需付款金额：' + FloatToStr(amountPaid) + '元' +
-      #13#10 + '　　已投币金额：' + FloatToStr(amountPaid) + '元';
-    WaitForCashTimerFlag := 1;
-  end
-  else if WaitForCashTimerFlag = 1 then
-  begin
-    FDlgProgress.Hide;
-
-    AdvSmoothLabel75.Visible := isNewCard;
-
-    if isCityCardCharging then
-    begin
-      AdvSmoothLabel74.Caption.Text := '卡片余额:' +
-        FloatToStr(Self.cityCardBalance) + '元';
-      AdvSmoothLabel74.Visible := True;
-    end;
-    Notebook1.ActivePage := 'pageMobileTopUpSuccess';
-  end;
-end;
-
-procedure TfrmMain.waitForCityCardBalanceTimer(Sender: TObject);
-begin
-  if waitForCityCardBalanceFlag = 0 then
-  begin
-//    AdvEdit11.Text := '记名卡(王小明 2837277273730230)';
-//    AdvEdit10.Text := '10.5';
-    FDlgProgress.Hide;
-  end;
-end;
-
-procedure TfrmMain.WaitForCityCardTimer(Sender: TObject);
-begin
-  if WaitForCityCardTimerFlag = 0 then
-  begin
-//    AdvEdit15.Text := '记名卡(王小明 2837277273730230)';
-//    AdvEdit16.Text := '10.5';
-    WaitForCityCardTimerFlag := 1;
-  end
-  else if WaitForCityCardTimerFlag = 1 then
-  begin
-    FDlgProgress.Hide;
-  end;
 end;
 
 procedure TfrmMain.WaitForCityCardWhenPayTimer(Sender: TObject);
