@@ -122,6 +122,21 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdGetMac2ForChargeC2S = ^TCmdGetMac2ForChargeC2S;
+
+  TCmdChargeDetail = packed record
+    CmdHead: TSTHead;
+    ASN: array[0..9] of Byte;//IC应用序列号
+    TSN: array[0..1] of Byte;//IC交易序列号
+    BankCardNo: array[0..9] of Byte;//没有的话直接填19个空格，如果是充值卡直接填写16位充值卡卡号，后三位补空格
+    CardType: Byte;//卡类型
+    TransDate: array[0..3] of Byte;//交易日期
+    TransTime: array[0..2] of Byte;//交易时间
+    TransAmount: Integer;//交易金额
+    BalanceBeforeTrans: Integer;//交易前余额
+    TAC: array[0..3] of Byte;//TAC认证码
+    TransSNo: array[0..7] of Byte;//交易流水号
+    CmdEnd: TSTEnd;
+  end;
 {******************************终端发起命令******************************}
 
 
