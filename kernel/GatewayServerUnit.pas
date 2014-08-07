@@ -12,6 +12,8 @@ const
 type
 
   TOnGetMac2 = procedure (ret: Byte; mac2: ansistring) of object;
+  TOnChargeDetailRsp = procedure(ret: Byte; recordId: Int64) of object;
+  TOnRefundRsp = procedure(ret: Byte; recordId: LongWord) of object;
 
   TCmdInfo = record //命令信息
     Id: integer; //命令ID
@@ -86,17 +88,22 @@ type
     procedure UnLockRead;
   private
     FOnGetMac2: TOnGetMac2;
+    FOnChargeDetailRsp: TOnChargeDetailRsp;
+    FOnRefundRsp: TOnRefundRsp;
     procedure FSocketSocketEvent(Sender: TObject; Socket: TCustomWinSocket; SocketEvent: TSocketEvent);
     procedure FSockerWriteBufferOverflow(Sender: TObject);
 
     procedure dealCmdTYRet(buf: array of Byte);
     procedure dealCmdGetMac2Rsp(buf: array of Byte);
-    procedure SetOnGetMac2(const Value: TOnGetMac2);
+    procedure dealCmdChargeDetailRsp(buf: array of Byte);
+    procedure dealCmdRefundRsp(buf: array of Byte);
 
-    procedure initCmd(var cmdHead: TSTHead; cmdId: Word; var cmdEnd: TSTEnd;
-        cmdMinSize: Integer);
+    procedure initCmd(var cmdHead: TSTHead; cmdId: Word; var cmdEnd: TSTEnd; cmdMinSize: Integer);
 
     function LoginToServer: Boolean;
+    procedure SetOnGetMac2(const Value: TOnGetMac2);
+    procedure SetOnChargeDetailRsp(const Value: TOnChargeDetailRsp);
+    procedure SetOnRefundRsp(const Value: TOnRefundRsp);
   protected
     function DirectSend(var buf; ABufSize: Integer): Boolean; //调用内部的发送函数直接发送数据
     function GetMaxCmdSNo: Word;
@@ -108,6 +115,8 @@ type
     procedure SendHeartbeat;
     procedure SendCmdGetMac2(chargeAmount: Integer; chargeTime, fakeRandom, mac1: string);
     procedure SendCmdUploadModuleStatus(moduleStatus: array of Byte);
+    procedure SendCmdChargeDetail(cmd: TCmdChargeDetailC2S);
+    procedure SendCmdRefund(cmd: TCmdRefundC2S);
 
     procedure SetFTimerEnabled(enabled: Boolean);
 
@@ -121,6 +130,8 @@ type
     property Socket: TClientSocketThread read FSocket;
 
     property OnGetMac2: TOnGetMac2 read FOnGetMac2 write SetOnGetMac2;
+    property OnChargeDetailRsp: TOnChargeDetailRsp read FOnChargeDetailRsp write SetOnChargeDetailRsp;
+    property OnRefundRsp: TOnRefundRsp read FOnRefundRsp write SetOnRefundRsp;
   end;
 
 
@@ -179,7 +190,6 @@ var
   cmdId: Word;
 begin
   //first 从线程中读取数据,注意,要减少线程的锁定时间
-
   try
     FSocket.LockRead;
     if FSocket.ReadBuf.WritePos > 0 then
@@ -265,6 +275,8 @@ begin
         case cmdId of// PByte(PtrAdd(FReadBuf.Data, 2))^ of
           S2C_TYRET: dealCmdTYRet(buf);
           S2C_GET_MAC2_RSP: dealCmdGetMac2Rsp(buf);
+          S2C_CHARGE_DETAIL_RSP: dealCmdChargeDetailRsp(buf);
+          S2C_REFUND_RSP: dealCmdRefundRsp(buf);
         else
           begin
             FLog.AddLog('处理数据错误:命令字不正确 ' + bytesToHexStr(wordToBytes(cmdId)));
@@ -386,6 +398,12 @@ begin
   Result := Pointer(Integer(p) + offset);
 end;
 
+procedure TGateWayServerCom.SendCmdChargeDetail(cmd: TCmdChargeDetailC2S);
+begin
+  initCmd(cmd.CmdHead, C2S_CHARGE_DETAIL, cmd.CmdEnd, SizeOf(TCmdChargeDetailC2S));
+  DirectSend(cmd, SizeOf(TCmdChargeDetailC2S));
+end;
+
 procedure TGateWayServerCom.SendCmdGetMac2(chargeAmount: Integer;
   chargeTime, fakeRandom, mac1: string);
 var
@@ -402,6 +420,12 @@ begin
   tempBuf := hexStrToBytes(mac1);
   CopyMemory(@cmd.Mac1[0], @tempBuf[0], Min(Length(cmd.Mac1), Length(tempBuf)));
   DirectSend(cmd, SizeOf(TCmdGetMac2ForChargeC2S));
+end;
+
+procedure TGateWayServerCom.SendCmdRefund(cmd: TCmdRefundC2S);
+begin
+  initCmd(cmd.CmdHead, C2S_REFUND, cmd.CmdEnd, SizeOf(TCmdRefundC2S));
+  DirectSend(cmd, SizeOf(TCmdRefundC2S));
 end;
 
 procedure TGateWayServerCom.SendCmdUploadModuleStatus(
@@ -507,9 +531,20 @@ begin
   DirectSend(cmd, SizeOf(TCmdHeartbeatC2S));
 end;
 
+procedure TGateWayServerCom.SetOnChargeDetailRsp(
+  const Value: TOnChargeDetailRsp);
+begin
+  FOnChargeDetailRsp := Value;
+end;
+
 procedure TGateWayServerCom.SetOnGetMac2(const Value: TOnGetMac2);
 begin
   FOnGetMac2 := Value;
+end;
+
+procedure TGateWayServerCom.SetOnRefundRsp(const Value: TOnRefundRsp);
+begin
+  FOnRefundRsp := Value;
 end;
 
 procedure TGateWayServerCom.LockRead;
@@ -536,6 +571,18 @@ begin
   end;
 end;
 
+procedure TGateWayServerCom.dealCmdChargeDetailRsp(buf: array of Byte);
+var
+  pcmd: PCmdChargeDetailRspS2C;
+begin
+  if Length(buf) >= SizeOf(TCmdChargeDetailRspS2C) then
+  begin
+    pcmd := PCmdChargeDetailRspS2C(@buf[0]);
+    if Assigned(FOnChargeDetailRsp) then
+      FOnChargeDetailRsp(pcmd^.Ret, pcmd^.RecordId);
+  end;
+end;
+
 procedure TGateWayServerCom.dealCmdGetMac2Rsp(buf: array of Byte);
 var
   pcmd: PCmdGetMac2ForChargeS2C;
@@ -547,6 +594,18 @@ begin
     mac2 := bytesToHexStr(pcmd^.Mac2);
     if Assigned(FOnGetMac2) then
       FOnGetMac2(pcmd^.Ret, mac2);
+  end;
+end;
+
+procedure TGateWayServerCom.dealCmdRefundRsp(buf: array of Byte);
+var
+  pcmd: PCmdRefundRspS2C;
+begin
+  if Length(buf) >= SizeOf(TCmdRefundRspS2C) then
+  begin
+    pcmd := PCmdRefundRspS2C(@buf[0]);
+    if Assigned(FOnRefundRsp) then
+      FOnRefundRsp(pcmd^.Ret, pcmd^.RecordId);
   end;
 end;
 

@@ -19,12 +19,16 @@ const
   C2S_LOGIN                  = $0003;//终端注册
   C2S_TERMINAL_MODULE_STATUS = $0004;//终端模块状态汇报
   C2S_GET_MAC2               = $0005;//获取MAC2
+  C2S_CHARGE_DETAIL          = $0006;//上传充值记录
+  C2S_REFUND                 = $0007;//退款记录登记
 {******************************终端发起命令字******************************}
 
 {*****************************服务端发起命令字*****************************}
-  S2C_TYRET        = $7001;//平台通用应答
-  S2C_LOGIN_RSP    = $7003;//终端注册应答
-  S2C_GET_MAC2_RSP = $7005;//获取mac2应答
+  S2C_TYRET             = $7001;//平台通用应答
+  S2C_LOGIN_RSP         = $7003;//终端注册应答
+  S2C_GET_MAC2_RSP      = $7005;//获取mac2应答
+  S2C_CHARGE_DETAIL_RSP = $7006;//上传充值记录应答
+  S2C_REFUND_RSP        = $7007;//退款记录应答
 {*****************************服务端发起命令字*****************************}
 {*********************************公共常量*********************************}
   CMD_START_FLAG = $7E;
@@ -123,11 +127,11 @@ type
   end;
   PCmdGetMac2ForChargeC2S = ^TCmdGetMac2ForChargeC2S;
 
-  TCmdChargeDetail = packed record
+  TCmdChargeDetailC2S = packed record
     CmdHead: TSTHead;
     ASN: array[0..9] of Byte;//IC应用序列号
     TSN: array[0..1] of Byte;//IC交易序列号
-    BankCardNo: array[0..9] of Byte;//没有的话直接填19个空格，如果是充值卡直接填写16位充值卡卡号，后三位补空格
+    BankCardNo: array[0..18] of Byte;//没有的话直接填19个空格，如果是充值卡直接填写16位充值卡卡号，后三位补空格
     CardType: Byte;//卡类型
     TransDate: array[0..3] of Byte;//交易日期
     TransTime: array[0..2] of Byte;//交易时间
@@ -135,8 +139,21 @@ type
     BalanceBeforeTrans: Integer;//交易前余额
     TAC: array[0..3] of Byte;//TAC认证码
     TransSNo: array[0..7] of Byte;//交易流水号
+    ChargeType: Byte;//充值类型
+    CityCardNo: array[0..7] of Byte;//市民卡卡号
     CmdEnd: TSTEnd;
   end;
+  PCmdChargeDetailC2S = ^TCmdChargeDetailC2S;
+
+  TCmdRefundC2S = packed record
+    CmdHead: TSTHead;
+    CityCardNo: array[0..7] of Byte;//市民卡卡号
+    Amount: Integer;//充值金额
+    ChargeType: Byte;//充值类型 0:现金 1:银行卡 2:充值卡
+    CmdEnd: TSTEnd;
+  end;
+  PCmdRefundC2S = ^TCmdRefundC2S;
+
 {******************************终端发起命令******************************}
 
 
@@ -168,6 +185,24 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdGetMac2ForChargeS2C = ^TCmdGetMac2ForChargeS2C;
+
+  //充值明细应答，根据应答的RecordId打印凭条
+  TCmdChargeDetailRspS2C = packed record
+    CmdHead: TSTHead;
+    Ret: Byte;//获取结果  1:成功  其他:无效
+    RecordId: Int64;//充值记录唯一ID
+    CmdEnd: TSTEnd;
+  end;
+  PCmdChargeDetailRspS2C = ^TCmdChargeDetailRspS2C;
+
+  //退款记录应答，根据该记录ID打印退款凭证
+  TCmdRefundRspS2C = packed record
+    CmdHead: TSTHead;
+    Ret: Byte;//获取结果  1:成功  其他:无效
+    RecordId: LongWord;//充值记录唯一ID
+    CmdEnd: TSTEnd;
+  end;
+  PCmdRefundRspS2C = ^TCmdRefundRspS2C;
 {*****************************服务端发起命令*****************************}
 
 function PtrAdd(p: pointer; offset: integer): pointer;
