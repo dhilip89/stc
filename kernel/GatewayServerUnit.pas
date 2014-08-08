@@ -113,7 +113,9 @@ type
     destructor Destroy; override;
     procedure ResendData(var buf; ABufSize: Integer; tip: string);
     procedure SendHeartbeat;
-    procedure SendCmdGetMac2(chargeAmount: Integer; chargeTime, fakeRandom, mac1: string);
+    procedure SendCmdGetMac2(cardNo, asn, CardTradeNo: array of Byte;
+                            OperType: Byte; OldBalance, chargeAmount: Integer;
+                            chargeTime, fakeRandom, mac1: array of Byte);
     procedure SendCmdUploadModuleStatus(moduleStatus: array of Byte);
     procedure SendCmdChargeDetail(cmd: TCmdChargeDetailC2S);
     procedure SendCmdRefund(cmd: TCmdRefundC2S);
@@ -404,21 +406,22 @@ begin
   DirectSend(cmd, SizeOf(TCmdChargeDetailC2S));
 end;
 
-procedure TGateWayServerCom.SendCmdGetMac2(chargeAmount: Integer;
-  chargeTime, fakeRandom, mac1: string);
+procedure TGateWayServerCom.SendCmdGetMac2(cardNo, asn, CardTradeNo: array of Byte;
+  OperType: Byte; OldBalance, chargeAmount: Integer;
+  chargeTime, fakeRandom, mac1: array of Byte);
 var
   cmd: TCmdGetMac2ForChargeC2S;
-  tempBuf: TByteDynArray;
 begin
   initCmd(cmd.CmdHead, C2S_GET_MAC2, cmd.CmdEnd, SizeOf(TCmdGetMac2ForChargeC2S));
+  cmd.OperType := OperType;
+  CopyMemory(@cmd.cardNo[0], @cardNo[0], Min(Length(cmd.cardNo), Length(cardNo)));
+  CopyMemory(@cmd.asn[0], @asn[0], Min(Length(cmd.asn), Length(asn)));
+  CopyMemory(@cmd.FakeRandom[0], @fakeRandom[0], Min(Length(cmd.FakeRandom), Length(fakeRandom)));
+  CopyMemory(@cmd.CardTradeNo[0], @CardTradeNo[0], Min(Length(cmd.CardTradeNo), Length(CardTradeNo)));
+  cmd.CardOldBalance := 0;
   cmd.ChargeAmount := ByteOderConvert_LongWord(chargeAmount);
-//  cmd.BizFlag := 0;
-  tempBuf := hexStrToBytes(chargeTime);
-  CopyMemory(@cmd.ChargeTime[0], @tempBuf[0], Min(Length(cmd.ChargeTime), Length(tempBuf)));
-  tempBuf := hexStrToBytes(fakeRandom);
-  CopyMemory(@cmd.FakeRandom[0], @tempBuf[0], Min(Length(cmd.FakeRandom), Length(tempBuf)));
-  tempBuf := hexStrToBytes(mac1);
-  CopyMemory(@cmd.Mac1[0], @tempBuf[0], Min(Length(cmd.Mac1), Length(tempBuf)));
+  CopyMemory(@cmd.Mac1[0], @mac1[0], Min(Length(cmd.Mac1), Length(mac1)));
+  CopyMemory(@cmd.ChargeTime[0], @chargeTime[0], Min(Length(cmd.ChargeTime), Length(chargeTime)));
   DirectSend(cmd, SizeOf(TCmdGetMac2ForChargeC2S));
 end;
 
