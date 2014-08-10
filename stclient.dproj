@@ -146,6 +146,7 @@
 				<FormType>dfm</FormType>
 			</DCCReference>
 			<DCCReference Include="kernel\itlssp.pas"/>
+			<DCCReference Include="kernel\SPCOMM.PAS"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

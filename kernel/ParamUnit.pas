@@ -26,6 +26,7 @@ type
     FD8ComPort: Integer;
     FD8BaudRate: Integer;
     FITLPort: Integer;
+    FPrinterComPort: Integer;
 
     procedure SetGateway(const Value: TAddrssParam);
     procedure SetGatewayBak(const Value: TAddrssParam);
@@ -66,6 +67,10 @@ type
     //---纸币机参数---
     property ITLPort: Integer read FITLPort write FITLPort;
     //---纸币机参数---
+
+    //---打印机参数---
+    property  PrinterComPort: Integer read FPrinterComPort write FPrinterComPort;
+    //---打印机参数---
 
   end;
 implementation
@@ -164,6 +169,12 @@ begin
       if n2 <> nil then
       begin
         FITLPort := StrToInt(Trim(n2.text));
+      end;
+
+      n2 := n1.selectSingleNode('PrinterComPort');
+      if (n2 <> nil) then
+      begin
+        FPrinterComPort := StrToInt(Trim(n2.text));
       end;
     end;
   except

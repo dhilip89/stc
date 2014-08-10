@@ -115,6 +115,7 @@ type
     CmdHead: TSTHead;
     OperType: Byte;
     CardNo: array[0..7] of Byte;
+    TerminalId: array[0..5] of Byte;
     ASN: array[0..9] of Byte;
     FakeRandom: array[0..3] of Byte;//伪随机数
     CardTradeNo: array[0..1] of Byte;//
@@ -138,7 +139,7 @@ type
     TransAmount: Integer;//交易金额
     BalanceBeforeTrans: Integer;//交易前余额
     TAC: array[0..3] of Byte;//TAC认证码
-    TransSNo: array[0..7] of Byte;//交易流水号
+    TransSNo: Integer;//交易流水号
     ChargeType: Byte;//充值类型
     CityCardNo: array[0..7] of Byte;//市民卡卡号
     CmdEnd: TSTEnd;

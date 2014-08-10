@@ -411,10 +411,13 @@ procedure TGateWayServerCom.SendCmdGetMac2(cardNo, asn, CardTradeNo: array of By
   chargeTime, fakeRandom, mac1: array of Byte);
 var
   cmd: TCmdGetMac2ForChargeC2S;
+  terminalIdBuf: TByteDynArray;
 begin
   initCmd(cmd.CmdHead, C2S_GET_MAC2, cmd.CmdEnd, SizeOf(TCmdGetMac2ForChargeC2S));
   cmd.OperType := OperType;
   CopyMemory(@cmd.cardNo[0], @cardNo[0], Min(Length(cmd.cardNo), Length(cardNo)));
+  terminalIdBuf := hexStrToByteBuf(getFixedLenStr(GlobalParam.TerminalId, 12, '0'), False);
+  CopyMemory(@(cmd.TerminalId[0]), @terminalIdBuf[0], SizeOf(cmd.TerminalId));
   CopyMemory(@cmd.asn[0], @asn[0], Min(Length(cmd.asn), Length(asn)));
   CopyMemory(@cmd.FakeRandom[0], @fakeRandom[0], Min(Length(cmd.FakeRandom), Length(fakeRandom)));
   CopyMemory(@cmd.CardTradeNo[0], @CardTradeNo[0], Min(Length(cmd.CardTradeNo), Length(CardTradeNo)));

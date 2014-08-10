@@ -143,28 +143,30 @@ type
     function doTask: Boolean; override;
     procedure DoOnTaskTimeout; override;
   public
-    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; cashAmount: Integer);
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout, cashAmount: Integer);
 
     procedure noticeMac2Got(mac2: string);
 
     property BalanceAfterCharge: Integer read FBalanceAfterCharge;
   end;
-
-  TThreadModuleChecker = class(TThread)
-  private
-  protected
-    procedure Execute;
-  public
-    constructor Create(CreateSuspended:Boolean);
-    destructor Destroy; override;
-  end;
+const
+  BILL_OK = '9000';
 
 implementation
 uses
   System.Types, System.SysUtils, System.DateUtils, drv_unit, uGloabVar,
-  Winapi.Windows, CmdStructUnit, itlssp;
+  Winapi.Windows, CmdStructUnit, itlssp, System.Math;
 
 { TQueryCityCardBalance }
+
+function checkRecvBufEndWith9000(recvBuf: array of AnsiChar; dataLen: Integer): AnsiString;
+var
+  tempStr: AnsiString;
+begin
+  SetLength(tempStr, 4);
+  CopyMemory(@tempStr[1], @recvBuf[dataLen * 2 - 4], 4);
+  Result := tempStr;
+end;
 
 constructor TQueryCityCardBalance.Create(CreateSuspended:Boolean; dlg: TfrmWaiting;
   timeout: Integer; edtCardInfo, edtCardBalance: TCustomEdit);
@@ -592,6 +594,11 @@ var
   tempBuf: TByteDynArray;
   strChargeAmount: string;
   strTerminalId: string;
+  cardType: Byte;
+  tac: TByteDynArray;
+  transSNo: LongWord;
+  cmd: TCmdChargeDetailC2S;
+  billStatus: AnsiString;
 begin
   Result := False;
   tip := '正在进行充值处理，请勿移开卡片'#13#10 + '卡片读取中...';
@@ -602,6 +609,48 @@ begin
     Exit;
   end;
 
+  //读出卡号和应用序列号
+  sendHexStr := '00B0950000';
+  CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+
+  sendLen := Length(sendHexStr) div 2;
+  recvLen := 0;
+  ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+  if ret <> 0 then
+  begin
+    addSysLog('读卡号和应用序列化失败, recvBuf:' + recvBuf);
+    Exit;
+  end;
+
+  offset := 0;
+  SetLength(tempStr, 8 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  cardNo := hexStrToBytes(tempStr);//卡号
+
+  offset := 20;
+  SetLength(tempStr, 10 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  asn := hexStrToBytes(tempStr);//应用序列号
+
+  //读出卡类型
+  sendHexStr := '00B0960000';
+  CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+
+  sendLen := Length(sendHexStr) div 2;
+  recvLen := 0;
+  ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+  if ret <> 0 then
+  begin
+    addSysLog('读卡类型失败, recvBuf:' + recvBuf);
+    Exit;
+  end;
+
+  offset := 0;
+  SetLength(tempStr, 1 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  cardType := hexStrToBytes(tempStr)[0];//卡类型
+
+  //圈存初始化
   lw := ByteOderConvert_LongWord(FChargeAmount);
   strChargeAmount := bytesToHexStr(LongWordToBytes(lw));
   strTerminalId := getFixedLenStr(GlobalParam.TerminalId, 12, '0');
@@ -611,40 +660,33 @@ begin
   sendLen := Length(sendHexStr) div 2;
   recvLen := 0;
   ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
-  if ret <> 0 then
+  billStatus := checkRecvBufEndWith9000(recvBuf, recvLen);
+  if (ret <> 0) or (billStatus <> BILL_OK) then
   begin
     addSysLog('initialize for load err, recvBuf:' + recvBuf);
     Exit;
   end;
-  //0001134F000A010085ECC7494F9CFB6D9000  返回示例
-  //0001134F    余额
-  //        000A				交易序号
-  //            01					密钥版本号
-  //              00					算法标识
-  //                4759EA92		伪随机数
-  //                        BF76B198		MAC1
-  //                                9000
 
   offset := 0;
   SetLength(tempStr, 4 * 2);
   CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-  oldBalance := bytesToInt(hexStrToBytes(tempStr), 0, False);
+  oldBalance := bytesToInt(hexStrToBytes(tempStr), 0, False);//充值前余额
   FBalanceAfterCharge := FChargeAmount + oldBalance;
 
   offset := 8;
   SetLength(tempStr, 4);
   CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-  tsn := hexStrToBytes(tempStr);
+  tsn := hexStrToBytes(tempStr);//交易序号
 
   offset := 16;
   SetLength(tempStr, 4 * 2);
   CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-  fakeRandom := hexStrToBytes(tempStr);
+  fakeRandom := hexStrToBytes(tempStr);//随机数
 
   offset := 24;
   SetLength(tempStr, 4 * 2);
   CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-  mac1 := hexStrToBytes(tempStr);
+  mac1 := hexStrToBytes(tempStr);//mac1
 
   tip := '正在进行充值处理，请勿移开卡片'#13#10 + '卡片联机校验中...';
   setWaitingTip(tip);
@@ -663,11 +705,40 @@ begin
   sendLen := Length(sendHexStr) div 2;
   recvLen := 0;
   ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
-  if ret <> 0 then
+  billStatus := checkRecvBufEndWith9000(recvBuf, recvLen);
+  if (ret <> 0) or (billStatus <> BILL_OK) then
   begin
     addSysLog('credit for load err, recvBuf:' + recvBuf);
     Exit;
   end;
+  //圈存成功，获取tac值
+  offset := 0;
+  SetLength(tempStr, 4 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  tac := hexStrToBytes(tempStr);//随机数
+
+  transSNo := getNextTSN;//获取交易流水号
+
+  //充值成功后，上传交易记录到服务端
+  CopyMemory(@cmd.ASN, @asn[0], Length(asn));
+  CopyMemory(@cmd.TSN, @tsn[0], Length(tsn));
+  initBytes(cmd.BankCardNo, $00);
+  cmd.CardType := cardType;
+  CopyMemory(@cmd.TransDate, @chargeTime[0], Length(cmd.TransDate));
+  CopyMemory(@cmd.TransTime, @chargeTime[4], Length(cmd.TransTime));
+  cmd.TransAmount := ByteOderConvert_LongWord(FChargeAmount);
+  cmd.BalanceBeforeTrans := ByteOderConvert_LongWord(oldBalance);
+  CopyMemory(@cmd.TAC, @tac[0], Length(tac));
+  cmd.TransSNo := ByteOderConvert_LongWord(transSNo);
+  //充值类型
+  cmd.ChargeType := currChargeType;
+  if (currChargeType <> 0) then
+  begin
+    CopyMemory(@cmd.BankCardNo[0], @BytesOf(bankCardNo)[0], Min(Length(cmd.BankCardNo), Length(bankCardNo)));
+  end;
+  CopyMemory(@cmd.CityCardNo, @cardNo[0], Length(cardNo));
+
+  DataServer.SendCmdChargeDetail(cmd);
 
   Result := True;
 end;
@@ -696,24 +767,6 @@ begin
     Break;
   end;
   Result := not isTimeout;
-end;
-
-{ TThreadModuleChecker }
-
-constructor TThreadModuleChecker.Create(CreateSuspended: Boolean);
-begin
-  inherited Create(CreateSuspended);
-end;
-
-destructor TThreadModuleChecker.Destroy;
-begin
-  inherited;
-  FreeOnTerminate := False;
-end;
-
-procedure TThreadModuleChecker.Execute;
-begin
-
 end;
 
 end.

@@ -3,8 +3,8 @@ unit uGloabVar;
 interface
 uses
   comCtrls, SysUtils, classes, UserUnit, BusinessServerUnit, ParamUnit,
-  Forms, windows, Messages, GatewayServerUnit,
-  cxTL, StructDefUnit, SystemLog, ConstDefineUnit, system.Types;
+  Forms, windows, Messages, GatewayServerUnit, cxTL, StructDefUnit,
+  SystemLog, ConstDefineUnit, system.Types, SPCOMM;
 
 var
   current_user: TUser;
@@ -16,6 +16,13 @@ var
 //  SystemLog: TSystemLog; //系统日志
   ExePath: string;
   FSysLog: TSystemLog;//该日志对象为立即写入，专门用来记录关键日志，防止异常后未能及时记录日志
+
+  printerCom: TComm;
+  isPrinterComOpen: Boolean;
+
+  tsn: LongWord = 0;
+  currChargeType: Byte;//当前充值类型  0:现金 1:银联卡  2：充值卡  03企福通充值/专有账户充值
+  bankCardNo: string;//充值时使用的银行卡号或者充值卡卡号
 
 function getCmdStat(stat: integer): string;
 function PopMsg(Title: string; Msg: string): boolean;
@@ -32,8 +39,14 @@ function bytesToInt(buf: array of byte; sIndex: Integer; isLittleEndian: Boolean
 function getFixedLenStr(srcStr:string; dstLen: Integer; fillchar: Char; isFillLeft: Boolean = True): string;
 function hexStrToBytes(hexStr: string): TByteDynArray;
 function intToBytes(iVal: Integer): TByteDynArray;
+procedure initBytes(buf: array of Byte; initByte: Byte);
 function wordToBytes(wVal: Word): TByteDynArray;
 function LongWordToBytes(lw: LongWord): TByteDynArray;
+function initPrinterCom(): Boolean;
+function freePrinterCom(): Boolean;
+function printContent(content: AnsiString): Boolean;
+function checkPrinterStatus(): Boolean;
+function getNextTSN():Integer;
 
 implementation
 uses
@@ -324,6 +337,88 @@ function LongWordToBytes(lw: LongWord): TByteDynArray;
 begin
   SetLength(Result, 4);
   CopyMemory(@Result[0], @lw, 4);
+end;
+
+procedure initBytes(buf: array of Byte; initByte: Byte);
+var
+  I: Integer;
+begin
+  for I := Low(buf) to High(buf) do
+  begin
+    buf[i] := initByte;
+  end;
+end;
+
+function initPrinterCom(): Boolean;
+begin
+  if printerCom = nil then
+  begin
+
+    printerCom := TComm.Create(nil);
+    printerCom.CommName := 'COM' + IntToStr(GlobalParam.PrinterComPort);
+    printerCom.BaudRate := 115200;
+    printerCom.Parity := None;
+    printerCom.StopBits := _1;
+    printerCom.ByteSize := _8;
+    //printerCom.OnReceiveData := CommReceiveData;
+    try
+      printerCom.StartComm;
+      isPrinterComOpen := True;
+    except
+      isPrinterComOpen := False;
+    end;
+  end;
+  Result := True;
+end;
+
+function freePrinterCom(): Boolean;
+begin
+  if printerCom <> nil then
+  begin
+    printerCom.StopComm;
+    printerCom.Free;
+  end;
+end;
+
+function printContent(content: AnsiString): Boolean;
+var
+  buf: TByteDynArray;
+begin
+  if isPrinterComOpen and (content <> '') then
+  begin
+    //初始化、并设置汉字模式
+    buf := hexStrToBytes('1B401C26');
+    printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
+
+    //发送内容
+    SetLength(buf, Length(content));
+    CopyMemory(@buf[0], @content[1], Length(buf));
+    printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
+
+    //打印并走纸，切纸
+    buf := hexStrToBytes('1B64081D5630');
+    printerCom.WriteCommData(PAnsiChar(@buf[0]), Length(buf));
+  end;
+  Result := False;
+end;
+
+function checkPrinterStatus(): Boolean;
+var
+  buf: TByteDynArray;
+begin
+  if isPrinterComOpen then
+  begin
+    //初始化、并设置汉字模式
+    buf := hexStrToBytes('1C76');
+    printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
+  end;
+  Result := False;
+end;
+
+function getNextTSN():Integer;
+begin
+  Inc(tsn);
+  Result := tsn;
 end;
 
 initialization

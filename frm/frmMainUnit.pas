@@ -330,6 +330,8 @@ type
     procedure DoOnGetCityCardBalance(edt: TCustomEdit; balance: Integer);
 
     procedure DoOnGetMac2(ret: Byte; mac2: AnsiString);
+
+    procedure DoOnPrinterComRecvData(Sender:TObject;Buffer:Pointer;BufferLength:Word);
   protected
     procedure CreateParams(var Params: TCreateParams); override;
   public
@@ -709,6 +711,7 @@ begin
   Timer4.OnTimer := waitForInsertBankCard;
   Timer4.Interval := 1000;
   Timer4.Enabled := True;
+  currChargeType := 1;
 end;
 
 procedure TfrmMain.btnPayCashClick(Sender: TObject);
@@ -717,6 +720,7 @@ var
   mr: TModalResult;
   newBalance: Double;
 begin
+  currChargeType := 0;
   Notebook1.ActivePage := 'pageCash';
   dlg := TfrmWaiting.Create(nil);
   try
@@ -898,6 +902,12 @@ begin
   btnHome.Click;
 end;
 
+procedure TfrmMain.DoOnPrinterComRecvData(Sender: TObject; Buffer: Pointer;
+  BufferLength: Word);
+begin
+//
+end;
+
 procedure TfrmMain.connectToGateway;
 begin
   DataServer.Host := GlobalParam.Gateway.Host;
@@ -942,6 +952,7 @@ end;
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
   CloseSSPComPort;
+  FreePrinterCom;
 end;
 
 procedure TfrmMain.FormResize(Sender: TObject);
@@ -1038,10 +1049,17 @@ begin
   sspCmd.PortNumber := GlobalParam.ITLPort;
   sspCmd.EncryptionStatus := 0;
   //打开串口
-  i := OpenSSPComPort(@sspCmd);
-  if (i = 0) then
-  begin
-    Exit;
+  try
+    i := OpenSSPComPort(@sspCmd);
+    if (i = 0) then
+    begin
+      Exit;
+    end;
+  except
+    on E: Exception do
+    begin
+      ShowMessage('zhibiji');
+    end;
   end;
 
   //发送 0x11 号命令查找识币器是否连接
@@ -1086,7 +1104,15 @@ end;
 
 function TfrmMain.initPrinter: Boolean;
 begin
-  Result := True;
+  if initPrinterCom then
+  begin
+    printerCom.OnReceiveData := DoOnPrinterComRecvData;
+    Result := True;
+  end
+  else
+  begin
+    Result := False;
+  end;
 end;
 
 function TfrmMain.isCheckModuleStatusOk: Boolean;

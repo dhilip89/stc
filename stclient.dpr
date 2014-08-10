@@ -22,7 +22,8 @@ uses
   FrmWaitingUnit in 'frm\FrmWaitingUnit.pas' {frmWaiting},
   ThreadsUnit in 'kernel\ThreadsUnit.pas',
   FrmTipUnit in 'frm\FrmTipUnit.pas' {FrmTip},
-  itlssp in 'kernel\itlssp.pas';
+  itlssp in 'kernel\itlssp.pas',
+  SPCOMM in 'kernel\SPCOMM.PAS';
 
 {$R *.res}
 
