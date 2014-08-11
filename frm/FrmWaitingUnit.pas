@@ -23,6 +23,7 @@ type
     { Public declarations }
     procedure setWaitingTip(tip: string);
     procedure noticeTimeout;
+    procedure noticeFail;
     procedure noticeMROK;
   end;
 
@@ -60,6 +61,11 @@ end;
 procedure TfrmWaiting.FormHide(Sender: TObject);
 begin
   Caption := 'form hide';
+end;
+
+procedure TfrmWaiting.noticeFail;
+begin
+  ModalResult := mrAbort;
 end;
 
 procedure TfrmWaiting.noticeMROK;

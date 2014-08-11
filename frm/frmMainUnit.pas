@@ -981,7 +981,8 @@ begin
 
   sspCmd.SSPAddress := 0;
   sspCmd.BaudRate := 9600;
-  sspCmd.Timeout := 10000;
+  sspCmd.Timeout := 1000;
+  sspCmd.RetryLevel := 3;
   sspCmd.PortNumber := GlobalParam.ITLPort;
   sspCmd.EncryptionStatus := 0;
 
@@ -1002,7 +1003,6 @@ begin
     Result := MODULE_STATUS_OK
   else
     Result := MODULE_STATUS_FAULT;
-
 end;
 
 function TfrmMain.getPrinterStatus: Byte;
@@ -1045,29 +1045,31 @@ begin
 
   sspCmd.SSPAddress := 0;
   sspCmd.BaudRate := 9600;
-  sspCmd.Timeout := 10000;
+  sspCmd.Timeout := 1000;
+  sspCmd.RetryLevel := 3;
   sspCmd.PortNumber := GlobalParam.ITLPort;
   sspCmd.EncryptionStatus := 0;
+  sspCmd.CommandDataLength := 0;
   //打开串口
   try
+    addSysLog('open ssp com');
     i := OpenSSPComPort(@sspCmd);
     if (i = 0) then
     begin
       Exit;
     end;
-  except
-    on E: Exception do
-    begin
-      ShowMessage('zhibiji');
-    end;
-  end;
 
-  //发送 0x11 号命令查找识币器是否连接
-  sspCmd.CommandData[0] := $11;
-  sspCmd.CommandDataLength := 1;
-  if SSPSendCommand(@sspCmd, @sspCmdInfo) = 0then
-  begin
-    Exit;
+
+    //发送 0x11 号命令查找识币器是否连接
+    sspCmd.CommandData[0] := $11;
+    sspCmd.CommandDataLength := 1;
+    if SSPSendCommand(@sspCmd, @sspCmdInfo) = 0then
+    begin
+      Exit;
+    end;
+  finally
+    addSysLog('close ssp com');
+    //CloseSSPComPort;
   end;
 
   Result := True;

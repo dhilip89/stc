@@ -20,6 +20,7 @@ var
   printerCom: TComm;
   isPrinterComOpen: Boolean;
 
+  currCityCardNo: ansistring;
   currentTSN: LongWord = 0;
   currChargeType: Byte;//当前充值类型  0:现金 1:银联卡  2：充值卡  03企福通充值/专有账户充值
   bankCardNo: string;//充值时使用的银行卡号或者充值卡卡号
@@ -439,7 +440,14 @@ begin
         fs := TFileStream.Create(FileName, fmOpenRead);
         SetLength(sno, fs.Size);
         fs.Read(sno[1], fs.Size);
-        currentTSN := StrToInt(sno);
+        if Trim(sno) <> '' then
+        begin
+          currentTSN := StrToInt(sno);
+        end
+        else
+        begin
+          currentTSN := 0;
+        end;
       end
       else
       begin

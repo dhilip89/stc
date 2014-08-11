@@ -92,11 +92,20 @@ type
     frmWaiting: TfrmWaiting;
     timeout: Integer;
   protected
+    {0:正常  1: 返回继续循环执行  2：关键操作非等待可解决的直接退出，不继续
+     3:执行失败，且需退钱
+    }
+    taskRet: Byte;
+    amountRefund: Integer;//退款金额
+    errInfo: string;//如果返回失败，填写错误提示
     procedure Execute; override;
     procedure setWaitingTip(tip: string);
     function doTask: Boolean; virtual; abstract;
-    procedure DoOnTaskOK; virtual;
-    procedure DoOnTaskTimeout; virtual;
+    procedure DoOnTaskOK; virtual; //执行顺利
+    procedure DoOnTaskTimeout; virtual;//执行超时
+    procedure DoOnTaskFail; virtual;//任务中关键操作失败，非等待可解决的，提前退出
+    procedure DoOnTaskWithRefund;virtual;//需要进行退钱打印凭条
+    procedure printRefundInfo(amount: Integer; cardNo: ansistring);
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer); virtual;
     destructor Destroy; override;
@@ -219,6 +228,7 @@ begin
   SetLength(tempStr, 8 * 2);
   CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
   cardInfo := tempStr;//'卡号:'
+  currCityCardNo := tempStr;
 
 //    Inc(offset, 20 * 2);
 //    SetLength(tempStr, 4 * 2);
@@ -327,6 +337,16 @@ begin
   inherited;
 end;
 
+procedure TBaseThread.DoOnTaskFail;
+begin
+  if errInfo <> '' then
+  begin
+    setWaitingTip(errInfo);
+    Sleep(4000);
+  end;
+  frmWaiting.noticeFail;
+end;
+
 procedure TBaseThread.DoOnTaskOK;
 begin
   frmWaiting.noticeMROK;
@@ -337,6 +357,17 @@ begin
   frmWaiting.noticeTimeout;
 end;
 
+procedure TBaseThread.DoOnTaskWithRefund;
+begin
+  if errInfo <> '' then
+  begin
+    setWaitingTip(errInfo);
+    Sleep(4000);
+  end;
+  printRefundInfo(amountRefund, currCityCardNo);
+  frmWaiting.noticeFail;
+end;
+
 procedure TBaseThread.Execute;
 var
   sTime: TDateTime;
@@ -344,8 +375,14 @@ var
 begin
   sTime := Now;
   isTimeout := False;
+  taskRet := 0;
   while not doTask do
   begin
+    if taskRet in [2, 3] then
+    begin
+      Break;
+    end;
+
     if SecondsBetween(now, stime) < timeout then
     begin
       Sleep(500);
@@ -356,12 +393,38 @@ begin
   end;
   if not isTimeout then
   begin
-    DoOnTaskOK;
+    if taskRet = 0 then
+    begin
+      DoOnTaskOK;
+    end
+    else if taskRet = 2 then
+    begin
+      DoOnTaskFail;
+    end
+    else if taskRet = 3 then
+    begin
+      DoOnTaskWithRefund;
+    end;
   end
   else
   begin
     DoOnTaskTimeout;
   end;
+end;
+
+procedure TBaseThread.printRefundInfo(amount: Integer; cardNo: ansistring);
+var
+  cmd: TCmdRefundC2S;
+  buf: TByteDynArray;
+begin
+  buf := hexStrToBytes(cardNo);
+  CopyMemory(@cmd.CityCardNo[0], @buf[0], Length(buf));
+  cmd.Amount := amount;
+  buf := hexStrToBytes(FormatDateTime('yyyyMMddHHnnss', Now));
+  CopyMemory(@cmd.Time[0], @buf[0], Length(buf));
+  DataServer.SendCmdRefund(cmd);
+
+  //printContent('')
 end;
 
 procedure TBaseThread.setWaitingTip(tip: string);
@@ -413,24 +476,30 @@ begin
   //设置串口参数
   sspCmd.SSPAddress := 0;
   sspCmd.BaudRate := 9600;
-  sspCmd.Timeout := 10000;
+  sspCmd.Timeout := 1000;
+  sspCmd.RetryLevel := 3;
   sspCmd.PortNumber := GlobalParam.ITLPort;
   sspCmd.EncryptionStatus := 0;
 
   //打开串口
   try
-    i := OpenSSPComPort(@sspCmd);
-    if (i = 0) then
-    begin
-      //ShowMessage('串口打开失败');
-      Exit;
-    end;
+//    addSysLog('open ssp com');
+//    i := OpenSSPComPort(@sspCmd);
+//    if (i = 0) then
+//    begin
+//      taskRet := 2;
+//      errInfo := '纸币器无法正常工作';
+//      //ShowMessage('串口打开失败');
+//      Exit;
+//    end;
 
     //发送 0x11 号命令查找识币器是否连接
     sspCmd.CommandData[0] := $11;
     sspCmd.CommandDataLength := 1;
     if SSPSendCommand(@sspCmd, @sspCmdInfo) = 0then
     begin
+      taskRet := 2;
+      errInfo := '纸币器无法正常工作';
       //ShowMessage('查找识币器是否连接命令执行失败');
       Exit;
     end;
@@ -440,6 +509,8 @@ begin
     sspCmd.CommandDataLength := 1;
     if (SSPSendCommand(@sspCmd, @sspCmdInfo) = 0) then
     begin
+      taskRet := 2;
+      errInfo := '纸币器无法正常工作';
       //ShowMessage('读取通道配置命令执行失败');
       Exit;
     end;
@@ -458,6 +529,8 @@ begin
     sspCmd.CommandDataLength := 1;
     if (SSPSendCommand(@sspCmd, @sspCmdInfo) = 0) then
     begin
+      taskRet := 2;
+      errInfo := '纸币器无法正常工作';
       //ShowMessage('disable失败');
       Exit;
     end;
@@ -469,6 +542,8 @@ begin
     sspCmd.CommandDataLength := 3;
     if (SSPSendCommand(@sspCmd, @sspCmdInfo) = 0) then
     begin
+      taskRet := 2;
+      errInfo := '纸币器无法正常工作';
       //ShowMessage('启用通道设置失败');
       Exit;
     end;
@@ -478,6 +553,8 @@ begin
     sspCmd.CommandDataLength := 1;
     if (SSPSendCommand(@sspcmd, @sspCmdInfo) = 0) then
     begin
+      taskRet := 2;
+      errInfo := '纸币器无法正常工作';
       //ShowMessage('enable失败');
       Exit;
     end;
@@ -495,6 +572,8 @@ begin
         sspCmd.CommandDataLength := 3;
         if (SSPSendCommand(@sspCmd, @sspCmdInfo) = 0) then
         begin
+          taskRet := 3;
+          errInfo := '纸币器无法正常工作';
           //ShowMessage('设置50元通道失败');
           Exit;
         end;
@@ -504,6 +583,8 @@ begin
       sspCmd.CommandDataLength := 1;
       if (SSPSendCommand(@sspcmd, @sspCmdInfo) = 0) then
       begin
+        taskRet := 3;
+        errInfo := '纸币器无法正常工作';
         //ShowMessage('poll 失败');
         Exit;
       end;
@@ -545,17 +626,25 @@ begin
     end;
     //Memo1.Lines.Add('totalAmount:' + IntToStr(amountRead));
   finally
-    CloseSSPComPort;
+//    addSysLog('close ssp com');
+//    CloseSSPComPort;
+    if taskRet = 3 then
+    begin
+      if FAmountRead > 0 then
+      begin//在读钞过程中出现错误
+        amountRefund := FAmountRead;
+      end
+      else
+      begin//还没有吞过钞票则将状态改为2
+        taskRet := 2;
+      end;
+    end;
   end;
   if (FAmountRead < totalAmount) then
   begin//timeout and amount is not enough
     Exit;
   end;
-//  Sleep(2000);
-//  setWaitingTip(Format(tip, [FCashAmount, 50]));
-//  Sleep(2000);
-//  setWaitingTip(Format(tip, [FCashAmount, 100]));
-//  Sleep(2000);
+  taskRet := 0;
   Result := True;
 end;
 
@@ -605,6 +694,7 @@ begin
   setWaitingTip(tip);
   if not resetD8 then
   begin
+    taskRet := 1;
     addSysLog('citycard charge reset d8 fail');
     Exit;
   end;
@@ -618,6 +708,8 @@ begin
   ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
   if ret <> 0 then
   begin
+    taskRet := 3;
+    errInfo := '充值失败，请注意保留凭条';
     addSysLog('读卡号和应用序列化失败, recvBuf:' + recvBuf);
     Exit;
   end;
@@ -641,6 +733,8 @@ begin
   ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
   if ret <> 0 then
   begin
+    taskRet := 3;
+    errInfo := '充值失败，请注意保留凭条';
     addSysLog('读卡类型失败, recvBuf:' + recvBuf);
     Exit;
   end;
@@ -663,6 +757,8 @@ begin
   billStatus := checkRecvBufEndWith9000(recvBuf, recvLen);
   if (ret <> 0) or (billStatus <> BILL_OK) then
   begin
+    taskRet := 3;
+    errInfo := '充值失败，请注意保留凭条';
     addSysLog('initialize for load err, recvBuf:' + recvBuf);
     Exit;
   end;
@@ -694,6 +790,9 @@ begin
   DataServer.SendCmdGetMac2(cardNo, asn, tsn, OperType, oldBalance, FChargeAmount, chargeTime, fakeRandom, mac1);
   if not waitForMac2 then
   begin//超时
+    taskRet := 3;
+    errInfo := '充值失败，请注意保留凭条';
+    addSysLog('credit for load err, recvBuf:' + recvBuf);
     Exit;
   end;
 
@@ -708,6 +807,8 @@ begin
   billStatus := checkRecvBufEndWith9000(recvBuf, recvLen);
   if (ret <> 0) or (billStatus <> BILL_OK) then
   begin
+    taskRet := 3;
+    errInfo := '充值失败，请注意保留凭条';
     addSysLog('credit for load err, recvBuf:' + recvBuf);
     Exit;
   end;

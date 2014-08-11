@@ -150,7 +150,8 @@ type
     CmdHead: TSTHead;
     CityCardNo: array[0..7] of Byte;//市民卡卡号
     Amount: Integer;//充值金额
-    ChargeType: Byte;//充值类型 0:现金 1:银行卡 2:充值卡
+    Time: array[0..6] of Byte;//退款时间
+    //ChargeType: Byte;//充值类型 0:现金 1:银行卡 2:充值卡
     CmdEnd: TSTEnd;
   end;
   PCmdRefundC2S = ^TCmdRefundC2S;
