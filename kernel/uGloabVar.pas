@@ -20,7 +20,7 @@ var
   printerCom: TComm;
   isPrinterComOpen: Boolean;
 
-  tsn: LongWord = 0;
+  currentTSN: LongWord = 0;
   currChargeType: Byte;//当前充值类型  0:现金 1:银联卡  2：充值卡  03企福通充值/专有账户充值
   bankCardNo: string;//充值时使用的银行卡号或者充值卡卡号
 
@@ -47,6 +47,8 @@ function freePrinterCom(): Boolean;
 function printContent(content: AnsiString): Boolean;
 function checkPrinterStatus(): Boolean;
 function getNextTSN():Integer;
+function getInitTSNFromFile: Integer;
+function writeTSNToFile(tsn: Integer): Boolean;
 
 implementation
 uses
@@ -417,8 +419,71 @@ end;
 
 function getNextTSN():Integer;
 begin
-  Inc(tsn);
-  Result := tsn;
+  Inc(currentTSN);
+  Result := currentTSN;
+  writeTSNToFile(currentTSN);
+end;
+
+function getInitTSNFromFile: Integer;
+var
+  fs: TFileStream;
+  fileName: string;
+  sno: AnsiString;
+begin
+  FileName := 'sno.txt';
+  fs := nil;
+  try
+    try
+      if FileExists(FileName) then
+      begin
+        fs := TFileStream.Create(FileName, fmOpenRead);
+        SetLength(sno, fs.Size);
+        fs.Read(sno[1], fs.Size);
+        currentTSN := StrToInt(sno);
+      end
+      else
+      begin
+        fs := TFileStream.Create(FileName, fmCreate or fmOpenRead);
+        currentTSN := 0;
+      end;
+    except
+
+    end;
+  finally
+    if fs <> nil then
+    begin
+      fs.Free;
+    end;
+  end;
+end;
+
+function writeTSNToFile(tsn: Integer): Boolean;
+var
+  fs: TFileStream;
+  fileName: string;
+  sno: AnsiString;
+begin
+  FileName := 'sno.txt';
+  fs := nil;
+  sno := IntToStr(tsn);
+  try
+    try
+      if FileExists(FileName) then
+        fs := TFileStream.Create(FileName, fmOpenWrite)
+      else
+      begin
+        fs := TFileStream.Create(FileName, fmCreate or fmOpenWrite);
+      end;
+      fs.Size := 0;
+      fs.Write(sno[1], Length(sno));
+    except
+    end;
+  finally
+    if fs <> nil then
+    begin
+      fs.Free;
+    end;
+  end;
 end;
 
 initialization
@@ -430,6 +495,8 @@ initialization
   FSysLog := TSystemLog.Create;
   FSysLog.WriteImmediate := True;
   FSysLog.LogFile := ExePath + 'log\sysLog\data';
+  getInitTSNFromFile();
+
 finalization
   //业务服务器在主窗口Free
   GlobalParam.Free;
