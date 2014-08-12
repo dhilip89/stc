@@ -389,9 +389,16 @@ end;
 function TGateWayServerCom.LoginToServer: Boolean; // 用户登录网关服务器
 var
   cmd: TCmdLoginC2S;
+  buf: TByteDynArray;
 begin
   initCmd(cmd.CmdHead, C2S_LOGIN, cmd.CmdEnd, SizeOf(TCmdLoginC2S));
   cmd.Ver := ByteOderConvert_Word(VER);
+  buf := hexStrToBytes(getFixedLenStr(GlobalParam.PosId, 12, '0', True));
+  CopyMemory(@cmd.PosID[0], @buf[0], Length(buf));
+
+  buf := hexStrToBytes(getFixedLenStr(GlobalParam.SAMID, 12, '0', True));
+  CopyMemory(@cmd.SAMID[0], @buf[0], Length(buf));
+
   Result := DirectSend(cmd, SizeOf(TCmdLoginC2S));
 end;
 
@@ -514,8 +521,7 @@ begin
   cmdHead.CmdId := ByteOderConvert_Word(cmdId);
   cmdHead.ClientType := 0;
 
-  terminalIdBuf := hexStrToByteBuf(getFixedLenStr(GlobalParam.TerminalId, 12, '0'), False);
-  CopyMemory(@(cmdHead.TerminalId[0]), @terminalIdBuf[0], SizeOf(cmdHead.TerminalId));
+  cmdHead.TerminalId := ByteOderConvert_LongWord(StrToInt(GlobalParam.TerminalId));
   cmdHead.BodySize := ByteOderConvert_Word(cmdMinSize - SizeOf(TSTHead) - SizeOf(TSTEnd));
   cmdHead.CmdSNo := ByteOderConvert_Word(cmdSNo);
   cmdEnd.CheckSum := 0;

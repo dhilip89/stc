@@ -27,6 +27,8 @@ type
     FD8BaudRate: Integer;
     FITLPort: Integer;
     FPrinterComPort: Integer;
+    FPosId: string;
+    FSAMID: string;
 
     procedure SetGateway(const Value: TAddrssParam);
     procedure SetGatewayBak(const Value: TAddrssParam);
@@ -36,6 +38,8 @@ type
     procedure SetUserName(const Value: string);
     procedure SetUserPassword(const Value: string);
     procedure SetTerminalId(const Value: string);
+    procedure SetPosId(const Value: string);
+    procedure SetSAMID(const Value: string);
 
   protected
     function SaveToXML: TXMLDocument;
@@ -58,6 +62,8 @@ type
     property UserPassword: string read FUserPassword write SetUserPassword;
 
     property TerminalId: string read FTerminalId write SetTerminalId;
+    property PosId: string read FPosId write SetPosId;
+    property SAMID: string read FSAMID write SetSAMID;
 
     //---¶Á¿¨Æ÷²ÎÊý---
     property D8ComPort: Integer read FD8ComPort write FD8ComPort;
@@ -243,6 +249,16 @@ begin
   FGatewayBak := Value;
 end;
 
+
+procedure TSystemParam.SetPosId(const Value: string);
+begin
+  FPosId := Value;
+end;
+
+procedure TSystemParam.SetSAMID(const Value: string);
+begin
+  FSAMID := Value;
+end;
 
 procedure TSystemParam.SetTerminalId(const Value: string);
 begin

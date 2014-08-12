@@ -21,14 +21,16 @@ const
   C2S_GET_MAC2               = $0005;//获取MAC2
   C2S_CHARGE_DETAIL          = $0006;//上传充值记录
   C2S_REFUND                 = $0007;//退款记录登记
+  C2S_PREPAID_CARD_CHECK     = $0008;//充值卡校验
 {******************************终端发起命令字******************************}
 
 {*****************************服务端发起命令字*****************************}
-  S2C_TYRET             = $7001;//平台通用应答
-  S2C_LOGIN_RSP         = $7003;//终端注册应答
-  S2C_GET_MAC2_RSP      = $7005;//获取mac2应答
-  S2C_CHARGE_DETAIL_RSP = $7006;//上传充值记录应答
-  S2C_REFUND_RSP        = $7007;//退款记录应答
+  S2C_TYRET                  = $7001;//平台通用应答
+  S2C_LOGIN_RSP              = $7003;//终端注册应答
+  S2C_GET_MAC2_RSP           = $7005;//获取mac2应答
+  S2C_CHARGE_DETAIL_RSP      = $7006;//上传充值记录应答
+  S2C_REFUND_RSP             = $7007;//退款记录应答
+  S2C_PRE_CARD_CHECK_RSP     = $7008;//充值卡校验应答
 {*****************************服务端发起命令字*****************************}
 {*********************************公共常量*********************************}
   CMD_START_FLAG = $7E;
@@ -49,7 +51,7 @@ type
     StartFlag: Byte;
     CmdId: Word;
     ClientType: Byte;
-    TerminalId: array[0..5] of Byte;//BCD
+    TerminalId: LongWord;
     BodySize: Short;
     CmdSNo: Short;
   end;
@@ -85,6 +87,8 @@ type
   TCmdLoginC2S = packed record
     CmdHead: TSTHead;
     Ver: Word;
+    PosID: array[0..5] of Byte;//BCD
+    SAMID: array[0..5] of Byte;//BCD
     CmdEnd: TSTEnd;
   end;
   PCmdLoginC2S = ^TCmdLoginC2S;
@@ -146,6 +150,7 @@ type
   end;
   PCmdChargeDetailC2S = ^TCmdChargeDetailC2S;
 
+  //退款记录请求
   TCmdRefundC2S = packed record
     CmdHead: TSTHead;
     CityCardNo: array[0..7] of Byte;//市民卡卡号
@@ -156,6 +161,14 @@ type
   end;
   PCmdRefundC2S = ^TCmdRefundC2S;
 
+  //充值卡校验请求
+  TCmdPrepaidCardCheckC2S = packed record
+    CmdHead: TSTHead;
+    CityCardNo: array[0..7] of Byte;//市民卡卡号
+    Password: array[0..7] of Byte;//充值卡密码
+    CmdEnd: TSTEnd;
+  end;
+  PCmdPrepaidCardCheckC2S = ^TCmdPrepaidCardCheckC2S;
 {******************************终端发起命令******************************}
 
 
@@ -205,6 +218,16 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdRefundRspS2C = ^TCmdRefundRspS2C;
+
+  //充值卡校验请求应答
+  TCmdPrepaidCardCheckS2C = packed record
+    CmdHead: TSTHead;
+    CheckRet: Byte;//校验结果
+    Amount: Integer;//充值金额
+    //TradeSNo: array[0..29] of Byte;//交易流水号，直接用字符串表示，最长30位，后补0x00,如交易号是 1234，那么数据31323334..
+    CmdEnd: TSTEnd;
+  end;
+  PCmdPrepaidCardCheckS2C = ^TCmdPrepaidCardCheckS2C;
 {*****************************服务端发起命令*****************************}
 
 function PtrAdd(p: pointer; offset: integer): pointer;

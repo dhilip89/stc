@@ -40,7 +40,7 @@ function bytesToInt(buf: array of byte; sIndex: Integer; isLittleEndian: Boolean
 function getFixedLenStr(srcStr:string; dstLen: Integer; fillchar: Char; isFillLeft: Boolean = True): string;
 function hexStrToBytes(hexStr: string): TByteDynArray;
 function intToBytes(iVal: Integer): TByteDynArray;
-procedure initBytes(buf: array of Byte; initByte: Byte);
+procedure initBytes(var buf: array of Byte; initByte: Byte);
 function wordToBytes(wVal: Word): TByteDynArray;
 function LongWordToBytes(lw: LongWord): TByteDynArray;
 function initPrinterCom(): Boolean;
@@ -342,7 +342,7 @@ begin
   CopyMemory(@Result[0], @lw, 4);
 end;
 
-procedure initBytes(buf: array of Byte; initByte: Byte);
+procedure initBytes(var buf: array of Byte; initByte: Byte);
 var
   I: Integer;
 begin
