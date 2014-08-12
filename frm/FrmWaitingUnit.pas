@@ -19,9 +19,11 @@ type
     procedure FormDestroy(Sender: TObject);
   private
     { Private declarations }
+    procedure resetComponentPos();
+    procedure hideProgressBar();
   public
     { Public declarations }
-    procedure setWaitingTip(tip: string);
+    procedure setWaitingTip(tip: string; isHideProgressBar: Boolean = False);
     procedure noticeTimeout;
     procedure noticeFail;
     procedure noticeMROK;
@@ -48,9 +50,7 @@ begin
 //  gif.Animate := true;
 //  img1.Picture.Assign(gif);
 //  gif.Free;
-  AdvCircularProgress1.Top := 15;
-  AdvCircularProgress1.Left := (AdvSmoothPanel1.Width - AdvCircularProgress1.Width) div 2;
-  AdvSmoothLabel1.Height := AdvSmoothPanel1.Height - (AdvCircularProgress1.Height + AdvCircularProgress1.Top);
+  resetComponentPos;
 end;
 
 procedure TfrmWaiting.FormDestroy(Sender: TObject);
@@ -61,6 +61,12 @@ end;
 procedure TfrmWaiting.FormHide(Sender: TObject);
 begin
   Caption := 'form hide';
+end;
+
+procedure TfrmWaiting.hideProgressBar;
+begin
+  AdvCircularProgress1.Visible := False;
+  AdvSmoothLabel1.Align := alClient;
 end;
 
 procedure TfrmWaiting.noticeFail;
@@ -78,8 +84,26 @@ begin
   ModalResult := mrAbort;
 end;
 
-procedure TfrmWaiting.setWaitingTip(tip: string);
+procedure TfrmWaiting.resetComponentPos;
 begin
+  AdvCircularProgress1.Visible := True;
+  AdvSmoothLabel1.Align := alBottom;
+
+  AdvCircularProgress1.Top := 15;
+  AdvCircularProgress1.Left := (AdvSmoothPanel1.Width - AdvCircularProgress1.Width) div 2;
+  AdvSmoothLabel1.Height := AdvSmoothPanel1.Height - (AdvCircularProgress1.Height + AdvCircularProgress1.Top);
+end;
+
+procedure TfrmWaiting.setWaitingTip(tip: string;isHideProgressBar: Boolean);
+begin
+  if isHideProgressBar then
+  begin
+    hideProgressBar;
+  end
+  else
+  begin
+    resetComponentPos;
+  end;
   AdvSmoothLabel1.Caption.Text := tip;
 end;
 

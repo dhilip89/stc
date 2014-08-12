@@ -99,7 +99,7 @@ type
     amountRefund: Integer;//退款金额
     errInfo: string;//如果返回失败，填写错误提示
     procedure Execute; override;
-    procedure setWaitingTip(tip: string);
+    procedure setWaitingTip(tip: string;isHideProgressBar: Boolean = False);
     function doTask: Boolean; virtual; abstract;
     procedure DoOnTaskOK; virtual; //执行顺利
     procedure DoOnTaskTimeout; virtual;//执行超时
@@ -341,8 +341,8 @@ procedure TBaseThread.DoOnTaskFail;
 begin
   if errInfo <> '' then
   begin
-    setWaitingTip(errInfo);
-    Sleep(4000);
+    setWaitingTip(errInfo, True);
+    Sleep(5000);
   end;
   frmWaiting.noticeFail;
 end;
@@ -361,8 +361,8 @@ procedure TBaseThread.DoOnTaskWithRefund;
 begin
   if errInfo <> '' then
   begin
-    setWaitingTip(errInfo);
-    Sleep(4000);
+    setWaitingTip(errInfo, True);
+    Sleep(5000);
   end;
   printRefundInfo(amountRefund, currCityCardNo);
   frmWaiting.noticeFail;
@@ -427,9 +427,9 @@ begin
   //printContent('')
 end;
 
-procedure TBaseThread.setWaitingTip(tip: string);
+procedure TBaseThread.setWaitingTip(tip: string; isHideProgressBar: Boolean);
 begin
-  frmWaiting.setWaitingTip(tip);
+  frmWaiting.setWaitingTip(tip, isHideProgressBar);
 end;
 
 { TGetCashAmount }

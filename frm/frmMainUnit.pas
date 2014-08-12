@@ -73,9 +73,6 @@ type
     pnlGetIDCardInfo: TRzPanel;
     pnlChooseAmountForNewCard: TRzPanel;
     RzPanel69: TRzPanel;
-    RzGroupBox2: TRzGroupBox;
-    AdvSmoothLabel59: TAdvSmoothLabel;
-    AdvSmoothButton36: TAdvSmoothButton;
     RzPanel70: TRzPanel;
     pnlSuccess: TRzPanel;
     Image38: TImage;
@@ -105,7 +102,6 @@ type
     AdvSmoothButton33: TAdvSmoothButton;
     AdvSmoothLabel54: TAdvSmoothLabel;
     RzPanel77: TRzPanel;
-    AdvSmoothLabel64: TAdvSmoothLabel;
     RzPanel78: TRzPanel;
     Image34: TImage;
     AdvSmoothLabel61: TAdvSmoothLabel;
@@ -951,6 +947,8 @@ end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
+  DataServer.Active := False;
+  DataServer.Free;
   CloseSSPComPort;
   FreePrinterCom;
 end;
