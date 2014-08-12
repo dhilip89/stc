@@ -419,7 +419,7 @@ var
 begin
   buf := hexStrToBytes(cardNo);
   CopyMemory(@cmd.CityCardNo[0], @buf[0], Length(buf));
-  cmd.Amount := amount;
+  cmd.Amount := ByteOderConvert_LongWord(amount * 100);
   buf := hexStrToBytes(FormatDateTime('yyyyMMddHHnnss', Now));
   CopyMemory(@cmd.Time[0], @buf[0], Length(buf));
   DataServer.SendCmdRefund(cmd);

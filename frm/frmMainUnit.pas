@@ -1295,7 +1295,19 @@ end;
 procedure TfrmMain.Timer3Timer(Sender: TObject);
 var
   moduleStatus: array of Byte;
+  cmd: TCmdRefundC2S;
 begin
+  initBytes(cmd.CityCardNo, $30);
+  cmd.Amount := ByteOderConvert_LongWord(10000);
+  cmd.Time[0] := $20;
+  cmd.Time[1] := $14;
+  cmd.Time[2] := $08;
+  cmd.Time[3] := $12;
+  cmd.Time[4] := $13;
+  cmd.Time[5] := $50;
+  cmd.Time[6] := $20;
+  DataServer.SendCmdRefund(cmd);
+
   if not isCheckModuleStatusOk then
     Exit;
 
