@@ -399,7 +399,7 @@ begin
     printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
 
     //´òÓ¡²¢×ßÖ½£¬ÇÐÖ½
-    buf := hexStrToBytes('1B64081D5630');
+    buf := hexStrToBytes('1B640A1D5630');
     printerCom.WriteCommData(PAnsiChar(@buf[0]), Length(buf));
   end;
   Result := False;

@@ -416,6 +416,8 @@ procedure TBaseThread.printRefundInfo(amount: Integer; cardNo: ansistring);
 var
   cmd: TCmdRefundC2S;
   buf: TByteDynArray;
+
+  printInfo: AnsiString;
 begin
   buf := hexStrToBytes(cardNo);
   CopyMemory(@cmd.CityCardNo[0], @buf[0], Length(buf));
@@ -424,7 +426,14 @@ begin
   CopyMemory(@cmd.Time[0], @buf[0], Length(buf));
   DataServer.SendCmdRefund(cmd);
 
-  //printContent('')
+  printInfo := '退款凭证'#13#10
+             + '---------------------------'#13#10
+             + '卡号:' + cardNo + #13#10
+             + '金额:' + IntToStr(amount) + '元'#13#10
+             + '时间:' + FormatDateTime('yyyy-MM-dd hh:nn:ss', now) + #13#10
+             + '---------------------------'#13#10
+             + '注:请带凭证到人工窗口退款';
+  printContent(printInfo);
 end;
 
 procedure TBaseThread.setWaitingTip(tip: string; isHideProgressBar: Boolean);
@@ -690,7 +699,7 @@ var
   billStatus: AnsiString;
 begin
   Result := False;
-  tip := '正在进行充值处理，请勿移开卡片'#13#10 + '卡片读取中...';
+  tip := '正在进行充值处理，请勿移开卡片';//#13#10 + '卡片读取中...';
   setWaitingTip(tip);
   if not resetD8 then
   begin
@@ -784,8 +793,8 @@ begin
   CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
   mac1 := hexStrToBytes(tempStr);//mac1
 
-  tip := '正在进行充值处理，请勿移开卡片'#13#10 + '卡片联机校验中...';
-  setWaitingTip(tip);
+//  tip := '正在进行充值处理，请勿移开卡片'#13#10 + '卡片联机校验中...';
+//  setWaitingTip(tip);
   chargeTime := hexStrToBytes(FormatDateTime('yyyyMMddhhnnss', Now));
   DataServer.SendCmdGetMac2(cardNo, asn, tsn, OperType, oldBalance, FChargeAmount, chargeTime, fakeRandom, mac1);
   if not waitForMac2 then
@@ -796,8 +805,8 @@ begin
     Exit;
   end;
 
-  tip := '正在进行充值处理，请勿移开卡片'#13#10 + '写卡中...';
-  setWaitingTip(tip);
+//  tip := '正在进行充值处理，请勿移开卡片'#13#10 + '写卡中...';
+//  setWaitingTip(tip);
   sendHexStr := '805200000B' + bytesToHexStr(chargeTime) + FMac2 + '04';
   CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
 

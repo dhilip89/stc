@@ -195,10 +195,20 @@ type
     AdvSmoothLabel74: TAdvSmoothLabel;
     RzPanel95: TRzPanel;
     AdvSmoothLabel39: TAdvSmoothLabel;
+    AdvSmoothLabel75: TAdvSmoothLabel;
+    RzPanel5: TRzPanel;
+    btnPayCityCard: TAdvSmoothButton;
+    borderRight: TRzBorder;
+    border4: TRzBorder;
+    btnChargeCard: TAdvSmoothButton;
+    borderLeft: TRzBorder;
+    border1: TRzBorder;
+    border2: TRzBorder;
     btnPayBankCard: TAdvSmoothButton;
     btnPayCash: TAdvSmoothButton;
-    btnPayCityCard: TAdvSmoothButton;
-    AdvSmoothLabel75: TAdvSmoothLabel;
+    btnQFTCard: TAdvSmoothButton;
+    border3: TRzBorder;
+    RzBorder7: TRzBorder;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -255,6 +265,8 @@ type
     procedure AdvSmoothButton44Click(Sender: TObject);
     procedure Timer3Timer(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure btnQFTCardClick(Sender: TObject);
+    procedure btnChargeCardClick(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -315,8 +327,8 @@ type
     procedure setTimeInfo();
     procedure setPanelInitPos;
     procedure setCompentInParentCenter(comp: TWinControl);
-    procedure setBtnPayTypeVisible(btnCityCardVisible: Boolean;
-      btnBankCardVisible: Boolean; btnCashVisible: Boolean);
+    procedure setBtnPayTypeVisible(btnCityCardVisible,btnBankCardVisible,
+      btnCashVisible, btnChargeCardVisible, btnQFTCardVisible: Boolean);
 //    procedure setProgressInCenter;
     procedure setProgressInTop;
 //    procedure setProgressTopPos(iTop: Integer);
@@ -401,7 +413,7 @@ end;
 procedure TfrmMain.AdvSmoothButton13Click(Sender: TObject);
 begin
   amountPaid := 50;
-  setBtnPayTypeVisible(True, True, True);
+  //setBtnPayTypeVisible(True, True, True);
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
@@ -481,6 +493,11 @@ begin
   Timer4.Enabled := True;
 end;
 
+procedure TfrmMain.btnChargeCardClick(Sender: TObject);
+begin
+  currChargeType := 2;
+end;
+
 procedure TfrmMain.AdvSmoothButton20Click(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageInputWaterCardInfo';
@@ -524,7 +541,7 @@ procedure TfrmMain.AdvSmoothButton23Click(Sender: TObject);
 begin
   amountPaid := StrToFloat(AdvEdit9.Text);
   Notebook1.ActivePage := 'pageSelectPayType';
-  Self.setBtnPayTypeVisible(True, True, False);
+  //Self.setBtnPayTypeVisible(True, True, False);
 end;
 
 procedure TfrmMain.AdvSmoothButton24Click(Sender: TObject);
@@ -619,7 +636,7 @@ procedure TfrmMain.AdvSmoothButton28Click(Sender: TObject);
 begin
   amountPaid := 50;
   cityCardBalance := amountPaid - StrToFloat(AdvSmoothLabel69.Caption.Text);
-  Self.setBtnPayTypeVisible(False, True, True);
+  //Self.setBtnPayTypeVisible(False, True, True);
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
@@ -634,6 +651,11 @@ begin
   AdvSmoothButton31.Enabled := False;
   Notebook1.ActivePage := 'pageCityCardIDCard';
   Timer4.Enabled := True;
+end;
+
+procedure TfrmMain.btnQFTCardClick(Sender: TObject);
+begin
+  currChargeType := 3;
 end;
 
 procedure TfrmMain.AdvSmoothButton30Click(Sender: TObject);
@@ -668,7 +690,7 @@ procedure TfrmMain.AdvSmoothButton32Click(Sender: TObject);
 begin
   amountPaid := 100;
   cityCardBalance := amountPaid - StrToFloat(AdvSmoothLabel69.Caption.Text);
-  Self.setBtnPayTypeVisible(False, True, True);
+  //Self.setBtnPayTypeVisible(False, True, True);
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
@@ -677,7 +699,7 @@ begin
 //  amountPaid := 50;
 //  cityCardBalance := amountPaid + 10.5;
   amountCharged := 50;
-  setBtnPayTypeVisible(False, True, True);
+  setBtnPayTypeVisible(False, False, True, True, True);
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
@@ -686,7 +708,7 @@ begin
 //  amountPaid := 100;
 //  cityCardBalance := amountPaid + 10.5;
   amountCharged := 100;
-  setBtnPayTypeVisible(False, True, True);
+  setBtnPayTypeVisible(False, False, True, True, True);
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
@@ -695,7 +717,7 @@ begin
 //  amountPaid := 200;
 //  cityCardBalance := amountPaid + 10.5;
   amountCharged := 200;
-  setBtnPayTypeVisible(False, True, True);
+  setBtnPayTypeVisible(False, False, True, True, True);
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
@@ -815,14 +837,14 @@ end;
 procedure TfrmMain.AdvSmoothButton41Click(Sender: TObject);
 begin
   amountPaid := 100;
-  setBtnPayTypeVisible(True, True, True);
+  //setBtnPayTypeVisible(True, True, True);
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
 procedure TfrmMain.AdvSmoothButton42Click(Sender: TObject);
 begin
   amountPaid := 200;
-  setBtnPayTypeVisible(True, True, True);
+  //setBtnPayTypeVisible(True, True, True);
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
@@ -1168,11 +1190,59 @@ begin
 end;
 
 procedure TfrmMain.setBtnPayTypeVisible(btnCityCardVisible, btnBankCardVisible,
-  btnCashVisible: Boolean);
+  btnCashVisible, btnChargeCardVisible, btnQFTCardVisible: Boolean);
+const
+  BORDER_DEFAULT_WIDTH = 28;
+var
+  incWidth: Integer;
 begin
-  Self.btnPayCityCard.Visible := btnCityCardVisible;
-  Self.btnPayBankCard.Visible := btnBankCardVisible;
-  Self.btnPayCash.Visible := btnCashVisible;
+  borderLeft.Width := BORDER_DEFAULT_WIDTH;
+  borderRight.Width := BORDER_DEFAULT_WIDTH;
+  incWidth := btnPayBankCard.Width div 2 + 14;
+
+  btnPayBankCard.Visible := btnBankCardVisible;
+  border1.Visible := btnBankCardVisible;
+
+  btnPayCash.Visible := btnCashVisible;
+  border2.Visible := btnCashVisible;
+
+  btnChargeCard.Visible := btnChargeCardVisible;
+  border3.Visible := btnChargeCardVisible;
+
+  btnQFTCard.Visible := btnQFTCardVisible;
+  border4.Visible := btnQFTCardVisible;
+
+  btnPayCityCard.Visible := btnCityCardVisible;
+
+  if not btnBankCardVisible then
+  begin
+    borderLeft.Width := borderLeft.Width + incWidth;
+    borderRight.Width := borderRight.Width + incWidth;
+  end;
+
+  if not btnCashVisible then
+  begin
+    borderLeft.Width := borderLeft.Width + incWidth;
+    borderRight.Width := borderRight.Width + incWidth;
+  end;
+
+  if not btnChargeCardVisible then
+  begin
+    borderLeft.Width := borderLeft.Width + incWidth;
+    borderRight.Width := borderRight.Width + incWidth;
+  end;
+
+  if not btnQFTCardVisible then
+  begin
+    borderLeft.Width := borderLeft.Width + incWidth;
+    borderRight.Width := borderRight.Width + incWidth;
+  end;
+
+  if not btnCityCardVisible then
+  begin
+    borderLeft.Width := borderLeft.Width + btnPayBankCard.Width div 2;
+    borderRight.Width := borderRight.Width + btnPayBankCard.Width div 2;
+  end;
 end;
 
 procedure TfrmMain.setCompentInParentCenter(comp: TWinControl);
