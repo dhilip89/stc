@@ -274,6 +274,8 @@ type
     procedure btnChargeCardClick(Sender: TObject);
     procedure btnPasswordOKClick(Sender: TObject);
     procedure edtPasswordForChargeCardKeyPress(Sender: TObject; var Key: Char);
+    procedure edtPasswordForChargeCardKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -300,10 +302,10 @@ type
     isCityCardCharging: Boolean;
     isNewCard: Boolean; // 是否办卡
 
-    amountCharged: Integer;//市民卡充值金额
+
     threadCharge: TCityCardCharge;
     threadChargeCardCheck: TChargeCardCheck;
-    threadQueryQFTBalance: TQueryCityCardBalance;
+    threadQueryQFTBalance: TQueryQFTBalance;
 
     isIgnoreMainTimeOut: Boolean;//是否忽略主界面的倒计时
 
@@ -505,8 +507,91 @@ begin
 end;
 
 procedure TfrmMain.btnPasswordOKClick(Sender: TObject);
+var
+  dlg: TfrmWaiting;
+  mr: TModalResult;
+  newBalance: Double;
 begin
-//
+  dlg := TfrmWaiting.Create(nil);
+  try
+    if currChargeType = 2 then
+    begin
+      dlg.setWaitingTip('正在校验充值卡，请稍后...');
+      threadChargeCardCheck := TChargeCardCheck.Create(True, dlg, 10, currCityCardNo, Trim(edtPasswordForChargeCard.Text));
+      try
+        threadChargeCardCheck.Resume;
+        mr := dlg.ShowModal;
+        if mr = mrOk then
+        begin
+          setCountdownTimerEnabled(True, 15);
+          threadCharge := TCityCardCharge.Create(True, dlg, 10, amountCharged);
+          try
+            threadCharge.Resume;
+            mr := dlg.ShowModal;
+            if mr = mrOk then
+            begin
+              AdvSmoothLabel75.Visible := False;
+              newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
+              AdvSmoothLabel74.Caption.Text := '充值后卡片余额：' + FormatFloat('0.0#', newBalance) + '元';
+              AdvSmoothLabel74.Visible := True;
+              Notebook1.ActivePage := 'pageMobileTopUpSuccess';
+            end
+            else if mr = mrAbort then
+            begin
+              btnHome.Click;
+            end;
+          finally
+            threadCharge.Free;
+            threadCharge := nil;
+          end;
+        end
+        else if mr = mrAbort then
+        begin
+
+        end;
+      finally
+        threadChargeCardCheck.Free;
+        threadChargeCardCheck := nil;
+      end;
+    end
+    else
+    begin
+      dlg.setWaitingTip('正在检验企福通余额，请稍后...');
+    end;
+
+
+    mr := dlg.ShowModal;
+    if mr = mrOk then
+    begin
+//      setCountdownTimerEnabled(True, 15);
+//      threadCharge := TCityCardCharge.Create(True, dlg, 10, amountCharged);
+//      try
+//        threadCharge.Resume;
+//        mr := dlg.ShowModal;
+//        if mr = mrOk then
+//        begin
+//          AdvSmoothLabel75.Visible := False;
+//          newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
+//          AdvSmoothLabel74.Caption.Text := '充值后卡片余额：' + FormatFloat('0.0#', newBalance) + '元';
+//          AdvSmoothLabel74.Visible := True;
+//          Notebook1.ActivePage := 'pageMobileTopUpSuccess';
+//        end
+//        else if mr = mrAbort then
+//        begin
+//          btnHome.Click;
+//        end;
+//      finally
+//        threadCharge.Free;
+//        threadCharge := nil;
+//      end;
+    end
+    else if mr = mrAbort then
+    begin
+      btnhome.Click;
+    end
+  finally
+    dlg.Free;
+  end;
 end;
 
 procedure TfrmMain.btnChargeCardClick(Sender: TObject);
@@ -793,7 +878,6 @@ begin
     begin
       btnhome.Click;
     end
-
   finally
     dlg.Free;
   end;
@@ -953,22 +1037,33 @@ procedure TfrmMain.DoOnQueryQFTBalanceRsp(ret: Byte; balance: Integer);
 begin
   if threadQueryQFTBalance <> nil then
   begin
-
+    threadQueryQFTBalance.noticeCmdRet(ret, balance);
   end;
 end;
 
 procedure TfrmMain.edtPasswordForChargeCardKeyPress(Sender: TObject;
   var Key: Char);
 begin
+  if not (Key in ['0'..'9', #8]) then
+  begin
+    Key := #0;
+  end;
+end;
+
+procedure TfrmMain.edtPasswordForChargeCardKeyUp(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
   if edtPasswordForChargeCard.MaxLength <> 0 then
   begin
-    btnPasswordOK.Enabled := Length(edtPasswordForChargeCard.Text) = edtPasswordForChargeCard.MaxLength;
+    if Length(Trim(edtPasswordForChargeCard.Text)) = edtPasswordForChargeCard.MaxLength then
+       btnPasswordOK.Enabled := True
+    else
+      btnPasswordOK.Enabled := False;
   end
   else
   begin
     btnPasswordOK.Enabled := Length(edtPasswordForChargeCard.Text) > 0;
   end;
-
 end;
 
 procedure TfrmMain.connectToGateway;
@@ -988,7 +1083,7 @@ procedure TfrmMain.DoOnChargeCardCheckRsp(ret: Byte; amount: Integer);
 begin
   if threadChargeCardCheck <> nil then
   begin
-
+    threadChargeCardCheck.noticeCmdRet(ret, amount);
   end;
 end;
 
@@ -1170,6 +1265,7 @@ end;
 
 procedure TfrmMain.initPnlPassword4ChargeCard(flag: Byte; maxLength: Integer);
 begin
+  edtPasswordForChargeCard.Text := '';
   edtPasswordForChargeCard.MaxLength := maxLength;
   if flag = 0 then
   begin

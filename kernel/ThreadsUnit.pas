@@ -176,7 +176,8 @@ type
   protected
     function doTask: Boolean; override;
   public
-    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; cityCardNo, password: string);
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer;
+      cityCardNo, password: AnsiString);
 
     procedure noticeCmdRet(ret: Byte; amount: Integer);
   end;
@@ -938,10 +939,10 @@ begin
   Result := not isTimeout;
 end;
 
-{ TCardBalanceCheck }
+{ TChargeCardCheck }
 
 constructor TChargeCardCheck.Create(CreateSuspended: Boolean; dlg: TfrmWaiting;
-  timeout: Integer; cityCardNo, password: string);
+  timeout: Integer; cityCardNo, password: AnsiString);
 begin
   FCityCardNo := cityCardNo;
   FPassword := password;
@@ -959,6 +960,19 @@ begin
     Exit;
   end;
 
+  if FRet = 0 then
+  begin
+    taskRet := 2;
+    errInfo := '充值卡校验失败';
+    Exit;
+  end;
+  if (FRet = 1) and (FAmount <> amountCharged * 100) then
+  begin
+    taskRet := 2;
+    errInfo := '充值卡面额与所选充值金额不符';
+    Exit;
+  end;
+  taskRet := 0;
   Result := True;
 end;
 
@@ -990,6 +1004,19 @@ begin
     Exit;
   end;
 
+  if FRet = 0 then
+  begin
+    taskRet := 2;
+    errInfo := '企福通余额查询失败';
+    Exit;
+  end;
+  if (FRet = 1) and (FAmount < amountCharged * 100) then
+  begin
+    taskRet := 2;
+    errInfo := '充值卡面额与所选充值金额不符';
+    Exit;
+  end;
+  taskRet := 0;
   Result := True;
 end;
 

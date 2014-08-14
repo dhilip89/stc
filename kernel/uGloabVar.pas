@@ -20,10 +20,12 @@ var
   printerCom: TComm;
   isPrinterComOpen: Boolean;
 
+  amountCharged: Integer;//市民卡充值金额 '单位:元'
+
   currCityCardNo: ansistring;
   currentTSN: LongWord = 0;
   currChargeType: Byte;//当前充值类型  0:现金 1:银联卡  2：充值卡  03企福通充值/专有账户充值
-  bankCardNo: string;//充值时使用的银行卡号或者充值卡卡号
+  bankCardNo: ansistring;//充值时使用的银行卡号或者充值卡卡号
 
 function getCmdStat(stat: integer): string;
 function PopMsg(Title: string; Msg: string): boolean;
