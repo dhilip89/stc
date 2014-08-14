@@ -1013,7 +1013,7 @@ begin
   if (FRet = 1) and (FAmount < amountCharged * 100) then
   begin
     taskRet := 2;
-    errInfo := '充值卡面额与所选充值金额不符';
+    errInfo := '企福通余额不足';
     Exit;
   end;
   taskRet := 0;
