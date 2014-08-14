@@ -98,6 +98,7 @@ type
     taskRet: Byte;
     amountRefund: Integer;//退款金额
     errInfo: string;//如果返回失败，填写错误提示
+    FIsCmdRet: Boolean;
     procedure Execute; override;
     procedure setWaitingTip(tip: string;isHideProgressBar: Boolean = False);
     function doTask: Boolean; virtual; abstract;
@@ -106,11 +107,14 @@ type
     procedure DoOnTaskFail; virtual;//任务中关键操作失败，非等待可解决的，提前退出
     procedure DoOnTaskWithRefund;virtual;//需要进行退钱打印凭条
     procedure printRefundInfo(amount: Integer; cardNo: ansistring);
+
+    function waitForCmdRet: Boolean;
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer); virtual;
     destructor Destroy; override;
   end;
 
+  //获取市民卡余额
   TQueryCityCardBalance = class(TThread)
   private
     frmWaiting: TfrmWaiting;
@@ -130,6 +134,7 @@ type
     property OnGetCardBalance: TOnGetCardBalance read FOnGetCardBalance write FOnGetCardBalance;
   end;
 
+  //读取纸币总额
   TGetCashAmount = class(TBaseThread)
   private
     FCashAmount: Integer;
@@ -141,6 +146,7 @@ type
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; cashAmount: Integer);
   end;
 
+  //充值交易过程
   TCityCardCharge = class(TBaseThread)
   private
     FChargeAmount: Integer;
@@ -158,6 +164,39 @@ type
 
     property BalanceAfterCharge: Integer read FBalanceAfterCharge;
   end;
+
+  //充值卡校验查面额
+  TChargeCardCheck = class(TBaseThread)
+  private
+    FCityCardNo: AnsiString;
+    FPassword: AnsiString;
+
+    FRet: Byte;
+    FAmount: Integer;
+  protected
+    function doTask: Boolean; override;
+  public
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; cityCardNo, password: string);
+
+    procedure noticeCmdRet(ret: Byte; amount: Integer);
+  end;
+
+  //企福通余额查询
+  TQueryQFTBalance = class(TBaseThread)
+  private
+    FCityCardNo: AnsiString;
+    FPassword: AnsiString;
+
+    FRet: Byte;
+    FAmount: Integer;
+  protected
+    function doTask: Boolean; override;
+  public
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; cityCardNo, password: string);
+
+    procedure noticeCmdRet(ret: Byte; amount: Integer);
+  end;
+
 const
   BILL_OK = '9000';
 
@@ -439,6 +478,26 @@ end;
 procedure TBaseThread.setWaitingTip(tip: string; isHideProgressBar: Boolean);
 begin
   frmWaiting.setWaitingTip(tip, isHideProgressBar);
+end;
+
+function TBaseThread.waitForCmdRet: Boolean;
+var
+  stime: TDateTime;
+  isTimeout: Boolean;
+begin
+  stime := Now;
+  isTimeout := False;
+  while not FIsCmdRet do
+  begin
+    if SecondsBetween(Now, stime) < Self.timeout then
+    begin
+      Sleep(200);
+      Continue;
+    end;
+    isTimeout := True;
+    Break;
+  end;
+  Result := not isTimeout;
 end;
 
 { TGetCashAmount }
@@ -877,6 +936,68 @@ begin
     Break;
   end;
   Result := not isTimeout;
+end;
+
+{ TCardBalanceCheck }
+
+constructor TChargeCardCheck.Create(CreateSuspended: Boolean; dlg: TfrmWaiting;
+  timeout: Integer; cityCardNo, password: string);
+begin
+  FCityCardNo := cityCardNo;
+  FPassword := password;
+  inherited Create(CreateSuspended, dlg, timeout);
+end;
+
+function TChargeCardCheck.doTask: Boolean;
+begin
+  Result := False;
+
+  FIsCmdRet := False;
+  DataServer.SendCmdChargeCardCheck(FCityCardNo, FPassword);
+  if not waitForCmdRet then
+  begin
+    Exit;
+  end;
+
+  Result := True;
+end;
+
+procedure TChargeCardCheck.noticeCmdRet(ret: Byte; amount: Integer);
+begin
+  FRet := ret;
+  FAmount := amount;
+  FIsCmdRet := True;
+end;
+
+{ TQueryQFTBalance }
+
+constructor TQueryQFTBalance.Create(CreateSuspended: Boolean; dlg: TfrmWaiting;
+  timeout: Integer; cityCardNo, password: string);
+begin
+  FCityCardNo := cityCardNo;
+  FPassword := password;
+  inherited Create(CreateSuspended, dlg, timeout);
+end;
+
+function TQueryQFTBalance.doTask: Boolean;
+begin
+  Result := False;
+
+  FIsCmdRet := False;
+  DataServer.SendCmdQueryQFTBalance(FCityCardNo, FPassword);
+  if not waitForCmdRet then
+  begin
+    Exit;
+  end;
+
+  Result := True;
+end;
+
+procedure TQueryQFTBalance.noticeCmdRet(ret: Byte; amount: Integer);
+begin
+  FRet := ret;
+  FAmount := amount;
+  FIsCmdRet := True;
 end;
 
 end.

@@ -14,6 +14,8 @@ type
   TOnGetMac2 = procedure (ret: Byte; mac2: ansistring) of object;
   TOnChargeDetailRsp = procedure(ret: Byte; recordId: Int64) of object;
   TOnRefundRsp = procedure(ret: Byte; recordId: LongWord) of object;
+  TOnChargeCardCheckRsp = procedure(ret: Byte; amount:Integer) of object;
+  TOnQueryQFTBalanceRsp = procedure(ret: Byte; amount:Integer) of object;
 
   TCmdInfo = record //命令信息
     Id: integer; //命令ID
@@ -90,6 +92,8 @@ type
     FOnGetMac2: TOnGetMac2;
     FOnChargeDetailRsp: TOnChargeDetailRsp;
     FOnRefundRsp: TOnRefundRsp;
+    FOnChargeCardCheckRsp: TOnChargeCardCheckRsp;
+    FOnQueryQFTBalanceRsp: TOnQueryQFTBalanceRsp;
     procedure FSocketSocketEvent(Sender: TObject; Socket: TCustomWinSocket; SocketEvent: TSocketEvent);
     procedure FSockerWriteBufferOverflow(Sender: TObject);
 
@@ -97,6 +101,8 @@ type
     procedure dealCmdGetMac2Rsp(buf: array of Byte);
     procedure dealCmdChargeDetailRsp(buf: array of Byte);
     procedure dealCmdRefundRsp(buf: array of Byte);
+    procedure dealCmdChargeCardCheckRsp(buf: array of Byte);
+    procedure dealCmdQueryQFTBalanceRsp(buf: array of Byte);
 
     procedure initCmd(var cmdHead: TSTHead; cmdId: Word; var cmdEnd: TSTEnd; cmdMinSize: Integer);
 
@@ -104,6 +110,8 @@ type
     procedure SetOnGetMac2(const Value: TOnGetMac2);
     procedure SetOnChargeDetailRsp(const Value: TOnChargeDetailRsp);
     procedure SetOnRefundRsp(const Value: TOnRefundRsp);
+    procedure SetOnChargeCardCheckRsp(const Value: TOnChargeCardCheckRsp);
+    procedure SetOnQueryQFTBalanceRsp(const Value: TOnQueryQFTBalanceRsp);
   protected
     function DirectSend(var buf; ABufSize: Integer): Boolean; //调用内部的发送函数直接发送数据
     function GetMaxCmdSNo: Word;
@@ -119,6 +127,8 @@ type
     procedure SendCmdUploadModuleStatus(moduleStatus: array of Byte);
     procedure SendCmdChargeDetail(cmd: TCmdChargeDetailC2S);
     procedure SendCmdRefund(cmd: TCmdRefundC2S);
+    procedure SendCmdChargeCardCheck(cityCardNo, password: AnsiString);
+    procedure SendCmdQueryQFTBalance(cityCardNo, password: AnsiString);
 
     procedure SetFTimerEnabled(enabled: Boolean);
 
@@ -134,6 +144,8 @@ type
     property OnGetMac2: TOnGetMac2 read FOnGetMac2 write SetOnGetMac2;
     property OnChargeDetailRsp: TOnChargeDetailRsp read FOnChargeDetailRsp write SetOnChargeDetailRsp;
     property OnRefundRsp: TOnRefundRsp read FOnRefundRsp write SetOnRefundRsp;
+    property OnChargeCardCheckRsp: TOnChargeCardCheckRsp read FOnChargeCardCheckRsp write SetOnChargeCardCheckRsp;
+    property OnQueryQFTBalanceRsp: TOnQueryQFTBalanceRsp read FOnQueryQFTBalanceRsp write SetOnQueryQFTBalanceRsp;
   end;
 
 
@@ -279,6 +291,8 @@ begin
           S2C_GET_MAC2_RSP: dealCmdGetMac2Rsp(buf);
           S2C_CHARGE_DETAIL_RSP: dealCmdChargeDetailRsp(buf);
           S2C_REFUND_RSP: dealCmdRefundRsp(buf);
+          S2C_PRE_CARD_CHECK_RSP: dealCmdChargeCardCheckRsp(buf);
+          S2C_QUERY_QFT_BALANCE: dealCmdQueryQFTBalanceRsp(buf);
         else
           begin
             FLog.AddLog('处理数据错误:命令字不正确 ' + bytesToHexStr(wordToBytes(cmdId)));
@@ -407,6 +421,21 @@ begin
   Result := Pointer(Integer(p) + offset);
 end;
 
+procedure TGateWayServerCom.SendCmdChargeCardCheck(cityCardNo,
+  password: AnsiString);
+var
+  buf: TByteDynArray;
+  cmd: TCmdChargeCardCheckC2S;
+begin
+  buf := hexStrToBytes(cityCardNo);
+  CopyMemory(@cmd.CityCardNo[0], @buf[0], Min(Length(buf), Length(cmd.CityCardNo)));
+
+  buf := hexStrToBytes(password);
+  CopyMemory(@cmd.Password[0], @buf[0], Min(Length(buf), Length(cmd.Password)));
+
+  DirectSend(cmd, SizeOf(TCmdChargeCardCheckC2S));
+end;
+
 procedure TGateWayServerCom.SendCmdChargeDetail(cmd: TCmdChargeDetailC2S);
 begin
   initCmd(cmd.CmdHead, C2S_CHARGE_DETAIL, cmd.CmdEnd, SizeOf(TCmdChargeDetailC2S));
@@ -433,6 +462,21 @@ begin
   CopyMemory(@cmd.Mac1[0], @mac1[0], Min(Length(cmd.Mac1), Length(mac1)));
   CopyMemory(@cmd.ChargeTime[0], @chargeTime[0], Min(Length(cmd.ChargeTime), Length(chargeTime)));
   DirectSend(cmd, SizeOf(TCmdGetMac2ForChargeC2S));
+end;
+
+procedure TGateWayServerCom.SendCmdQueryQFTBalance(cityCardNo,
+  password: AnsiString);
+var
+  buf: TByteDynArray;
+  cmd: TCmdQueryQFTBalanceC2S;
+begin
+  buf := hexStrToBytes(cityCardNo);
+  CopyMemory(@cmd.CityCardNo[0], @buf[0], Min(Length(buf), Length(cmd.CityCardNo)));
+
+  buf := hexStrToBytes(password);
+  CopyMemory(@cmd.Password[0], @buf[0], Min(Length(buf), Length(cmd.Password)));
+
+  DirectSend(cmd, SizeOf(TCmdQueryQFTBalanceC2S));
 end;
 
 procedure TGateWayServerCom.SendCmdRefund(cmd: TCmdRefundC2S);
@@ -543,6 +587,12 @@ begin
   DirectSend(cmd, SizeOf(TCmdHeartbeatC2S));
 end;
 
+procedure TGateWayServerCom.SetOnChargeCardCheckRsp(
+  const Value: TOnChargeCardCheckRsp);
+begin
+  FOnChargeCardCheckRsp := Value;
+end;
+
 procedure TGateWayServerCom.SetOnChargeDetailRsp(
   const Value: TOnChargeDetailRsp);
 begin
@@ -552,6 +602,12 @@ end;
 procedure TGateWayServerCom.SetOnGetMac2(const Value: TOnGetMac2);
 begin
   FOnGetMac2 := Value;
+end;
+
+procedure TGateWayServerCom.SetOnQueryQFTBalanceRsp(
+  const Value: TOnQueryQFTBalanceRsp);
+begin
+  FOnQueryQFTBalanceRsp := Value;
 end;
 
 procedure TGateWayServerCom.SetOnRefundRsp(const Value: TOnRefundRsp);
@@ -606,6 +662,28 @@ begin
     mac2 := bytesToHexStr(pcmd^.Mac2);
     if Assigned(FOnGetMac2) then
       FOnGetMac2(pcmd^.Ret, mac2);
+  end;
+end;
+
+procedure TGateWayServerCom.dealCmdChargeCardCheckRsp(buf: array of Byte);
+var
+  pcmd: PCmdChargeCardCheckS2C;
+begin
+  if Length(buf) >= SizeOf(TCmdChargeCardCheckS2C) then
+  begin
+    pcmd := PCmdChargeCardCheckS2C(@buf[0]);
+    if Assigned(FOnChargeCardCheckRsp) then
+      FOnChargeCardCheckRsp(pcmd^.CheckRet, pcmd^.Amount);
+  end;
+end;
+
+procedure TGateWayServerCom.dealCmdQueryQFTBalanceRsp(buf: array of Byte);
+var
+  pcmd: PCmdQueryQFTBalanceS2C;
+begin
+  if Length(buf) >= SizeOf(TCmdQueryQFTBalanceS2C) then
+  begin
+    pcmd := PCmdQueryQFTBalanceS2C(@buf[0]);
   end;
 end;
 

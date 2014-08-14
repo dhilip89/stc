@@ -209,6 +209,11 @@ type
     btnQFTCard: TAdvSmoothButton;
     border3: TRzBorder;
     RzBorder7: TRzBorder;
+    pnlPasswordForChargeCard: TRzPanel;
+    RzPanel6: TRzPanel;
+    lblPassword4ChargeCardOrQFT: TAdvSmoothLabel;
+    edtPasswordForChargeCard: TAdvEdit;
+    btnPasswordOK: TAdvSmoothButton;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -267,6 +272,8 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure btnQFTCardClick(Sender: TObject);
     procedure btnChargeCardClick(Sender: TObject);
+    procedure btnPasswordOKClick(Sender: TObject);
+    procedure edtPasswordForChargeCardKeyPress(Sender: TObject; var Key: Char);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -295,6 +302,8 @@ type
 
     amountCharged: Integer;//市民卡充值金额
     threadCharge: TCityCardCharge;
+    threadChargeCardCheck: TChargeCardCheck;
+    threadQueryQFTBalance: TQueryCityCardBalance;
 
     isIgnoreMainTimeOut: Boolean;//是否忽略主界面的倒计时
 
@@ -305,7 +314,7 @@ type
     function getD8Status: Byte;
     function getBillAcceptorStatus: Byte;
     function getPrinterStatus: Byte;
-
+    procedure initPnlPassword4ChargeCard(flag: Byte; maxLength: Integer);//flag 0:充值卡 1:企福通卡
     procedure waitForInsertBankCard(Sender: TObject);
     procedure waitForBankCardPassTimer(Sender: TObject);
     procedure WaitForBankCardSuccessTimer(Sender: TObject);
@@ -338,6 +347,8 @@ type
     procedure DoOnGetCityCardBalance(edt: TCustomEdit; balance: Integer);
 
     procedure DoOnGetMac2(ret: Byte; mac2: AnsiString);
+    procedure DoOnChargeCardCheckRsp(ret: Byte; amount: Integer);
+    procedure DoOnQueryQFTBalanceRsp(ret: Byte; balance: Integer);
 
     procedure DoOnPrinterComRecvData(Sender:TObject;Buffer:Pointer;BufferLength:Word);
   protected
@@ -493,9 +504,16 @@ begin
   Timer4.Enabled := True;
 end;
 
+procedure TfrmMain.btnPasswordOKClick(Sender: TObject);
+begin
+//
+end;
+
 procedure TfrmMain.btnChargeCardClick(Sender: TObject);
 begin
   currChargeType := 2;
+  initPnlPassword4ChargeCard(0, 16);
+  Notebook1.ActivePage := 'pagePasswordForChargeCardOrQFT';
 end;
 
 procedure TfrmMain.AdvSmoothButton20Click(Sender: TObject);
@@ -656,6 +674,8 @@ end;
 procedure TfrmMain.btnQFTCardClick(Sender: TObject);
 begin
   currChargeType := 3;
+  initPnlPassword4ChargeCard(1, 6);
+  Notebook1.ActivePage := 'pagePasswordForChargeCardOrQFT';
 end;
 
 procedure TfrmMain.AdvSmoothButton30Click(Sender: TObject);
@@ -923,7 +943,32 @@ end;
 procedure TfrmMain.DoOnPrinterComRecvData(Sender: TObject; Buffer: Pointer;
   BufferLength: Word);
 begin
-//
+  if Trim(edtPasswordForChargeCard.Text) <> '' then
+  begin
+
+  end;
+end;
+
+procedure TfrmMain.DoOnQueryQFTBalanceRsp(ret: Byte; balance: Integer);
+begin
+  if threadQueryQFTBalance <> nil then
+  begin
+
+  end;
+end;
+
+procedure TfrmMain.edtPasswordForChargeCardKeyPress(Sender: TObject;
+  var Key: Char);
+begin
+  if edtPasswordForChargeCard.MaxLength <> 0 then
+  begin
+    btnPasswordOK.Enabled := Length(edtPasswordForChargeCard.Text) = edtPasswordForChargeCard.MaxLength;
+  end
+  else
+  begin
+    btnPasswordOK.Enabled := Length(edtPasswordForChargeCard.Text) > 0;
+  end;
+
 end;
 
 procedure TfrmMain.connectToGateway;
@@ -937,6 +982,14 @@ procedure TfrmMain.CreateParams(var Params: TCreateParams);
 begin
   inherited;
   Params.ExStyle := 33554432; // 0x 02 00 00 00
+end;
+
+procedure TfrmMain.DoOnChargeCardCheckRsp(ret: Byte; amount: Integer);
+begin
+  if threadChargeCardCheck <> nil then
+  begin
+
+  end;
 end;
 
 procedure TfrmMain.DoOnGetCityCardBalance(edt: TCustomEdit; balance: Integer);
@@ -1115,12 +1168,27 @@ begin
   initPrinter;
 end;
 
+procedure TfrmMain.initPnlPassword4ChargeCard(flag: Byte; maxLength: Integer);
+begin
+  edtPasswordForChargeCard.MaxLength := maxLength;
+  if flag = 0 then
+  begin
+    lblPassword4ChargeCardOrQFT.Caption.Text := '充值卡密码：';
+  end
+  else if flag = 1 then
+  begin
+    lblPassword4ChargeCardOrQFT.Caption.Text := '企福通密码：';
+  end;
+  btnPasswordOK.Enabled := False;
+end;
+
 procedure TfrmMain.initMain;
 begin
   loadParam;
 
   DataServer := TGateWayServerCom.Create;
   DataServer.OnGetMac2 := DoOnGetMac2;
+  DataServer.OnChargeCardCheckRsp := DoOnChargeCardCheckRsp;
   connectToGateway;
 end;
 
@@ -1139,7 +1207,7 @@ end;
 
 function TfrmMain.isCheckModuleStatusOk: Boolean;
 begin
-  Result := True;
+  Result := not isCityCardCharging;
 end;
 
 procedure TfrmMain.loadParam;
@@ -1283,6 +1351,7 @@ end;
 
 procedure TfrmMain.setPanelInitPos;
 begin
+  setCompentInParentCenter(RzPanel6);
   setCompentInParentCenter(RzPanel73);
   setCompentInParentCenter(RzPanel74);
   setCompentInParentCenter(RzPanel75);
