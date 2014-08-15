@@ -25,7 +25,7 @@ uses
   dxSkinSpringTime, dxSkinStardust, dxSkinSummer2008, dxSkinTheAsphaltWorld,
   dxSkinsDefaultPainters, dxSkinValentine, dxSkinVS2010, dxSkinWhiteprint,
   dxSkinXmas2008Blue, cxRadioGroup, Data.Bind.EngExt, Vcl.Bind.DBEngExt,
-  Data.Bind.Components, ThreadsUnit;
+  Data.Bind.Components, ThreadsUnit, FrmWaitingUnit;
 
 type
   TfrmMain = class(TForm)
@@ -214,6 +214,7 @@ type
     lblPassword4ChargeCardOrQFT: TAdvSmoothLabel;
     edtPasswordForChargeCard: TAdvEdit;
     btnPasswordOK: TAdvSmoothButton;
+    RzPanel7: TRzPanel;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -276,6 +277,10 @@ type
     procedure edtPasswordForChargeCardKeyPress(Sender: TObject; var Key: Char);
     procedure edtPasswordForChargeCardKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
+    procedure AdvSmoothButton9Click(Sender: TObject);
+    procedure RzPanel7Click(Sender: TObject);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+    procedure RzPanel7DblClick(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -309,6 +314,9 @@ type
 
     isIgnoreMainTimeOut: Boolean;//是否忽略主界面的倒计时
 
+    clickCount: Integer;
+    firstTime: TDateTime;
+
     procedure initMain;
     procedure loadParam;
     procedure connectToGateway;
@@ -317,6 +325,8 @@ type
     function getBillAcceptorStatus: Byte;
     function getPrinterStatus: Byte;
     procedure initPnlPassword4ChargeCard(flag: Byte; maxLength: Integer);//flag 0:充值卡 1:企福通卡
+    procedure doCityCardCharge(dlg: TfrmWaiting);
+
     procedure waitForInsertBankCard(Sender: TObject);
     procedure waitForBankCardPassTimer(Sender: TObject);
     procedure WaitForBankCardSuccessTimer(Sender: TObject);
@@ -365,7 +375,7 @@ var
 implementation
 
 uses
-  System.DateUtils, uGloabVar, drv_unit, GatewayServerUnit, FrmWaitingUnit,
+  System.DateUtils, uGloabVar, drv_unit, GatewayServerUnit,
   CmdStructUnit, itlssp;
 
 {$R *.dfm}
@@ -510,7 +520,6 @@ procedure TfrmMain.btnPasswordOKClick(Sender: TObject);
 var
   dlg: TfrmWaiting;
   mr: TModalResult;
-  newBalance: Double;
 begin
   dlg := TfrmWaiting.Create(nil);
   try
@@ -518,36 +527,16 @@ begin
     begin
       dlg.setWaitingTip('正在校验充值卡，请稍后...');
       threadChargeCardCheck := TChargeCardCheck.Create(True, dlg, 10, currCityCardNo, Trim(edtPasswordForChargeCard.Text));
+      threadChargeCardCheck.start;
       try
-        threadChargeCardCheck.Resume;
         mr := dlg.ShowModal;
         if mr = mrOk then
         begin
-          setCountdownTimerEnabled(True, 15);
-          threadCharge := TCityCardCharge.Create(True, dlg, 10, amountCharged);
-          try
-            threadCharge.Resume;
-            mr := dlg.ShowModal;
-            if mr = mrOk then
-            begin
-              AdvSmoothLabel75.Visible := False;
-              newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
-              AdvSmoothLabel74.Caption.Text := '充值后卡片余额：' + FormatFloat('0.0#', newBalance) + '元';
-              AdvSmoothLabel74.Visible := True;
-              Notebook1.ActivePage := 'pageMobileTopUpSuccess';
-            end
-            else if mr = mrAbort then
-            begin
-              btnHome.Click;
-            end;
-          finally
-            threadCharge.Free;
-            threadCharge := nil;
-          end;
+          doCityCardCharge(dlg);
         end
         else if mr = mrAbort then
         begin
-
+          btnHome.Click;
         end;
       finally
         threadChargeCardCheck.Free;
@@ -556,39 +545,24 @@ begin
     end
     else
     begin
-      dlg.setWaitingTip('正在检验企福通余额，请稍后...');
+      dlg.setWaitingTip('正在查询企福通余额，请稍后...');
+      threadQueryQFTBalance := TQueryQFTBalance.Create(True, dlg, 10, currCityCardNo, Trim(edtPasswordForChargeCard.Text));
+      try
+        threadQueryQFTBalance.start;
+        mr := dlg.ShowModal;
+        if mr = mrOk then
+        begin
+          doCityCardCharge(dlg);
+        end
+        else if mr = mrAbort then
+        begin
+          btnHome.Click;
+        end;
+      finally
+        threadQueryQFTBalance.Free;
+        threadQueryQFTBalance := nil;
+      end;
     end;
-
-
-    mr := dlg.ShowModal;
-    if mr = mrOk then
-    begin
-//      setCountdownTimerEnabled(True, 15);
-//      threadCharge := TCityCardCharge.Create(True, dlg, 10, amountCharged);
-//      try
-//        threadCharge.Resume;
-//        mr := dlg.ShowModal;
-//        if mr = mrOk then
-//        begin
-//          AdvSmoothLabel75.Visible := False;
-//          newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
-//          AdvSmoothLabel74.Caption.Text := '充值后卡片余额：' + FormatFloat('0.0#', newBalance) + '元';
-//          AdvSmoothLabel74.Visible := True;
-//          Notebook1.ActivePage := 'pageMobileTopUpSuccess';
-//        end
-//        else if mr = mrAbort then
-//        begin
-//          btnHome.Click;
-//        end;
-//      finally
-//        threadCharge.Free;
-//        threadCharge := nil;
-//      end;
-    end
-    else if mr = mrAbort then
-    begin
-      btnhome.Click;
-    end
   finally
     dlg.Free;
   end;
@@ -671,7 +645,7 @@ begin
       edtCityCardInfoWhenChosingAmount, edtCityCardBalanceWhenChosingAmount);
     threadQueryCityCard.OnGetCityCardInfo := DoOnGetCityCardInfo;
     threadQueryCityCard.OnGetCardBalance := DoOnGetCityCardBalance;
-    threadQueryCityCard.Resume;
+    threadQueryCityCard.Start;
     mr := dlg.ShowModal;
     if mr = mrAbort then
     begin
@@ -699,7 +673,7 @@ begin
     threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15, edtCityCardInfo, edtCityCardBalance);
     threadQueryCityCard.OnGetCityCardInfo := DoOnGetCityCardInfo;
     threadQueryCityCard.OnGetCardBalance := DoOnGetCityCardBalance;
-    threadQueryCityCard.Resume;
+    threadQueryCityCard.Start;
     mr := dlg.ShowModal;
     if mr = mrAbort then
     begin
@@ -855,7 +829,7 @@ begin
       setCountdownTimerEnabled(True, 15);
       threadCharge := TCityCardCharge.Create(True, dlg, 10, amountCharged);
       try
-        threadCharge.Resume;
+        threadCharge.Start;
         mr := dlg.ShowModal;
         if mr = mrOk then
         begin
@@ -983,6 +957,14 @@ begin
   Notebook1.ActivePage := 'pageBankCardTransfer';
 end;
 
+procedure TfrmMain.AdvSmoothButton9Click(Sender: TObject);
+begin
+  currCityCardNo := '1122334455667788';
+  amountCharged := 100;
+  setBtnPayTypeVisible(False, False, True, True, True);
+  Notebook1.ActivePage := 'pageSelectPayType';
+end;
+
 procedure TfrmMain.btnBackClick(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageRegister';
@@ -1026,10 +1008,14 @@ end;
 
 procedure TfrmMain.DoOnPrinterComRecvData(Sender: TObject; Buffer: Pointer;
   BufferLength: Word);
+var
+  pb: PByte;
+  status: Byte;
 begin
-  if Trim(edtPasswordForChargeCard.Text) <> '' then
+  if BufferLength = 1 then
   begin
-
+    pb := PByte(Buffer);
+    status := pb^;
   end;
 end;
 
@@ -1079,6 +1065,35 @@ begin
   Params.ExStyle := 33554432; // 0x 02 00 00 00
 end;
 
+procedure TfrmMain.doCityCardCharge(dlg: TfrmWaiting);
+var
+  mr: TModalResult;
+  newBalance: Double;
+begin
+  setCountdownTimerEnabled(True, 15);
+  threadCharge := TCityCardCharge.Create(True, dlg, 10, amountCharged);
+  try
+    threadCharge.Start;
+    dlg.setWaitingTip('正在进行充值处理，请勿移开卡片');
+    mr := dlg.ShowModal;
+    if mr = mrOk then
+    begin
+      AdvSmoothLabel75.Visible := False;
+      newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
+      AdvSmoothLabel74.Caption.Text := '充值后卡片余额：' + FormatFloat('0.0#', newBalance) + '元';
+      AdvSmoothLabel74.Visible := True;
+      Notebook1.ActivePage := 'pageMobileTopUpSuccess';
+    end
+    else if mr = mrAbort then
+    begin
+      btnHome.Click;
+    end;
+  finally
+    threadCharge.Free;
+    threadCharge := nil;
+  end;
+end;
+
 procedure TfrmMain.DoOnChargeCardCheckRsp(ret: Byte; amount: Integer);
 begin
   if threadChargeCardCheck <> nil then
@@ -1105,13 +1120,27 @@ begin
   end;
 end;
 
+procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+begin
+  if MessageBox(Handle, '您确认关闭自助服务系统吗？', '确认', MB_YESNO + MB_ICONQUESTION) = ID_NO then
+  begin
+    CanClose := False;
+  end
+  else
+  begin
+    CanClose := True;
+  end;
+
+end;
+
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
   setPanelInvisible;
   setTimeInfo;
   Self.DoubleBuffered := True;
   RzPanel1.DoubleBuffered := True;
-
+  firstTime := Now;
+  clickCount := 0;
   initMain;
 end;
 
@@ -1175,8 +1204,10 @@ end;
 
 function TfrmMain.getPrinterStatus: Byte;
 begin
-  Result := MODULE_STATUS_FAULT;
-  Result := MODULE_STATUS_OK;
+  if isPrinterComOpen then
+    Result := MODULE_STATUS_OK
+  else
+    Result := MODULE_STATUS_FAULT;
 end;
 
 procedure TfrmMain.iniForm;
@@ -1285,6 +1316,7 @@ begin
   DataServer := TGateWayServerCom.Create;
   DataServer.OnGetMac2 := DoOnGetMac2;
   DataServer.OnChargeCardCheckRsp := DoOnChargeCardCheckRsp;
+  DataServer.OnQueryQFTBalanceRsp := DoOnQueryQFTBalanceRsp;
   connectToGateway;
 end;
 
@@ -1333,6 +1365,42 @@ procedure TfrmMain.RzPanel2Resize(Sender: TObject);
 begin
   RzPanel72.Left := RzPanel2.Width - RzPanel72.Width - 40;
   RzPanel72.Top := (RzPanel2.Height - RzPanel72.Height) div 2;
+end;
+
+procedure TfrmMain.RzPanel7Click(Sender: TObject);
+begin
+  if MilliSecondsBetween(firstTime, Now) <= 5000 then
+  begin
+    Inc(clickCount);
+  end
+  else
+  begin
+    clickCount := 1;
+    firstTime := Now;
+  end;
+  AdvSmoothButton7.Caption := IntToStr(clickCount);
+  if (clickCount >= 5) then
+  begin
+    Close;
+  end;
+end;
+
+procedure TfrmMain.RzPanel7DblClick(Sender: TObject);
+begin
+  if MilliSecondsBetween(firstTime, Now) <= 5000 then
+  begin
+    Inc(clickCount);
+  end
+  else
+  begin
+    clickCount := 1;
+    firstTime := Now;
+  end;
+  AdvSmoothButton7.Caption := IntToStr(clickCount);
+  if (clickCount >= 5) then
+  begin
+    Close;
+  end;
 end;
 
 procedure TfrmMain.setTimeInfo();

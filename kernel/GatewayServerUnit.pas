@@ -427,6 +427,8 @@ var
   buf: TByteDynArray;
   cmd: TCmdChargeCardCheckC2S;
 begin
+  initCmd(cmd.CmdHead, C2S_CHARGE_CARD_CHECK, cmd.CmdEnd, SizeOf(TCmdChargeCardCheckC2S));
+
   buf := hexStrToBytes(cityCardNo);
   CopyMemory(@cmd.CityCardNo[0], @buf[0], Min(Length(buf), Length(cmd.CityCardNo)));
 
@@ -470,6 +472,7 @@ var
   buf: TByteDynArray;
   cmd: TCmdQueryQFTBalanceC2S;
 begin
+  initCmd(cmd.CmdHead, C2S_QUERY_QFT_BALANCE, cmd.CmdEnd, SizeOf(TCmdQueryQFTBalanceC2S));
   buf := hexStrToBytes(cityCardNo);
   CopyMemory(@cmd.CityCardNo[0], @buf[0], Min(Length(buf), Length(cmd.CityCardNo)));
 
@@ -673,7 +676,7 @@ begin
   begin
     pcmd := PCmdChargeCardCheckS2C(@buf[0]);
     if Assigned(FOnChargeCardCheckRsp) then
-      FOnChargeCardCheckRsp(pcmd^.CheckRet, pcmd^.Amount);
+      FOnChargeCardCheckRsp(pcmd^.CheckRet, ByteOderConvert_LongWord(pcmd^.Amount));
   end;
 end;
 
@@ -684,6 +687,8 @@ begin
   if Length(buf) >= SizeOf(TCmdQueryQFTBalanceS2C) then
   begin
     pcmd := PCmdQueryQFTBalanceS2C(@buf[0]);
+    if Assigned(FOnQueryQFTBalanceRsp) then
+      FOnQueryQFTBalanceRsp(pcmd^.CheckRet, ByteOderConvert_LongWord(pcmd^.Balance));
   end;
 end;
 

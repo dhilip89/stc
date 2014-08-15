@@ -175,6 +175,7 @@ type
     FAmount: Integer;
   protected
     function doTask: Boolean; override;
+    procedure DoOnTaskTimeout; override;//执行超时
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer;
       cityCardNo, password: AnsiString);
@@ -192,6 +193,7 @@ type
     FAmount: Integer;
   protected
     function doTask: Boolean; override;
+    procedure DoOnTaskTimeout; override;//执行超时
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; cityCardNo, password: string);
 
@@ -759,8 +761,8 @@ var
   billStatus: AnsiString;
 begin
   Result := False;
-  tip := '正在进行充值处理，请勿移开卡片';//#13#10 + '卡片读取中...';
-  setWaitingTip(tip);
+//  tip := '正在进行充值处理，请勿移开卡片';//#13#10 + '卡片读取中...';
+//  setWaitingTip(tip);
   if not resetD8 then
   begin
     taskRet := 1;
@@ -944,9 +946,17 @@ end;
 constructor TChargeCardCheck.Create(CreateSuspended: Boolean; dlg: TfrmWaiting;
   timeout: Integer; cityCardNo, password: AnsiString);
 begin
+  inherited Create(CreateSuspended, dlg, timeout);
   FCityCardNo := cityCardNo;
   FPassword := password;
-  inherited Create(CreateSuspended, dlg, timeout);
+  FreeOnTerminate := False;
+end;
+
+procedure TChargeCardCheck.DoOnTaskTimeout;
+begin
+  setWaitingTip('校验超时，请稍后再试');
+  Sleep(3000);
+  inherited;
 end;
 
 function TChargeCardCheck.doTask: Boolean;
@@ -963,7 +973,7 @@ begin
   if FRet = 0 then
   begin
     taskRet := 2;
-    errInfo := '充值卡校验失败';
+    errInfo := '充值卡校验失败，请确认密码正确';
     Exit;
   end;
   if (FRet = 1) and (FAmount <> amountCharged * 100) then
@@ -988,9 +998,17 @@ end;
 constructor TQueryQFTBalance.Create(CreateSuspended: Boolean; dlg: TfrmWaiting;
   timeout: Integer; cityCardNo, password: string);
 begin
+  inherited Create(CreateSuspended, dlg, timeout);
   FCityCardNo := cityCardNo;
   FPassword := password;
-  inherited Create(CreateSuspended, dlg, timeout);
+  FreeOnTerminate := False;
+end;
+
+procedure TQueryQFTBalance.DoOnTaskTimeout;
+begin
+  setWaitingTip('查询企福通余额超时，请稍后再试');
+  Sleep(3000);
+  inherited;
 end;
 
 function TQueryQFTBalance.doTask: Boolean;
@@ -1007,7 +1025,7 @@ begin
   if FRet = 0 then
   begin
     taskRet := 2;
-    errInfo := '企福通余额查询失败';
+    errInfo := '企福通余额查询失败，请确认密码';
     Exit;
   end;
   if (FRet = 1) and (FAmount < amountCharged * 100) then
