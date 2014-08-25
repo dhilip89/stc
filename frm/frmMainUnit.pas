@@ -222,6 +222,11 @@ type
     btnCashCharge: TAdvSmoothButton;
     btnPrepaidCardCharge: TAdvSmoothButton;
     btnZHBCharge: TAdvSmoothButton;
+    pnlInputPrepaidCardPassword: TRzPanel;
+    RzPanel9: TRzPanel;
+    AdvSmoothLabel5: TAdvSmoothLabel;
+    edtPrepaidCardPassword: TAdvEdit;
+    btnInputPrepaidCardPasswordOk: TAdvSmoothButton;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -289,6 +294,8 @@ type
     procedure RzPanel7DblClick(Sender: TObject);
     procedure btnCashChargeClick(Sender: TObject);
     procedure btnZHBChargeClick(Sender: TObject);
+    procedure edtPrepaidCardPasswordKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -940,7 +947,10 @@ end;
 
 procedure TfrmMain.btnPrepaidCardChargeClick(Sender: TObject);
 begin
+  btnInputPrepaidCardPasswordOk.Enabled := False;
+  edtPrepaidCardPassword.Text := '';
   Notebook1.ActivePage := 'pageInputPrepaidCardPassword';
+  edtPrepaidCardPassword.SetFocus;
 end;
 
 procedure TfrmMain.AdvSmoothButton7Click(Sender: TObject);
@@ -1108,6 +1118,15 @@ begin
   begin
     btnPasswordOK.Enabled := Length(edtPasswordForChargeCard.Text) > 0;
   end;
+end;
+
+procedure TfrmMain.edtPrepaidCardPasswordKeyUp(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if Length(Trim(edtPrepaidCardPassword.Text)) = edtPrepaidCardPassword.MaxLength then
+    btnInputPrepaidCardPasswordOk.Enabled := True
+  else
+    btnInputPrepaidCardPasswordOk.Enabled := False;
 end;
 
 procedure TfrmMain.connectToGateway;
@@ -1573,8 +1592,9 @@ end;
 
 procedure TfrmMain.setPanelInitPos;
 begin
-  setCompentInParentCenter(RzPanel8);
   setCompentInParentCenter(RzPanel6);
+  setCompentInParentCenter(RzPanel8);
+  setCompentInParentCenter(RzPanel9);
   setCompentInParentCenter(RzPanel73);
   setCompentInParentCenter(RzPanel74);
   setCompentInParentCenter(RzPanel75);
