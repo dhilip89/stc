@@ -11106,6 +11106,7 @@ object frmMain: TfrmMain
         Width = 1234
         Height = 498
         Align = alClient
+        PageIndex = 24
         TabOrder = 1
         OnPageChanged = Notebook1PageChanged
         object TPage
@@ -15449,18 +15450,18 @@ object frmMain: TfrmMain
             TabOrder = 0
             Transparent = True
             object RzPanel73: TRzPanel
-              Left = 384
+              Left = 280
               Top = 156
-              Width = 664
-              Height = 282
+              Width = 737
+              Height = 269
               BorderOuter = fsNone
               TabOrder = 0
               Transparent = True
               object AdvSmoothButton25: TAdvSmoothButton
                 Left = 70
                 Top = 89
-                Width = 128
-                Height = 81
+                Width = 150
+                Height = 90
                 Margins.Left = 0
                 Margins.Top = 0
                 Margins.Right = 0
@@ -15503,8 +15504,8 @@ object frmMain: TfrmMain
                 OnClick = AdvSmoothButton25Click
               end
               object AdvSmoothButton26: TAdvSmoothButton
-                Left = 286
-                Top = 89
+                Left = 70
+                Top = 193
                 Width = 128
                 Height = 81
                 Margins.Left = 0
@@ -15543,14 +15544,15 @@ object frmMain: TfrmMain
                 ParentFont = False
                 Shadow = True
                 TabOrder = 1
+                Visible = False
                 HorizontalSpacing = 0
                 VerticalSpacing = 1
                 Version = '1.7.1.0'
                 OnClick = AdvSmoothButton26Click
               end
               object AdvSmoothButton24: TAdvSmoothButton
-                Left = 494
-                Top = 89
+                Left = 558
+                Top = 201
                 Width = 128
                 Height = 81
                 Margins.Left = 0
@@ -15589,6 +15591,99 @@ object frmMain: TfrmMain
                 ParentFont = False
                 Shadow = True
                 TabOrder = 2
+                Visible = False
+                HorizontalSpacing = 0
+                VerticalSpacing = 1
+                Version = '1.7.1.0'
+                OnClick = AdvSmoothButton24Click
+              end
+              object AdvSmoothButton1: TAdvSmoothButton
+                Left = 302
+                Top = 89
+                Width = 150
+                Height = 90
+                Margins.Left = 0
+                Margins.Top = 0
+                Margins.Right = 0
+                Margins.Bottom = 0
+                Appearance.PictureAlignment = taCenter
+                Appearance.Font.Charset = GB2312_CHARSET
+                Appearance.Font.Color = clWhite
+                Appearance.Font.Height = -24
+                Appearance.Font.Name = #23435#20307
+                Appearance.Font.Style = [fsBold]
+                Appearance.Layout = blPictureTop
+                Appearance.Spacing = 10
+                Appearance.FocusColor = clTeal
+                Appearance.SimpleLayout = True
+                Status.Caption = '0'
+                Status.Appearance.Fill.Color = clRed
+                Status.Appearance.Fill.ColorMirror = clNone
+                Status.Appearance.Fill.ColorMirrorTo = clNone
+                Status.Appearance.Fill.GradientType = gtSolid
+                Status.Appearance.Fill.GradientMirrorType = gtSolid
+                Status.Appearance.Fill.BorderColor = clGray
+                Status.Appearance.Fill.Rounding = 8
+                Status.Appearance.Fill.ShadowOffset = 0
+                Status.Appearance.Fill.Glow = gmNone
+                Status.Appearance.Font.Charset = DEFAULT_CHARSET
+                Status.Appearance.Font.Color = clWhite
+                Status.Appearance.Font.Height = -11
+                Status.Appearance.Font.Name = 'Tahoma'
+                Status.Appearance.Font.Style = []
+                Bevel = False
+                BevelColor = clLime
+                Caption = #26597'  '#35810
+                Color = 16222720
+                ParentFont = False
+                Shadow = True
+                TabOrder = 3
+                HorizontalSpacing = 0
+                VerticalSpacing = 1
+                Version = '1.7.1.0'
+                OnClick = AdvSmoothButton26Click
+              end
+              object AdvSmoothButton2: TAdvSmoothButton
+                Left = 534
+                Top = 89
+                Width = 150
+                Height = 90
+                Margins.Left = 0
+                Margins.Top = 0
+                Margins.Right = 0
+                Margins.Bottom = 0
+                Appearance.PictureAlignment = taCenter
+                Appearance.Font.Charset = GB2312_CHARSET
+                Appearance.Font.Color = clWhite
+                Appearance.Font.Height = -24
+                Appearance.Font.Name = #23435#20307
+                Appearance.Font.Style = [fsBold]
+                Appearance.Layout = blPictureTop
+                Appearance.Spacing = 10
+                Appearance.FocusColor = clTeal
+                Appearance.SimpleLayout = True
+                Status.Caption = '0'
+                Status.Appearance.Fill.Color = clRed
+                Status.Appearance.Fill.ColorMirror = clNone
+                Status.Appearance.Fill.ColorMirrorTo = clNone
+                Status.Appearance.Fill.GradientType = gtSolid
+                Status.Appearance.Fill.GradientMirrorType = gtSolid
+                Status.Appearance.Fill.BorderColor = clGray
+                Status.Appearance.Fill.Rounding = 8
+                Status.Appearance.Fill.ShadowOffset = 0
+                Status.Appearance.Fill.Glow = gmNone
+                Status.Appearance.Font.Charset = DEFAULT_CHARSET
+                Status.Appearance.Font.Color = clWhite
+                Status.Appearance.Font.Height = -11
+                Status.Appearance.Font.Name = 'Tahoma'
+                Status.Appearance.Font.Style = []
+                Bevel = False
+                BevelColor = clLime
+                Caption = #20462#25913#23494#30721
+                Color = 16222720
+                ParentFont = False
+                Shadow = True
+                TabOrder = 4
                 HorizontalSpacing = 0
                 VerticalSpacing = 1
                 Version = '1.7.1.0'
@@ -16099,7 +16194,7 @@ object frmMain: TfrmMain
                 Visible = True
                 Version = '2.9.1.4'
               end
-              object AdvSmoothButton35: TAdvSmoothButton
+              object btnCashCharge200: TAdvSmoothButton
                 Left = 625
                 Top = 204
                 Width = 119
@@ -16143,9 +16238,9 @@ object frmMain: TfrmMain
                 HorizontalSpacing = 0
                 VerticalSpacing = 1
                 Version = '1.7.1.0'
-                OnClick = AdvSmoothButton35Click
+                OnClick = btnCashCharge200Click
               end
-              object AdvSmoothButton34: TAdvSmoothButton
+              object btnCashCharge100: TAdvSmoothButton
                 Left = 447
                 Top = 204
                 Width = 119
@@ -16189,9 +16284,9 @@ object frmMain: TfrmMain
                 HorizontalSpacing = 0
                 VerticalSpacing = 1
                 Version = '1.7.1.0'
-                OnClick = AdvSmoothButton34Click
+                OnClick = btnCashCharge100Click
               end
-              object AdvSmoothButton33: TAdvSmoothButton
+              object btnCashCharge50: TAdvSmoothButton
                 Left = 270
                 Top = 204
                 Width = 119
@@ -16235,7 +16330,7 @@ object frmMain: TfrmMain
                 HorizontalSpacing = 0
                 VerticalSpacing = 1
                 Version = '1.7.1.0'
-                OnClick = AdvSmoothButton33Click
+                OnClick = btnCashCharge50Click
               end
             end
           end
@@ -17408,6 +17503,182 @@ object frmMain: TfrmMain
             end
           end
         end
+        object TPage
+          Left = 0
+          Top = 0
+          Caption = 'pageSelectChargeType'
+          object pnlSelectChargeType: TRzPanel
+            Left = 0
+            Top = 0
+            Width = 1234
+            Height = 498
+            Align = alClient
+            BorderOuter = fsNone
+            TabOrder = 0
+            Transparent = True
+            object RzPanel8: TRzPanel
+              Left = 328
+              Top = 168
+              Width = 705
+              Height = 249
+              BorderOuter = fsNone
+              TabOrder = 0
+              Transparent = True
+              object btnCashCharge: TAdvSmoothButton
+                Left = 70
+                Top = 89
+                Width = 150
+                Height = 90
+                Margins.Left = 0
+                Margins.Top = 0
+                Margins.Right = 0
+                Margins.Bottom = 0
+                Appearance.PictureAlignment = taCenter
+                Appearance.Font.Charset = GB2312_CHARSET
+                Appearance.Font.Color = clWhite
+                Appearance.Font.Height = -24
+                Appearance.Font.Name = #23435#20307
+                Appearance.Font.Style = [fsBold]
+                Appearance.Layout = blPictureTop
+                Appearance.Spacing = 10
+                Appearance.FocusColor = clTeal
+                Appearance.SimpleLayout = True
+                Status.Caption = '0'
+                Status.Appearance.Fill.Color = clRed
+                Status.Appearance.Fill.ColorMirror = clNone
+                Status.Appearance.Fill.ColorMirrorTo = clNone
+                Status.Appearance.Fill.GradientType = gtSolid
+                Status.Appearance.Fill.GradientMirrorType = gtSolid
+                Status.Appearance.Fill.BorderColor = clGray
+                Status.Appearance.Fill.Rounding = 8
+                Status.Appearance.Fill.ShadowOffset = 0
+                Status.Appearance.Fill.Glow = gmNone
+                Status.Appearance.Font.Charset = DEFAULT_CHARSET
+                Status.Appearance.Font.Color = clWhite
+                Status.Appearance.Font.Height = -11
+                Status.Appearance.Font.Name = 'Tahoma'
+                Status.Appearance.Font.Style = []
+                Bevel = False
+                BevelColor = clLime
+                Caption = #29616#37329#20805#20540
+                Color = 16222720
+                ParentFont = False
+                Shadow = True
+                TabOrder = 0
+                HorizontalSpacing = 0
+                VerticalSpacing = 1
+                Version = '1.7.1.0'
+                OnClick = btnCashChargeClick
+              end
+              object btnPrepaidCardCharge: TAdvSmoothButton
+                Left = 286
+                Top = 89
+                Width = 150
+                Height = 90
+                Margins.Left = 0
+                Margins.Top = 0
+                Margins.Right = 0
+                Margins.Bottom = 0
+                Appearance.PictureAlignment = taCenter
+                Appearance.Font.Charset = GB2312_CHARSET
+                Appearance.Font.Color = clWhite
+                Appearance.Font.Height = -24
+                Appearance.Font.Name = #23435#20307
+                Appearance.Font.Style = [fsBold]
+                Appearance.Layout = blPictureTop
+                Appearance.Spacing = 10
+                Appearance.FocusColor = clTeal
+                Appearance.SimpleLayout = True
+                Status.Caption = '0'
+                Status.Appearance.Fill.Color = clRed
+                Status.Appearance.Fill.ColorMirror = clNone
+                Status.Appearance.Fill.ColorMirrorTo = clNone
+                Status.Appearance.Fill.GradientType = gtSolid
+                Status.Appearance.Fill.GradientMirrorType = gtSolid
+                Status.Appearance.Fill.BorderColor = clGray
+                Status.Appearance.Fill.Rounding = 8
+                Status.Appearance.Fill.ShadowOffset = 0
+                Status.Appearance.Fill.Glow = gmNone
+                Status.Appearance.Font.Charset = DEFAULT_CHARSET
+                Status.Appearance.Font.Color = clWhite
+                Status.Appearance.Font.Height = -11
+                Status.Appearance.Font.Name = 'Tahoma'
+                Status.Appearance.Font.Style = []
+                Bevel = False
+                BevelColor = clLime
+                Caption = #20805#20540#21345#20805#20540
+                Color = 16222720
+                ParentFont = False
+                Shadow = True
+                TabOrder = 1
+                HorizontalSpacing = 0
+                VerticalSpacing = 1
+                Version = '1.7.1.0'
+                OnClick = btnPrepaidCardChargeClick
+              end
+              object btnZHBCharge: TAdvSmoothButton
+                Left = 502
+                Top = 89
+                Width = 150
+                Height = 90
+                Margins.Left = 0
+                Margins.Top = 0
+                Margins.Right = 0
+                Margins.Bottom = 0
+                Appearance.PictureAlignment = taCenter
+                Appearance.Font.Charset = GB2312_CHARSET
+                Appearance.Font.Color = clWhite
+                Appearance.Font.Height = -24
+                Appearance.Font.Name = #23435#20307
+                Appearance.Font.Style = [fsBold]
+                Appearance.Layout = blPictureTop
+                Appearance.Spacing = 10
+                Appearance.FocusColor = clTeal
+                Appearance.SimpleLayout = True
+                Status.Caption = '0'
+                Status.Appearance.Fill.Color = clRed
+                Status.Appearance.Fill.ColorMirror = clNone
+                Status.Appearance.Fill.ColorMirrorTo = clNone
+                Status.Appearance.Fill.GradientType = gtSolid
+                Status.Appearance.Fill.GradientMirrorType = gtSolid
+                Status.Appearance.Fill.BorderColor = clGray
+                Status.Appearance.Fill.Rounding = 8
+                Status.Appearance.Fill.ShadowOffset = 0
+                Status.Appearance.Fill.Glow = gmNone
+                Status.Appearance.Font.Charset = DEFAULT_CHARSET
+                Status.Appearance.Font.Color = clWhite
+                Status.Appearance.Font.Height = -11
+                Status.Appearance.Font.Name = 'Tahoma'
+                Status.Appearance.Font.Style = []
+                Bevel = False
+                BevelColor = clLime
+                Caption = #36134#25143#23453#20805#20540
+                Color = 16222720
+                ParentFont = False
+                Shadow = True
+                TabOrder = 2
+                HorizontalSpacing = 0
+                VerticalSpacing = 1
+                Version = '1.7.1.0'
+                OnClick = btnZHBChargeClick
+              end
+            end
+          end
+        end
+        object TPage
+          Left = 0
+          Top = 0
+          Caption = 'pageInputPrepaidCardPassword'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
+        end
+        object TPage
+          Left = 0
+          Top = 0
+          Caption = 'pageInputZHBPassword'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
+        end
       end
     end
     object pnlBottom: TRzPanel
@@ -17510,8 +17781,6 @@ object frmMain: TfrmMain
       Caption = 'Panel Top'
       TabOrder = 2
       Transparent = True
-      ExplicitLeft = 40
-      ExplicitTop = 80
       object btnHome: TAdvGlowButton
         Left = 928
         Top = 24
@@ -17581,8 +17850,6 @@ object frmMain: TfrmMain
         Transparent = True
         OnClick = RzPanel7Click
         OnDblClick = RzPanel7DblClick
-        ExplicitTop = 7
-        ExplicitHeight = 77
       end
     end
   end

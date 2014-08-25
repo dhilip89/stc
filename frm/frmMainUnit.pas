@@ -97,9 +97,9 @@ type
     AdvSmoothLabel62: TAdvSmoothLabel;
     AdvSmoothLabel63: TAdvSmoothLabel;
     edtCityCardBalanceWhenChosingAmount: TAdvEdit;
-    AdvSmoothButton35: TAdvSmoothButton;
-    AdvSmoothButton34: TAdvSmoothButton;
-    AdvSmoothButton33: TAdvSmoothButton;
+    btnCashCharge200: TAdvSmoothButton;
+    btnCashCharge100: TAdvSmoothButton;
+    btnCashCharge50: TAdvSmoothButton;
     AdvSmoothLabel54: TAdvSmoothLabel;
     RzPanel77: TRzPanel;
     RzPanel78: TRzPanel;
@@ -215,11 +215,17 @@ type
     edtPasswordForChargeCard: TAdvEdit;
     btnPasswordOK: TAdvSmoothButton;
     RzPanel7: TRzPanel;
+    AdvSmoothButton1: TAdvSmoothButton;
+    AdvSmoothButton2: TAdvSmoothButton;
+    pnlSelectChargeType: TRzPanel;
+    RzPanel8: TRzPanel;
+    btnCashCharge: TAdvSmoothButton;
+    btnPrepaidCardCharge: TAdvSmoothButton;
+    btnZHBCharge: TAdvSmoothButton;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
-    procedure AdvSmoothButton3Click(Sender: TObject);
     procedure btnNormalClick(Sender: TObject);
     procedure btnBackClick(Sender: TObject);
     procedure btnHomeClick(Sender: TObject);
@@ -228,7 +234,7 @@ type
     procedure btnExpertClick(Sender: TObject);
     procedure btnCheckInPageCheckFeeClick(Sender: TObject);
     procedure btnRegisterOkClick(Sender: TObject);
-    procedure AdvSmoothButton4Click(Sender: TObject);
+    procedure btnPrepaidCardChargeClick(Sender: TObject);
     procedure btnPayInPageQueryFeeUnpaidClick(Sender: TObject);
     procedure AdvSmoothButton11Click(Sender: TObject);
     procedure AdvSmoothButton13Click(Sender: TObject);
@@ -258,9 +264,9 @@ type
     procedure AdvSmoothButton38Click(Sender: TObject);
     procedure AdvSmoothButton37Click(Sender: TObject);
     procedure RzPanel2Resize(Sender: TObject);
-    procedure AdvSmoothButton33Click(Sender: TObject);
-    procedure AdvSmoothButton34Click(Sender: TObject);
-    procedure AdvSmoothButton35Click(Sender: TObject);
+    procedure btnCashCharge50Click(Sender: TObject);
+    procedure btnCashCharge100Click(Sender: TObject);
+    procedure btnCashCharge200Click(Sender: TObject);
     procedure btnPayBankCardClick(Sender: TObject);
     procedure AdvSmoothButton28Click(Sender: TObject);
     procedure AdvSmoothButton30Click(Sender: TObject);
@@ -281,6 +287,8 @@ type
     procedure RzPanel7Click(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure RzPanel7DblClick(Sender: TObject);
+    procedure btnCashChargeClick(Sender: TObject);
+    procedure btnZHBChargeClick(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -326,6 +334,7 @@ type
     function getPrinterStatus: Byte;
     procedure initPnlPassword4ChargeCard(flag: Byte; maxLength: Integer);//flag 0:充值卡 1:企福通卡
     procedure doCityCardCharge(dlg: TfrmWaiting);
+    procedure DoOnPayCash();
 
     procedure waitForInsertBankCard(Sender: TObject);
     procedure waitForBankCardPassTimer(Sender: TObject);
@@ -568,6 +577,35 @@ begin
   end;
 end;
 
+procedure TfrmMain.btnCashChargeClick(Sender: TObject);
+var
+  dlg: Tfrmwaiting;
+  mr: TModalResult;
+  threadQueryCityCard: TQueryCityCardBalance;
+begin
+  isCityCardCharging := True;
+  edtCityCardInfoWhenChosingAmount.Text := '';
+  edtCityCardBalanceWhenChosingAmount.Text := '';
+  Notebook1.ActivePage := 'pageCityCardChooseChargeAmount';
+  cityCardBizType := 0;
+  dlg := TfrmWaiting.Create(nil);
+  try
+    dlg.setWaitingTip('请将市民卡放置在读卡区...');
+    threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15,
+      edtCityCardInfoWhenChosingAmount, edtCityCardBalanceWhenChosingAmount);
+    threadQueryCityCard.OnGetCityCardInfo := DoOnGetCityCardInfo;
+    threadQueryCityCard.OnGetCardBalance := DoOnGetCityCardBalance;
+    threadQueryCityCard.Start;
+    mr := dlg.ShowModal;
+    if mr = mrAbort then
+    begin
+      btnhome.Click;
+    end;
+  finally
+    dlg.Free;
+  end;
+end;
+
 procedure TfrmMain.btnChargeCardClick(Sender: TObject);
 begin
   currChargeType := 2;
@@ -628,32 +666,9 @@ begin
 end;
 
 procedure TfrmMain.AdvSmoothButton25Click(Sender: TObject);
-var
-  dlg: Tfrmwaiting;
-  mr: TModalResult;
-  threadQueryCityCard: TQueryCityCardBalance;
 begin
-  isCityCardCharging := True;
-  edtCityCardInfoWhenChosingAmount.Text := '';
-  edtCityCardBalanceWhenChosingAmount.Text := '';
-  Notebook1.ActivePage := 'pageCityCardChooseChargeAmount';
-  cityCardBizType := 0;
-  dlg := TfrmWaiting.Create(nil);
-  try
-    dlg.setWaitingTip('请将市民卡放置在读卡区...');
-    threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15,
-      edtCityCardInfoWhenChosingAmount, edtCityCardBalanceWhenChosingAmount);
-    threadQueryCityCard.OnGetCityCardInfo := DoOnGetCityCardInfo;
-    threadQueryCityCard.OnGetCardBalance := DoOnGetCityCardBalance;
-    threadQueryCityCard.Start;
-    mr := dlg.ShowModal;
-    if mr = mrAbort then
-    begin
-      btnhome.Click;
-    end;
-  finally
-    dlg.Free;
-  end;
+  Notebook1.ActivePage := 'pageSelectChargeType';
+  Exit;
 end;
 
 procedure TfrmMain.AdvSmoothButton26Click(Sender: TObject);
@@ -773,31 +788,28 @@ begin
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
-procedure TfrmMain.AdvSmoothButton33Click(Sender: TObject);
+procedure TfrmMain.btnCashCharge50Click(Sender: TObject);
 begin
-//  amountPaid := 50;
-//  cityCardBalance := amountPaid + 10.5;
   amountCharged := 50;
-  setBtnPayTypeVisible(False, False, True, True, True);
-  Notebook1.ActivePage := 'pageSelectPayType';
+//  setBtnPayTypeVisible(False, False, True, True, True);
+//  Notebook1.ActivePage := 'pageSelectPayType';
+  DoOnPayCash;
 end;
 
-procedure TfrmMain.AdvSmoothButton34Click(Sender: TObject);
+procedure TfrmMain.btnCashCharge100Click(Sender: TObject);
 begin
-//  amountPaid := 100;
-//  cityCardBalance := amountPaid + 10.5;
   amountCharged := 100;
-  setBtnPayTypeVisible(False, False, True, True, True);
-  Notebook1.ActivePage := 'pageSelectPayType';
+//  setBtnPayTypeVisible(False, False, True, True, True);
+//  Notebook1.ActivePage := 'pageSelectPayType';
+  DoOnPayCash;
 end;
 
-procedure TfrmMain.AdvSmoothButton35Click(Sender: TObject);
+procedure TfrmMain.btnCashCharge200Click(Sender: TObject);
 begin
-//  amountPaid := 200;
-//  cityCardBalance := amountPaid + 10.5;
   amountCharged := 200;
-  setBtnPayTypeVisible(False, False, True, True, True);
-  Notebook1.ActivePage := 'pageSelectPayType';
+//  setBtnPayTypeVisible(False, False, True, True, True);
+//  Notebook1.ActivePage := 'pageSelectPayType';
+  DoOnPayCash;
 end;
 
 procedure TfrmMain.btnPayBankCardClick(Sender: TObject);
@@ -889,11 +901,6 @@ begin
   Notebook1.ActivePage := 'pageMobileTopUpSuccess';
 end;
 
-procedure TfrmMain.AdvSmoothButton3Click(Sender: TObject);
-begin
-  Notebook1.ActivePage := 'pageRegister';
-end;
-
 procedure TfrmMain.AdvSmoothButton40Click(Sender: TObject);
 begin
   try
@@ -931,10 +938,9 @@ begin
   Notebook1.ActivePage := 'pageBankBiz';
 end;
 
-procedure TfrmMain.AdvSmoothButton4Click(Sender: TObject);
+procedure TfrmMain.btnPrepaidCardChargeClick(Sender: TObject);
 begin
-  Notebook1.ActivePage := 'pageSelfPay';
-  setCountdownTimerEnabled(True, 120);
+  Notebook1.ActivePage := 'pageInputPrepaidCardPassword';
 end;
 
 procedure TfrmMain.AdvSmoothButton7Click(Sender: TObject);
@@ -1004,6 +1010,58 @@ end;
 procedure TfrmMain.btnRegisterOkClick(Sender: TObject);
 begin
   btnHome.Click;
+end;
+
+procedure TfrmMain.btnZHBChargeClick(Sender: TObject);
+begin
+  Notebook1.ActivePage := 'pageInputZHBPassword';
+end;
+
+procedure TfrmMain.DoOnPayCash;
+var
+  dlg: TfrmWaiting;
+  mr: TModalResult;
+  newBalance: Double;
+begin
+  currChargeType := 0;
+  Notebook1.ActivePage := 'pageCash';
+  dlg := TfrmWaiting.Create(nil);
+  try
+    dlg.setWaitingTip('请将市民卡放置在读卡区...');
+    TGetCashAmount.Create(False, dlg, 55, amountCharged);
+    mr := dlg.ShowModal;
+    if mr = mrOk then
+    begin
+      setCountdownTimerEnabled(True, 15);
+      dlg.setWaitingTip('正在进行充值处理，请勿移动卡片...');
+      threadCharge := TCityCardCharge.Create(True, dlg, 10, amountCharged);
+      try
+        threadCharge.Start;
+        mr := dlg.ShowModal;
+        if mr = mrOk then
+        begin
+          AdvSmoothLabel75.Visible := False;
+          newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
+          AdvSmoothLabel74.Caption.Text := '充值后卡片余额：' + FormatFloat('0.0#', newBalance) + '元';
+          AdvSmoothLabel74.Visible := True;
+          Notebook1.ActivePage := 'pageMobileTopUpSuccess';
+        end
+        else if mr = mrAbort then
+        begin
+          btnHome.Click;
+        end;
+      finally
+        threadCharge.Free;
+        threadCharge := nil;
+      end;
+    end
+    else if mr = mrAbort then
+    begin
+      btnhome.Click;
+    end
+  finally
+    dlg.Free;
+  end;
 end;
 
 procedure TfrmMain.DoOnPrinterComRecvData(Sender: TObject; Buffer: Pointer;
@@ -1515,6 +1573,7 @@ end;
 
 procedure TfrmMain.setPanelInitPos;
 begin
+  setCompentInParentCenter(RzPanel8);
   setCompentInParentCenter(RzPanel6);
   setCompentInParentCenter(RzPanel73);
   setCompentInParentCenter(RzPanel74);

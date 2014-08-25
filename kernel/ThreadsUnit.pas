@@ -248,6 +248,17 @@ var
   cardInfo: string;
   balance: Integer;
 begin
+  {$IFDEF test}
+    Sleep(200);
+    if Assigned(FOnGetCityCardInfo) then
+      FOnGetCityCardInfo(FEdtCardInfo, '1234567890123456');
+
+    if Assigned(FOnGetCardBalance) then
+      FOnGetCardBalance(FEdtCardBalance, 23134);
+
+    Result := True;
+    Exit;
+  {$ENDIF}
   Result := False;
   if not resetD8 then
   begin
@@ -281,7 +292,7 @@ begin
 //    SetLength(tempStr, 4 * 2);
 //    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
 //    Memo1.Lines.Add('卡片失效日期:' + tempStr);
-
+  {
   //卡片基本信息
   sendHexStr := '00B0960000';
   CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
@@ -298,7 +309,7 @@ begin
   SetLength(tempStr, 20 * 2);
 
   CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-  cardInfo := cardInfo + '(' + bytesToStr(hexStrToByteBuf(tempStr, false)) + ')';//持卡人姓名
+  cardInfo := cardInfo + '(' + bytesToStr(hexStrToByteBuf(tempStr, false)) + ')';//持卡人姓名  }
   if Assigned(FOnGetCityCardInfo) then
     FOnGetCityCardInfo(FEdtCardInfo, cardInfo);
 
@@ -539,6 +550,15 @@ begin
          '已 投 币 金 额:%-3d元';
   setWaitingTip(Format(tip, [FCashAmount, 0]));
 
+  {$IFDEF test}
+    Sleep(2000);
+    FAmountRead := FCashAmount;
+    setWaitingTip(Format(tip, [FCashAmount, FAmountRead]));
+    Result := True;
+    taskRet := 0;
+    Exit;
+  {$ENDIF}
+
   totalAmount := FCashAmount;
   FAmountRead := 0;
   cashAmount[0] := 0;
@@ -760,8 +780,14 @@ var
   cmd: TCmdChargeDetailC2S;
   billStatus: AnsiString;
 begin
+  {$IFDEF test}
+    Sleep(1000);
+    taskRet := 0;
+    Result := True;
+    Exit;
+  {$ENDIF}
   Result := False;
-//  tip := '正在进行充值处理，请勿移开卡片';//#13#10 + '卡片读取中...';
+//  tip := '正在进行充值处理，请勿移开卡片...';//#13#10 + '卡片读取中...';
 //  setWaitingTip(tip);
   if not resetD8 then
   begin
