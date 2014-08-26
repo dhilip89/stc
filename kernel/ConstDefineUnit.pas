@@ -12,23 +12,6 @@ interface
 uses Messages;
 const
 //====================================================================
-  INITDATA_HOUR = 4;
-  MY_APP_NAME = 'VSMSClient_Taxi';
-  CM_RESTORE = WM_USER + $1000; // -自定义的“恢复”消息
-  CM_DATASERVER_SENDMSG = WM_USER + $1001; //
-  CM_DevStat = WM_USER + $1002; // 设备状态
-  CM_DevParam_READOk = WM_USER + $1003; // 读设备参数
-  CM_DevNotifyStat = WM_USER + $1004; // 服务器有数据更新的通知,通知客户端要刷新指定的设备的信息
-  CM_DevToHost = WM_USER + $1005; // 收到Dev发送到Host的数据
-  CM_RegUserErr = WM_USER + $1006; // 用户登录到网关服务器 错误
-  CM_DEVALARM = WM_USER + $1007; // 在收到的GPS数据中有 报警
-
-  //删除越界或驶入报警列表中的相关车辆 ，此消息由电子围栏列表中删除时，发给主界面。
-  //--当用户在电子围栏列表中删除某区域（对应的车辆将全不限定）或 从某区域中不再限定该车时，如果越界或驶入报警列表中有该车，则需移入到历史记录中
-  CM_DELAlarmListDev_OutORInCA = WM_USER + $1008;
-
-  CM_UPDATE = WM_USER + $1009; //更新本自已,,必须关闭自己,这个消息是由更新程序发出.
-//  CM_PowerCut           =WM_USER+ $1010;  //断电报警
 
   //发出命令的执行状态
   CMD_SNDNODO = 0; // 已发送未执行
@@ -171,7 +154,6 @@ const
  //固定菜单个数
   LCD_MENU_COUNT = 128;
 
- //发出信息的(PostMessage)类型, //对应的函数: ReturnMsgTypeState
   MSG_TYPE_LCD_MENU = 1; //固定菜单.
   MSG_TYPE_CONTRAL_INFO = 2; //调度信息.
   MSG_TYPE_TAXI_STOPTIME = 3; //计价器停机时间
@@ -211,49 +193,8 @@ const
   //检测网关的服务器登录用户名
   CHECKGATAWAY_USERID = $1001;
 
-  SWITCHBOARDON = 1;
-  SWITCHBOARDOFF = 0;
-
-  IOPARKTYPE_INPARKFROMS = 7;
-  IOPARKTYPE_INPARKFROME = 8;
-  IOPARKTYPE_OUTPARKTOS = 9;
-  IOPARKTYPE_OUTPARKTOE = 10;
-
-function ReturnMsgTypeState(State: integer): string;
-//得到断油电供油供电的具体内容
-function ReturnCutOrFeedContent(ParamId: Byte): string;
-
 
 implementation
 
-
-function ReturnMsgTypeState(State: integer): string;
-begin
-  Result := '';
-  case State of
-    MSG_TYPE_LCD_MENU: Result := '固定菜单';
-    MSG_TYPE_CONTRAL_INFO: Result := '调度信息';
-    MSG_TYPE_TAXI_STOPTIME: Result := '计价器停机时间';
-    MSG_TYPE_SEV_INFO: Result := '服务器通知消息';
-    MSG_TYPE_DEV_SEND_TO_HOST: Result := '收到发给到中心的数据';
-    MSG_TYPE_GPS_MODULE_ERROR: Result := 'GPS模块发生故障';
-    MSG_TYPE_GPS_LINE_ERROR: Result := 'GPS天线未接或被剪断';
-    MSG_TYPE_LOW_V: Result := '低压报警';
-    MSG_TYPE_LCD_ERROR: Result := 'LCD故障';
-    MSG_TYPE_MEASURE_ERROR: Result := '计价器故障';
-     //MSG_TYPE_SIM_ERROR:Result          :='SIM卡未设置，或者车机读取SIM卡号失败';
-  end;
-end;
-
-function ReturnCutOrFeedContent(ParamId: Byte): string;
-begin
-  Result := '';
-  case ParamId of
-    CUT_OIL: Result := '断油';
-    CUT_ELECTRICITY: Result := '断电';
-    FEED_OIL: Result := '供油';
-    FEED_ELECTRICITY: Result := '供电';
-  end;
-end;
 
 end.

@@ -227,6 +227,18 @@ type
     AdvSmoothLabel5: TAdvSmoothLabel;
     edtPrepaidCardPassword: TAdvEdit;
     btnInputPrepaidCardPasswordOk: TAdvSmoothButton;
+    pnlPrepaidCardAmountConfirm: TRzPanel;
+    RzPanel11: TRzPanel;
+    AdvSmoothLabel6: TAdvSmoothLabel;
+    AdvSmoothLabel7: TAdvSmoothLabel;
+    AdvSmoothLabel8: TAdvSmoothLabel;
+    AdvSmoothLabel9: TAdvSmoothLabel;
+    btnPrepaidCardAmountConfirm: TAdvSmoothButton;
+    RzPanel10: TRzPanel;
+    RzPanel12: TRzPanel;
+    AdvSmoothLabel10: TAdvSmoothLabel;
+    edtZHBPassword: TAdvEdit;
+    btnInputZHBPasswordOk: TAdvSmoothButton;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -296,6 +308,9 @@ type
     procedure btnZHBChargeClick(Sender: TObject);
     procedure edtPrepaidCardPasswordKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
+    procedure btnInputPrepaidCardPasswordOkClick(Sender: TObject);
+    procedure btnPrepaidCardAmountConfirmClick(Sender: TObject);
+    procedure btnInputZHBPasswordOkClick(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -597,7 +612,7 @@ begin
   cityCardBizType := 0;
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip('请将市民卡放置在读卡区...');
+    dlg.setWaitingTip('请将龙城通卡放置在读卡区...');
     threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15,
       edtCityCardInfoWhenChosingAmount, edtCityCardBalanceWhenChosingAmount);
     threadQueryCityCard.OnGetCityCardInfo := DoOnGetCityCardInfo;
@@ -691,7 +706,7 @@ begin
   cityCardBizType := 1;
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip('请将市民卡放置在读卡区...');
+    dlg.setWaitingTip('请将龙城通卡放置在读卡区...');
     threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15, edtCityCardInfo, edtCityCardBalance);
     threadQueryCityCard.OnGetCityCardInfo := DoOnGetCityCardInfo;
     threadQueryCityCard.OnGetCardBalance := DoOnGetCityCardBalance;
@@ -797,7 +812,7 @@ end;
 
 procedure TfrmMain.btnCashCharge50Click(Sender: TObject);
 begin
-  amountCharged := 50;
+  amountCharged := 50 * 100;
 //  setBtnPayTypeVisible(False, False, True, True, True);
 //  Notebook1.ActivePage := 'pageSelectPayType';
   DoOnPayCash;
@@ -805,7 +820,7 @@ end;
 
 procedure TfrmMain.btnCashCharge100Click(Sender: TObject);
 begin
-  amountCharged := 100;
+  amountCharged := 100 * 100;
 //  setBtnPayTypeVisible(False, False, True, True, True);
 //  Notebook1.ActivePage := 'pageSelectPayType';
   DoOnPayCash;
@@ -813,7 +828,7 @@ end;
 
 procedure TfrmMain.btnCashCharge200Click(Sender: TObject);
 begin
-  amountCharged := 200;
+  amountCharged := 200 * 100;
 //  setBtnPayTypeVisible(False, False, True, True, True);
 //  Notebook1.ActivePage := 'pageSelectPayType';
   DoOnPayCash;
@@ -840,7 +855,7 @@ begin
   Notebook1.ActivePage := 'pageCash';
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip('请将市民卡放置在读卡区...');
+    dlg.setWaitingTip('请将龙城通卡放置在读卡区...');
     TGetCashAmount.Create(False, dlg, 55, amountCharged);
     mr := dlg.ShowModal;
     if mr = mrOk then
@@ -886,7 +901,7 @@ begin
   Notebook1.ActivePage := 'pagePayFromCityCard';
   FDlgProgress.Timer1.Interval := 1000;
   FDlgProgress.Timer1.OnTimer := WaitForCityCardWhenPayTimer;
-  FDlgProgress.RzMemo1.Text := '正在读取市民卡，请稍后...';
+  FDlgProgress.RzMemo1.Text := '正在读取龙城通卡，请稍后...';
   setDlgProgressTransparent(True);
   setProgressInTop;
   WaitForCityCardWhenPayTimerFlag := 0;
@@ -916,7 +931,7 @@ begin
   except
 
   end;
-  FDlgProgress.RzMemo1.Text := '正在处理市民卡交易请求,请稍后...';
+  FDlgProgress.RzMemo1.Text := '正在处理龙城通卡交易请求,请稍后...';
   setDlgProgressTransparent(True);
   FDlgProgress.Timer1.OnTimer := WaitForBankCardSuccessTimer;
   FDlgProgress.Timer1.Interval := 3000;
@@ -945,12 +960,33 @@ begin
   Notebook1.ActivePage := 'pageBankBiz';
 end;
 
-procedure TfrmMain.btnPrepaidCardChargeClick(Sender: TObject);
+procedure TfrmMain.btnPrepaidCardAmountConfirmClick(Sender: TObject);
 begin
-  btnInputPrepaidCardPasswordOk.Enabled := False;
-  edtPrepaidCardPassword.Text := '';
-  Notebook1.ActivePage := 'pageInputPrepaidCardPassword';
-  edtPrepaidCardPassword.SetFocus;
+  amountCharged := currPrepaidCardAmount;
+  doCityCardCharge(nil);
+end;
+
+procedure TfrmMain.btnPrepaidCardChargeClick(Sender: TObject);
+var
+  dlg: Tfrmwaiting;
+  mr: TModalResult;
+  threadQueryCityCard: TQueryCityCardBalance;
+begin
+  dlg := TfrmWaiting.Create(nil);
+  try
+    dlg.setWaitingTip('请将龙城通卡放置在读卡区...');
+    threadQueryCityCard := TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
+    mr := dlg.ShowModal;
+    if mr = mrOk then
+    begin
+      btnInputPrepaidCardPasswordOk.Enabled := False;
+      edtPrepaidCardPassword.Text := '';
+      Notebook1.ActivePage := 'pageInputPrepaidCardPassword';
+      edtPrepaidCardPassword.SetFocus;
+    end;
+  finally
+    dlg.Free;
+  end;
 end;
 
 procedure TfrmMain.AdvSmoothButton7Click(Sender: TObject);
@@ -976,7 +1012,7 @@ end;
 procedure TfrmMain.AdvSmoothButton9Click(Sender: TObject);
 begin
   currCityCardNo := '1122334455667788';
-  amountCharged := 100;
+  amountCharged := 100 * 100;
   setBtnPayTypeVisible(False, False, True, True, True);
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
@@ -1006,6 +1042,68 @@ begin
   Notebook1.ActivePage := 'default';
 end;
 
+procedure TfrmMain.btnInputPrepaidCardPasswordOkClick(Sender: TObject);
+var
+  password: ansistring;
+  dlg: TfrmWaiting;
+  mr: TModalResult;
+begin
+  password := AnsiString(Trim(edtPrepaidCardPassword.Text));
+  if (password = '') or (Length(password) <> 16) then
+    Exit;
+
+  //获取面额
+  dlg := TfrmWaiting.Create(nil);
+  try
+    dlg.setWaitingTip('正在获取充值面额,请稍后...');
+    threadChargeCardCheck := TChargeCardCheck.Create(True, dlg, 10, currCityCardNo, password);
+    threadChargeCardCheck.start;
+    try
+      mr := dlg.ShowModal;
+      if mr = mrOk then
+      begin
+        Notebook1.ActivePage := 'pagePrepaidCardAmountConfirm';
+      end;
+    finally
+      threadChargeCardCheck.Free;
+      threadChargeCardCheck := nil;
+    end;
+  finally
+    dlg.Free;
+  end;
+end;
+
+procedure TfrmMain.btnInputZHBPasswordOkClick(Sender: TObject);
+var
+  password: ansistring;
+  dlg: TfrmWaiting;
+  mr: TModalResult;
+begin
+  password := AnsiString(Trim(edtZHBPassword.Text));
+  if (password = '') or (Length(password) <> edtZHBPassword.MaxLength) then
+    Exit;
+
+  //获取余额
+  dlg := TfrmWaiting.Create(nil);
+  try
+    dlg.setWaitingTip('正在获取账户宝余额,请稍后...');
+    threadQueryQFTBalance := TQueryQFTBalance.Create(True, dlg, 10, currCityCardNo, password);
+    try
+      threadQueryQFTBalance.start;
+      mr := dlg.ShowModal;
+      if mr = mrOk then
+      begin
+        Notebook1.ActivePage := 'pageZHBBalanceConfirm';
+      end;
+    finally
+      threadQueryQFTBalance.Free;
+      threadQueryQFTBalance := nil;
+    end;
+  finally
+    dlg.Free;
+  end;
+end;
+
 procedure TfrmMain.btnNormalClick(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageNormal';
@@ -1023,8 +1121,26 @@ begin
 end;
 
 procedure TfrmMain.btnZHBChargeClick(Sender: TObject);
+var
+  dlg: Tfrmwaiting;
+  mr: TModalResult;
+  threadQueryCityCard: TQueryCityCardBalance;
 begin
-  Notebook1.ActivePage := 'pageInputZHBPassword';
+  dlg := TfrmWaiting.Create(nil);
+  try
+    dlg.setWaitingTip('请将龙城通卡放置在读卡区...');
+    threadQueryCityCard := TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
+    mr := dlg.ShowModal;
+    if mr = mrOk then
+    begin
+      btnInputZHBPasswordOk.Enabled := False;
+      edtZHBPassword.Text := '';
+      Notebook1.ActivePage := 'pageInputZHBPassword';
+      edtZHBPassword.SetFocus;
+    end;
+  finally
+    dlg.Free;
+  end;
 end;
 
 procedure TfrmMain.DoOnPayCash;
@@ -1037,7 +1153,7 @@ begin
   Notebook1.ActivePage := 'pageCash';
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip('请将市民卡放置在读卡区...');
+    dlg.setWaitingTip('请将龙城通卡放置在读卡区...');
     TGetCashAmount.Create(False, dlg, 55, amountCharged);
     mr := dlg.ShowModal;
     if mr = mrOk then
@@ -1146,7 +1262,15 @@ procedure TfrmMain.doCityCardCharge(dlg: TfrmWaiting);
 var
   mr: TModalResult;
   newBalance: Double;
+  isNewDlg: Boolean;
 begin
+  isNewDlg := False;
+  if dlg = nil then
+  begin
+    isNewDlg := True;
+    dlg := TfrmWaiting.Create(nil);
+  end;
+
   setCountdownTimerEnabled(True, 15);
   threadCharge := TCityCardCharge.Create(True, dlg, 10, amountCharged);
   try
@@ -1168,6 +1292,10 @@ begin
   finally
     threadCharge.Free;
     threadCharge := nil;
+    if isNewDlg then
+    begin
+      dlg.Free;
+    end;
   end;
 end;
 
@@ -1249,7 +1377,6 @@ function TfrmMain.getBillAcceptorStatus: Byte;
 var
   sspCmd: TSSP_Command;
   sspCmdInfo: TSSP_Command_Info;
-  i: Integer;
 begin
   Result := MODULE_STATUS_FAULT;
 
@@ -1318,6 +1445,10 @@ var
   i: Integer;
 begin
   Result := False;
+
+  {$IFDEF test}
+    Exit;
+  {$ENDIF}
 
   sspCmd.SSPAddress := 0;
   sspCmd.BaudRate := 9600;
@@ -1595,6 +1726,7 @@ begin
   setCompentInParentCenter(RzPanel6);
   setCompentInParentCenter(RzPanel8);
   setCompentInParentCenter(RzPanel9);
+  setCompentInParentCenter(RzPanel11);
   setCompentInParentCenter(RzPanel73);
   setCompentInParentCenter(RzPanel74);
   setCompentInParentCenter(RzPanel75);
@@ -1675,19 +1807,7 @@ end;
 procedure TfrmMain.Timer3Timer(Sender: TObject);
 var
   moduleStatus: array of Byte;
-  cmd: TCmdRefundC2S;
 begin
-  initBytes(cmd.CityCardNo, $30);
-  cmd.Amount := ByteOderConvert_LongWord(10000);
-  cmd.Time[0] := $20;
-  cmd.Time[1] := $14;
-  cmd.Time[2] := $08;
-  cmd.Time[3] := $12;
-  cmd.Time[4] := $13;
-  cmd.Time[5] := $50;
-  cmd.Time[6] := $20;
-  DataServer.SendCmdRefund(cmd);
-
   if not isCheckModuleStatusOk then
     Exit;
 

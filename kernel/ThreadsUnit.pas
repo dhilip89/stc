@@ -127,7 +127,7 @@ type
   protected
     procedure Execute; override;
   public
-    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; edtCardInfo, edtCardBalance: TCustomEdit);
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; edtCardInfo, edtCardBalance: TCustomEdit);virtual;
     destructor Destroy; override;
 
     property OnGetCityCardInfo: TOnGetCityCardInfo read FOnGetCityCardInfo write FOnGetCityCardInfo;
@@ -143,14 +143,15 @@ type
     function doTask: Boolean;override;
     procedure DoOnTaskTimeout;override;
   public
-    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; cashAmount: Integer);
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting;
+      timeout: Integer; cashAmount: Integer);
   end;
 
   //充值交易过程
   TCityCardCharge = class(TBaseThread)
   private
     FChargeAmount: Integer;
-    FMac2: string;
+    FMac2: AnsiString;
     FIsMac2Got: Boolean;
     FBalanceAfterCharge: Integer;
     function waitForMac2: Boolean;
@@ -158,9 +159,9 @@ type
     function doTask: Boolean; override;
     procedure DoOnTaskTimeout; override;
   public
-    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout, cashAmount: Integer);
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout, cashAmount: Integer);virtual;
 
-    procedure noticeMac2Got(mac2: string);
+    procedure noticeMac2Got(mac2: AnsiString);
 
     property BalanceAfterCharge: Integer read FBalanceAfterCharge;
   end;
@@ -178,7 +179,7 @@ type
     procedure DoOnTaskTimeout; override;//执行超时
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer;
-      cityCardNo, password: AnsiString);
+      cityCardNo, password: AnsiString);virtual;
 
     procedure noticeCmdRet(ret: Byte; amount: Integer);
   end;
@@ -195,7 +196,8 @@ type
     function doTask: Boolean; override;
     procedure DoOnTaskTimeout; override;//执行超时
   public
-    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; cityCardNo, password: string);
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting;
+      timeout: Integer; cityCardNo, password: string);virtual;
 
     procedure noticeCmdRet(ret: Byte; amount: Integer);
   end;
@@ -249,16 +251,20 @@ var
   balance: Integer;
 begin
   {$IFDEF test}
-    Sleep(200);
+    Sleep(1000);
+    currCityCardNo := '1234567890123456';
+    currCityCardBalance := 12345;
+
     if Assigned(FOnGetCityCardInfo) then
-      FOnGetCityCardInfo(FEdtCardInfo, '1234567890123456');
+      FOnGetCityCardInfo(FEdtCardInfo, currCityCardNo);
 
     if Assigned(FOnGetCardBalance) then
-      FOnGetCardBalance(FEdtCardBalance, 23134);
+      FOnGetCardBalance(FEdtCardBalance, currCityCardBalance);
 
     Result := True;
     Exit;
   {$ENDIF}
+
   Result := False;
   if not resetD8 then
   begin
@@ -341,6 +347,7 @@ begin
   tempInt := bytesToInt(hexStrToByteBuf(tempstr, False), 0, false);
   //Memo1.Lines.Add('卡片余额:' + FormatFloat('0.##', tempInt / 100.0) + '元');
   balance := tempInt;
+  currCityCardBalance := balance;
   if Assigned(FOnGetCardBalance) then
     FOnGetCardBalance(FEdtCardBalance, balance);
 
@@ -783,6 +790,7 @@ begin
   {$IFDEF test}
     Sleep(1000);
     taskRet := 0;
+    FBalanceAfterCharge := 12345;
     Result := True;
     Exit;
   {$ENDIF}
@@ -941,7 +949,7 @@ begin
   Result := True;
 end;
 
-procedure TCityCardCharge.noticeMac2Got(mac2: string);
+procedure TCityCardCharge.noticeMac2Got(mac2: AnsiString);
 begin
   FMac2 := mac2;
   FIsMac2Got := True;
@@ -1002,12 +1010,7 @@ begin
     errInfo := '充值卡校验失败，请确认密码正确';
     Exit;
   end;
-  if (FRet = 1) and (FAmount <> amountCharged * 100) then
-  begin
-    taskRet := 2;
-    errInfo := '充值卡面额与所选充值金额不符';
-    Exit;
-  end;
+
   taskRet := 0;
   Result := True;
 end;
@@ -1017,6 +1020,7 @@ begin
   FRet := ret;
   FAmount := amount;
   FIsCmdRet := True;
+  currPrepaidCardAmount := FAmount;
 end;
 
 { TQueryQFTBalance }
@@ -1054,7 +1058,7 @@ begin
     errInfo := '企福通余额查询失败，请确认密码';
     Exit;
   end;
-  if (FRet = 1) and (FAmount < amountCharged * 100) then
+  if (FRet = 1) and (FAmount < amountCharged) then
   begin
     taskRet := 2;
     errInfo := '企福通余额不足';
