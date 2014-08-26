@@ -234,11 +234,23 @@ type
     AdvSmoothLabel8: TAdvSmoothLabel;
     AdvSmoothLabel9: TAdvSmoothLabel;
     btnPrepaidCardAmountConfirm: TAdvSmoothButton;
-    RzPanel10: TRzPanel;
+    pnlInputZHBPassword: TRzPanel;
     RzPanel12: TRzPanel;
     AdvSmoothLabel10: TAdvSmoothLabel;
     edtZHBPassword: TAdvEdit;
-    btnInputZHBPasswordOk: TAdvSmoothButton;
+    btnZHBPasswordOk: TAdvSmoothButton;
+    pnlZHBBalanceConfirm: TRzPanel;
+    RzPanel10: TRzPanel;
+    AdvSmoothLabel11: TAdvSmoothLabel;
+    AdvSmoothLabel12: TAdvSmoothLabel;
+    AdvSmoothLabel13: TAdvSmoothLabel;
+    AdvSmoothLabel14: TAdvSmoothLabel;
+    AdvSmoothLabel15: TAdvSmoothLabel;
+    AdvSmoothButton3: TAdvSmoothButton;
+    AdvSmoothButton4: TAdvSmoothButton;
+    AdvSmoothButton5: TAdvSmoothButton;
+    AdvSmoothButton6: TAdvSmoothButton;
+    AdvSmoothButton33: TAdvSmoothButton;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -310,7 +322,9 @@ type
       Shift: TShiftState);
     procedure btnInputPrepaidCardPasswordOkClick(Sender: TObject);
     procedure btnPrepaidCardAmountConfirmClick(Sender: TObject);
-    procedure btnInputZHBPasswordOkClick(Sender: TObject);
+    procedure btnZHBPasswordOkClick(Sender: TObject);
+    procedure edtZHBPasswordKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -355,6 +369,7 @@ type
     function getBillAcceptorStatus: Byte;
     function getPrinterStatus: Byte;
     procedure initPnlPassword4ChargeCard(flag: Byte; maxLength: Integer);//flag 0:充值卡 1:企福通卡
+    procedure backToMainFrame;//回到主界面
     procedure doCityCardCharge(dlg: TfrmWaiting);
     procedure DoOnPayCash();
 
@@ -567,7 +582,7 @@ begin
         end
         else if mr = mrAbort then
         begin
-          btnHome.Click;
+          backToMainFrame;
         end;
       finally
         threadChargeCardCheck.Free;
@@ -587,7 +602,7 @@ begin
         end
         else if mr = mrAbort then
         begin
-          btnHome.Click;
+          backToMainFrame;
         end;
       finally
         threadQueryQFTBalance.Free;
@@ -621,7 +636,7 @@ begin
     mr := dlg.ShowModal;
     if mr = mrAbort then
     begin
-      btnhome.Click;
+      backToMainFrame;
     end;
   finally
     dlg.Free;
@@ -714,7 +729,7 @@ begin
     mr := dlg.ShowModal;
     if mr = mrAbort then
     begin
-      btnhome.Click;
+      backToMainFrame;
     end;
   finally
     dlg.Free;
@@ -875,7 +890,7 @@ begin
         end
         else if mr = mrAbort then
         begin
-          btnHome.Click;
+          backToMainFrame;
         end;
       finally
         threadCharge.Free;
@@ -884,7 +899,7 @@ begin
     end
     else if mr = mrAbort then
     begin
-      btnhome.Click;
+      backToMainFrame;
     end
   finally
     dlg.Free;
@@ -1017,6 +1032,11 @@ begin
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
+procedure TfrmMain.backToMainFrame;
+begin
+  btnHome.Click;
+end;
+
 procedure TfrmMain.btnBackClick(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageRegister';
@@ -1073,7 +1093,7 @@ begin
   end;
 end;
 
-procedure TfrmMain.btnInputZHBPasswordOkClick(Sender: TObject);
+procedure TfrmMain.btnZHBPasswordOkClick(Sender: TObject);
 var
   password: ansistring;
   dlg: TfrmWaiting;
@@ -1094,6 +1114,15 @@ begin
       if mr = mrOk then
       begin
         Notebook1.ActivePage := 'pageZHBBalanceConfirm';
+      end
+      else if mr = mrAbort then
+      begin
+        backToMainFrame;
+      end
+      else if mr = mrRetry then
+      begin
+        edtZHBPassword.Text := '';
+        edtZHBPassword.SetFocus;
       end;
     finally
       threadQueryQFTBalance.Free;
@@ -1117,7 +1146,7 @@ end;
 
 procedure TfrmMain.btnRegisterOkClick(Sender: TObject);
 begin
-  btnHome.Click;
+  backToMainFrame;
 end;
 
 procedure TfrmMain.btnZHBChargeClick(Sender: TObject);
@@ -1133,7 +1162,7 @@ begin
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
-      btnInputZHBPasswordOk.Enabled := False;
+      btnZHBPasswordOk.Enabled := False;
       edtZHBPassword.Text := '';
       Notebook1.ActivePage := 'pageInputZHBPassword';
       edtZHBPassword.SetFocus;
@@ -1174,7 +1203,7 @@ begin
         end
         else if mr = mrAbort then
         begin
-          btnHome.Click;
+          backToMainFrame;
         end;
       finally
         threadCharge.Free;
@@ -1183,7 +1212,7 @@ begin
     end
     else if mr = mrAbort then
     begin
-      btnhome.Click;
+      backToMainFrame;
     end
   finally
     dlg.Free;
@@ -1245,6 +1274,15 @@ begin
     btnInputPrepaidCardPasswordOk.Enabled := False;
 end;
 
+procedure TfrmMain.edtZHBPasswordKeyUp(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  if Length(Trim(edtZHBPassword.Text)) = edtZHBPassword.MaxLength then
+    btnZHBPasswordOk.Enabled := True
+  else
+    btnZHBPasswordOk.Enabled := False;
+end;
+
 procedure TfrmMain.connectToGateway;
 begin
   DataServer.Host := GlobalParam.Gateway.Host;
@@ -1287,7 +1325,7 @@ begin
     end
     else if mr = mrAbort then
     begin
-      btnHome.Click;
+      backToMainFrame;
     end;
   finally
     threadCharge.Free;
@@ -1726,7 +1764,9 @@ begin
   setCompentInParentCenter(RzPanel6);
   setCompentInParentCenter(RzPanel8);
   setCompentInParentCenter(RzPanel9);
+  setCompentInParentCenter(RzPanel10);
   setCompentInParentCenter(RzPanel11);
+  setCompentInParentCenter(RzPanel12);
   setCompentInParentCenter(RzPanel73);
   setCompentInParentCenter(RzPanel74);
   setCompentInParentCenter(RzPanel75);
@@ -1779,7 +1819,7 @@ begin
   if (overTime <= 1) then
   begin
     overTime := 60;
-    btnHome.Click;
+    backToMainFrame;
   end
   else
   begin

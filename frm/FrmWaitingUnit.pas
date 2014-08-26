@@ -27,6 +27,7 @@ type
     procedure noticeTimeout;
     procedure noticeFail;
     procedure noticeMROK;
+    procedure noticeRetry;
   end;
 
 var
@@ -77,6 +78,11 @@ end;
 procedure TfrmWaiting.noticeMROK;
 begin
   ModalResult := mrOk;
+end;
+
+procedure TfrmWaiting.noticeRetry;
+begin
+  ModalResult := mrRetry;
 end;
 
 procedure TfrmWaiting.noticeTimeout;

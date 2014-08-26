@@ -93,7 +93,7 @@ type
     timeout: Integer;
   protected
     {0:正常  1: 返回继续循环执行  2：关键操作非等待可解决的直接退出，不继续
-     3:执行失败，且需退钱
+     3:执行失败，且需退钱  4:充值卡、账户宝密码错误，退出需用户重新确认
     }
     taskRet: Byte;
     amountRefund: Integer;//退款金额
@@ -106,6 +106,7 @@ type
     procedure DoOnTaskTimeout; virtual;//执行超时
     procedure DoOnTaskFail; virtual;//任务中关键操作失败，非等待可解决的，提前退出
     procedure DoOnTaskWithRefund;virtual;//需要进行退钱打印凭条
+    procedure DoOnTaskRetry; virtual;//需用户重新确认信息，界面不跳转
     procedure printRefundInfo(amount: Integer; cardNo: ansistring);
 
     function waitForCmdRet: Boolean;
@@ -412,6 +413,16 @@ begin
   frmWaiting.noticeMROK;
 end;
 
+procedure TBaseThread.DoOnTaskRetry;
+begin
+  if errInfo <> '' then
+  begin
+    setWaitingTip(errInfo, True);
+    Sleep(3000);
+  end;
+  frmWaiting.noticeRetry;
+end;
+
 procedure TBaseThread.DoOnTaskTimeout;
 begin
   frmWaiting.noticeTimeout;
@@ -438,7 +449,7 @@ begin
   taskRet := 0;
   while not doTask do
   begin
-    if taskRet in [2, 3] then
+    if taskRet in [2, 3, 4] then
     begin
       Break;
     end;
@@ -464,6 +475,10 @@ begin
     else if taskRet = 3 then
     begin
       DoOnTaskWithRefund;
+    end
+    else if taskRet = 4 then
+    begin
+      DoOnTaskRetry;
     end;
   end
   else
@@ -1058,10 +1073,10 @@ begin
     errInfo := '企福通余额查询失败，请确认密码';
     Exit;
   end;
-  if (FRet = 1) and (FAmount < amountCharged) then
+  if (FRet = 2) then
   begin
-    taskRet := 2;
-    errInfo := '企福通余额不足';
+    taskRet := 4;
+    errInfo := '账户宝密码不正确，请确认';
     Exit;
   end;
   taskRet := 0;
