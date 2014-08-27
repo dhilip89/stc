@@ -231,8 +231,8 @@ type
     RzPanel11: TRzPanel;
     AdvSmoothLabel6: TAdvSmoothLabel;
     AdvSmoothLabel7: TAdvSmoothLabel;
-    AdvSmoothLabel8: TAdvSmoothLabel;
-    AdvSmoothLabel9: TAdvSmoothLabel;
+    lblCityCardBalanceOnPnlPrepaidCard: TAdvSmoothLabel;
+    lblPrepaidCardAmount: TAdvSmoothLabel;
     btnPrepaidCardAmountConfirm: TAdvSmoothButton;
     pnlInputZHBPassword: TRzPanel;
     RzPanel12: TRzPanel;
@@ -243,14 +243,15 @@ type
     RzPanel10: TRzPanel;
     AdvSmoothLabel11: TAdvSmoothLabel;
     AdvSmoothLabel12: TAdvSmoothLabel;
-    AdvSmoothLabel13: TAdvSmoothLabel;
-    AdvSmoothLabel14: TAdvSmoothLabel;
+    lblCityCardBalanceOnPnlZHB: TAdvSmoothLabel;
+    lblZHBBalance: TAdvSmoothLabel;
     AdvSmoothLabel15: TAdvSmoothLabel;
-    AdvSmoothButton3: TAdvSmoothButton;
-    AdvSmoothButton4: TAdvSmoothButton;
-    AdvSmoothButton5: TAdvSmoothButton;
-    AdvSmoothButton6: TAdvSmoothButton;
-    AdvSmoothButton33: TAdvSmoothButton;
+    btnZHBCharge50: TAdvSmoothButton;
+    btnZHBCharge100: TAdvSmoothButton;
+    btnZHBCharge200: TAdvSmoothButton;
+    btnZHBCharge30: TAdvSmoothButton;
+    btnZHBChargeAllBalance: TAdvSmoothButton;
+    AdvSmoothLabel8: TAdvSmoothLabel;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -325,6 +326,11 @@ type
     procedure btnZHBPasswordOkClick(Sender: TObject);
     procedure edtZHBPasswordKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
+    procedure btnZHBChargeAllBalanceClick(Sender: TObject);
+    procedure btnZHBCharge100Click(Sender: TObject);
+    procedure btnZHBCharge200Click(Sender: TObject);
+    procedure btnZHBCharge30Click(Sender: TObject);
+    procedure btnZHBCharge50Click(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -368,10 +374,11 @@ type
     function getD8Status: Byte;
     function getBillAcceptorStatus: Byte;
     function getPrinterStatus: Byte;
-    procedure initPnlPassword4ChargeCard(flag: Byte; maxLength: Integer);//flag 0:充值卡 1:企福通卡
+    procedure initPnlPassword4ChargeCard(flag: Byte; maxLength: Integer);//flag 0:充值卡 1:账户宝
     procedure backToMainFrame;//回到主界面
     procedure doCityCardCharge(dlg: TfrmWaiting);
     procedure DoOnPayCash();
+    procedure setBtnZHBBalanceChargeEnabled;
 
     procedure waitForInsertBankCard(Sender: TObject);
     procedure waitForBankCardPassTimer(Sender: TObject);
@@ -422,7 +429,7 @@ implementation
 
 uses
   System.DateUtils, uGloabVar, drv_unit, GatewayServerUnit,
-  CmdStructUnit, itlssp;
+  CmdStructUnit, itlssp, ConstDefineUnit;
 
 {$R *.dfm}
 
@@ -591,7 +598,7 @@ begin
     end
     else
     begin
-      dlg.setWaitingTip('正在查询企福通余额，请稍后...');
+      dlg.setWaitingTip('正在查询账户宝余额，请稍后...');
       threadQueryQFTBalance := TQueryQFTBalance.Create(True, dlg, 10, currCityCardNo, Trim(edtPasswordForChargeCard.Text));
       try
         threadQueryQFTBalance.start;
@@ -620,6 +627,7 @@ var
   mr: TModalResult;
   threadQueryCityCard: TQueryCityCardBalance;
 begin
+  currChargeType := 0;
   isCityCardCharging := True;
   edtCityCardInfoWhenChosingAmount.Text := '';
   edtCityCardBalanceWhenChosingAmount.Text := '';
@@ -827,7 +835,7 @@ end;
 
 procedure TfrmMain.btnCashCharge50Click(Sender: TObject);
 begin
-  amountCharged := 50 * 100;
+  amountCharged := AMOUNT_50_YUAN;
 //  setBtnPayTypeVisible(False, False, True, True, True);
 //  Notebook1.ActivePage := 'pageSelectPayType';
   DoOnPayCash;
@@ -835,7 +843,7 @@ end;
 
 procedure TfrmMain.btnCashCharge100Click(Sender: TObject);
 begin
-  amountCharged := 100 * 100;
+  amountCharged := AMOUNT_100_YUAN;
 //  setBtnPayTypeVisible(False, False, True, True, True);
 //  Notebook1.ActivePage := 'pageSelectPayType';
   DoOnPayCash;
@@ -843,7 +851,7 @@ end;
 
 procedure TfrmMain.btnCashCharge200Click(Sender: TObject);
 begin
-  amountCharged := 200 * 100;
+  amountCharged := AMOUNT_200_YUAN;
 //  setBtnPayTypeVisible(False, False, True, True, True);
 //  Notebook1.ActivePage := 'pageSelectPayType';
   DoOnPayCash;
@@ -884,7 +892,7 @@ begin
         begin
           AdvSmoothLabel75.Visible := False;
           newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
-          AdvSmoothLabel74.Caption.Text := '充值后卡片余额：' + FormatFloat('0.0#', newBalance) + '元';
+          AdvSmoothLabel74.Caption.Text := '充值后龙城通片余额：' + FormatFloat('0.0#', newBalance) + '元';
           AdvSmoothLabel74.Visible := True;
           Notebook1.ActivePage := 'pageMobileTopUpSuccess';
         end
@@ -994,6 +1002,7 @@ begin
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
+      currChargeType := 2;
       btnInputPrepaidCardPasswordOk.Enabled := False;
       edtPrepaidCardPassword.Text := '';
       Notebook1.ActivePage := 'pageInputPrepaidCardPassword';
@@ -1034,6 +1043,10 @@ end;
 
 procedure TfrmMain.backToMainFrame;
 begin
+  currCityCardBalance := 0;
+  currPrepaidCardAmount := 0;
+  currZHBBalance := 0;
+
   btnHome.Click;
 end;
 
@@ -1082,6 +1095,9 @@ begin
       mr := dlg.ShowModal;
       if mr = mrOk then
       begin
+        bankCardNoOrPassword := password;
+        lblCityCardBalanceOnPnlPrepaidCard.Caption.Text := FormatFloat('0.00', currCityCardBalance * 1.0 / 100) + '元';
+        lblPrepaidCardAmount.Caption.Text := FormatFloat('0.00', currPrepaidCardAmount * 1.0 / 100) + '元';
         Notebook1.ActivePage := 'pagePrepaidCardAmountConfirm';
       end;
     finally
@@ -1113,6 +1129,10 @@ begin
       mr := dlg.ShowModal;
       if mr = mrOk then
       begin
+        bankCardNoOrPassword := password;
+        setBtnZHBBalanceChargeEnabled;
+        lblCityCardBalanceOnPnlZHB.Caption.Text := FormatFloat('0.00', currCityCardBalance * 1.0 / 100) + '元';
+        lblZHBBalance.Caption.Text := FormatFloat('0.00', currZHBBalance * 1.0 / 100) + '元';
         Notebook1.ActivePage := 'pageZHBBalanceConfirm';
       end
       else if mr = mrAbort then
@@ -1149,6 +1169,51 @@ begin
   backToMainFrame;
 end;
 
+procedure TfrmMain.btnZHBCharge100Click(Sender: TObject);
+begin
+  if currZHBBalance < AMOUNT_100_YUAN then
+    Exit;
+
+  amountCharged := AMOUNT_100_YUAN;
+  doCityCardCharge(nil);
+end;
+
+procedure TfrmMain.btnZHBCharge200Click(Sender: TObject);
+begin
+  if currZHBBalance < AMOUNT_200_YUAN then
+    Exit;
+
+  amountCharged := AMOUNT_200_YUAN;
+  doCityCardCharge(nil);
+end;
+
+procedure TfrmMain.btnZHBCharge30Click(Sender: TObject);
+begin
+  if currZHBBalance < AMOUNT_30_YUAN then
+    Exit;
+
+  amountCharged := AMOUNT_30_YUAN;
+  doCityCardCharge(nil);
+end;
+
+procedure TfrmMain.btnZHBCharge50Click(Sender: TObject);
+begin
+  if currZHBBalance < AMOUNT_50_YUAN then
+    Exit;
+
+  amountCharged := AMOUNT_50_YUAN;
+  doCityCardCharge(nil);
+end;
+
+procedure TfrmMain.btnZHBChargeAllBalanceClick(Sender: TObject);
+begin
+  if currZHBBalance <= 0 then
+    Exit;
+
+  amountCharged := currZHBBalance;
+  doCityCardCharge(nil);
+end;
+
 procedure TfrmMain.btnZHBChargeClick(Sender: TObject);
 var
   dlg: Tfrmwaiting;
@@ -1162,6 +1227,7 @@ begin
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
+      currChargeType := 3;
       btnZHBPasswordOk.Enabled := False;
       edtZHBPassword.Text := '';
       Notebook1.ActivePage := 'pageInputZHBPassword';
@@ -1550,7 +1616,7 @@ begin
   end
   else if flag = 1 then
   begin
-    lblPassword4ChargeCardOrQFT.Caption.Text := '企福通密码：';
+    lblPassword4ChargeCardOrQFT.Caption.Text := '账户宝密码：';
   end;
   btnPasswordOK.Enabled := False;
 end;
@@ -1721,6 +1787,15 @@ begin
     borderLeft.Width := borderLeft.Width + btnPayBankCard.Width div 2;
     borderRight.Width := borderRight.Width + btnPayBankCard.Width div 2;
   end;
+end;
+
+procedure TfrmMain.setBtnZHBBalanceChargeEnabled;
+begin
+  btnZHBCharge30.Enabled := currZHBBalance >= AMOUNT_30_YUAN;
+  btnZHBCharge50.Enabled := currZHBBalance >= AMOUNT_50_YUAN;
+  btnZHBCharge100.Enabled := currZHBBalance >= AMOUNT_100_YUAN;
+  btnZHBCharge200.Enabled := currZHBBalance >= AMOUNT_200_YUAN;
+  btnZHBChargeAllBalance.Enabled := currZHBBalance > 0;
 end;
 
 procedure TfrmMain.setCompentInParentCenter(comp: TWinControl);

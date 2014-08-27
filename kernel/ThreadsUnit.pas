@@ -128,11 +128,20 @@ type
   protected
     procedure Execute; override;
   public
-    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; edtCardInfo, edtCardBalance: TCustomEdit);virtual;
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; edtCardInfo, edtCardBalance: TCustomEdit);
     destructor Destroy; override;
 
     property OnGetCityCardInfo: TOnGetCityCardInfo read FOnGetCityCardInfo write FOnGetCityCardInfo;
     property OnGetCardBalance: TOnGetCardBalance read FOnGetCardBalance write FOnGetCardBalance;
+  end;
+
+  //查询交易明细
+  TQueryCityCardDetail = class(TBaseThread)
+  protected
+    function doTask: Boolean; override;
+  public
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer);
+    destructor Destroy; override;
   end;
 
   //读取纸币总额
@@ -160,7 +169,7 @@ type
     function doTask: Boolean; override;
     procedure DoOnTaskTimeout; override;
   public
-    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout, cashAmount: Integer);virtual;
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout, cashAmount: Integer);
 
     procedure noticeMac2Got(mac2: AnsiString);
 
@@ -185,7 +194,7 @@ type
     procedure noticeCmdRet(ret: Byte; amount: Integer);
   end;
 
-  //企福通余额查询
+  //账户宝余额查询
   TQueryQFTBalance = class(TBaseThread)
   private
     FCityCardNo: AnsiString;
@@ -198,7 +207,7 @@ type
     procedure DoOnTaskTimeout; override;//执行超时
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting;
-      timeout: Integer; cityCardNo, password: string);virtual;
+      timeout: Integer; cityCardNo, password: string);
 
     procedure noticeCmdRet(ret: Byte; amount: Integer);
   end;
@@ -447,6 +456,7 @@ begin
   sTime := Now;
   isTimeout := False;
   taskRet := 0;
+  addSysLog(Self.ClassName + ' execute');
   while not doTask do
   begin
     if taskRet in [2, 3, 4] then
@@ -782,7 +792,7 @@ function TCityCardCharge.doTask: Boolean;
 var
   tip: string;
   cardNo, asn, tsn: TByteDynArray;
-  OperType: Byte; //操作类型 00现金充值，01银行卡充值，02充值卡充值，03企福通充值/专有账户充值
+  OperType: Byte; //操作类型 00现金充值，01银行卡充值，02充值卡充值，03账户宝充值/专有账户充值
   oldBalance: Integer;//充值前余额
   chargeTime, fakeRandom, mac1: TByteDynArray;
   sendLen, recvLen: SmallInt;
@@ -805,7 +815,7 @@ begin
   {$IFDEF test}
     Sleep(1000);
     taskRet := 0;
-    FBalanceAfterCharge := 12345;
+    FBalanceAfterCharge := currCityCardBalance + amountCharged;
     Result := True;
     Exit;
   {$ENDIF}
@@ -955,7 +965,7 @@ begin
   cmd.ChargeType := currChargeType;
   if (currChargeType <> 0) then
   begin
-    CopyMemory(@cmd.BankCardNo[0], @BytesOf(bankCardNo)[0], Min(Length(cmd.BankCardNo), Length(bankCardNo)));
+    CopyMemory(@cmd.BankCardNo[0], @BytesOf(bankCardNoOrPassword)[0], Min(Length(cmd.BankCardNo), Length(bankCardNoOrPassword)));
   end;
   CopyMemory(@cmd.CityCardNo, @cardNo[0], Length(cardNo));
 
@@ -1051,13 +1061,14 @@ end;
 
 procedure TQueryQFTBalance.DoOnTaskTimeout;
 begin
-  setWaitingTip('查询企福通余额超时，请稍后再试');
+  setWaitingTip('查询账户宝余额超时，请稍后再试');
   Sleep(3000);
   inherited;
 end;
 
 function TQueryQFTBalance.doTask: Boolean;
 begin
+  addSysLog('query zhb balance');
   Result := False;
 
   FIsCmdRet := False;
@@ -1070,7 +1081,7 @@ begin
   if FRet = 0 then
   begin
     taskRet := 2;
-    errInfo := '企福通余额查询失败，请确认密码';
+    errInfo := '账户宝余额查询失败，请确认密码';
     Exit;
   end;
   if (FRet = 2) then
@@ -1088,6 +1099,75 @@ begin
   FRet := ret;
   FAmount := amount;
   FIsCmdRet := True;
+  currZHBBalance := FAmount;
+end;
+
+{ TQueryCityCardDetail }
+
+constructor TQueryCityCardDetail.Create(CreateSuspended: Boolean;
+  dlg: TfrmWaiting; timeout: Integer);
+begin
+  inherited Create(CreateSuspended, dlg, timeout);
+end;
+
+destructor TQueryCityCardDetail.Destroy;
+begin
+  inherited;
+end;
+
+function TQueryCityCardDetail.doTask: Boolean;
+var
+  sendLen, recvLen: SmallInt;
+  sendBuf: array[0..512] of AnsiChar;
+  recvBuf: array[0..512] of AnsiChar;
+  ret: SmallInt;
+  sendHexStr: ansistring;
+  tempStr: AnsiString;
+  offset:Integer;
+  tempInt: Integer;
+  cardInfo: string;
+  balance: Integer;
+  I: Integer;
+begin
+  {$IFDEF test}
+    sleep(2000);
+
+    Result := True;
+    Exit;
+  {$ENDIF}
+
+  Result := False;
+  if not resetD8 then
+  begin
+    Exit;
+  end;
+
+  //交易明细  0018H
+  for I := 1 to 10 do
+  begin
+    sendHexStr := '00B2' + inttohex(i, 2) +  'C400';//命令组成参见手册7.6.2
+    CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+
+    sendLen := Length(sendHexStr) div 2;
+    recvLen := 0;
+    ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+    if (ret <> 0) or (checkRecvBufEndWith9000(recvBuf, recvLen) <> BILL_OK) then
+    begin
+      addSysLog('read card transaction detail err, recvBuf:' + recvBuf);
+      Exit;
+    end;
+
+    offset := 0;
+    SetLength(tempStr, 8 * 2);
+    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+    cardInfo := tempStr;//'卡号:'
+    currCityCardNo := tempStr;
+  //
+  //  if Assigned(FOnGetCityCardInfo) then
+  //    FOnGetCityCardInfo(FEdtCardInfo, cardInfo);
+
+  end;
+  Result := True;
 end;
 
 end.

@@ -12,6 +12,10 @@ interface
 uses Messages;
 const
 //====================================================================
+  AMOUNT_30_YUAN = 30 * 100;
+  AMOUNT_50_YUAN = 50 * 100;
+  AMOUNT_100_YUAN = 100 * 100;
+  AMOUNT_200_YUAN = 200 * 100;
 
   //发出命令的执行状态
   CMD_SNDNODO = 0; // 已发送未执行
