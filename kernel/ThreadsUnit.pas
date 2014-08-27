@@ -1128,6 +1128,9 @@ var
   cardInfo: string;
   balance: Integer;
   I: Integer;
+  transDate, transTime: ansistring;
+  transType, transAmount:ansistring;
+  transTerminalId: ansistring;
 begin
   {$IFDEF test}
     sleep(2000);
