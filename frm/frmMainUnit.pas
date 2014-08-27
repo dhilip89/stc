@@ -252,6 +252,14 @@ type
     btnZHBCharge30: TAdvSmoothButton;
     btnZHBChargeAllBalance: TAdvSmoothButton;
     AdvSmoothLabel8: TAdvSmoothLabel;
+    AdvSmoothButton3: TAdvSmoothButton;
+    AdvSmoothButton4: TAdvSmoothButton;
+    pnlQueryBiz: TRzPanel;
+    RzPanel13: TRzPanel;
+    btnCityCardBalanceQuery: TAdvSmoothButton;
+    btnCityCardDetailQuery: TAdvSmoothButton;
+    btnZHBBalanceQuery: TAdvSmoothButton;
+    RzPanel14: TRzPanel;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -331,6 +339,9 @@ type
     procedure btnZHBCharge200Click(Sender: TObject);
     procedure btnZHBCharge30Click(Sender: TObject);
     procedure btnZHBCharge50Click(Sender: TObject);
+    procedure AdvSmoothButton39Click(Sender: TObject);
+    procedure AdvSmoothButton4Click(Sender: TObject);
+    procedure AdvSmoothButton1Click(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -567,6 +578,11 @@ begin
   Timer4.OnTimer := waitForInputWEGTimer;
   Timer4.Interval := 300;
   Timer4.Enabled := True;
+end;
+
+procedure TfrmMain.AdvSmoothButton1Click(Sender: TObject);
+begin
+  Notebook1.ActivePage := 'pageQueryBiz';
 end;
 
 procedure TfrmMain.btnPasswordOKClick(Sender: TObject);
@@ -946,6 +962,11 @@ begin
   Notebook1.ActivePage := 'pageMobileTopUpSuccess';
 end;
 
+procedure TfrmMain.AdvSmoothButton39Click(Sender: TObject);
+begin
+  backToMainFrame;
+end;
+
 procedure TfrmMain.AdvSmoothButton40Click(Sender: TObject);
 begin
   try
@@ -981,6 +1002,12 @@ end;
 procedure TfrmMain.AdvSmoothButton44Click(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageBankBiz';
+end;
+
+procedure TfrmMain.AdvSmoothButton4Click(Sender: TObject);
+begin
+  initGlobalVar;
+  Notebook1.ActivePage := 'pageSelectChargeType';
 end;
 
 procedure TfrmMain.btnPrepaidCardAmountConfirmClick(Sender: TObject);
@@ -1043,10 +1070,7 @@ end;
 
 procedure TfrmMain.backToMainFrame;
 begin
-  currCityCardBalance := 0;
-  currPrepaidCardAmount := 0;
-  currZHBBalance := 0;
-
+  initGlobalVar;
   btnHome.Click;
 end;
 
@@ -1263,7 +1287,7 @@ begin
         begin
           AdvSmoothLabel75.Visible := False;
           newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
-          AdvSmoothLabel74.Caption.Text := '充值后卡片余额：' + FormatFloat('0.0#', newBalance) + '元';
+          AdvSmoothLabel74.Caption.Text := '充值后龙城通卡余额：' + FormatFloat('0.0#', newBalance) + '元';
           AdvSmoothLabel74.Visible := True;
           Notebook1.ActivePage := 'pageMobileTopUpSuccess';
         end
@@ -1385,7 +1409,7 @@ begin
     begin
       AdvSmoothLabel75.Visible := False;
       newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
-      AdvSmoothLabel74.Caption.Text := '充值后卡片余额：' + FormatFloat('0.0#', newBalance) + '元';
+      AdvSmoothLabel74.Caption.Text := '充值后龙城通卡余额：' + FormatFloat('0.0#', newBalance) + '元';
       AdvSmoothLabel74.Visible := True;
       Notebook1.ActivePage := 'pageMobileTopUpSuccess';
     end
@@ -1665,6 +1689,10 @@ begin
     isCityCardCharging := False;
     isNewCard := False;
   end
+  else if Notebook1.ActivePage = 'pageMobileTopUpSuccess' then
+  begin
+    setCountdownTimerEnabled(True, 30);
+  end
   else
   begin
     setCountdownTimerEnabled(True);
@@ -1791,11 +1819,11 @@ end;
 
 procedure TfrmMain.setBtnZHBBalanceChargeEnabled;
 begin
-  btnZHBCharge30.Enabled := currZHBBalance >= AMOUNT_30_YUAN;
-  btnZHBCharge50.Enabled := currZHBBalance >= AMOUNT_50_YUAN;
-  btnZHBCharge100.Enabled := currZHBBalance >= AMOUNT_100_YUAN;
-  btnZHBCharge200.Enabled := currZHBBalance >= AMOUNT_200_YUAN;
-  btnZHBChargeAllBalance.Enabled := currZHBBalance > 0;
+  btnZHBCharge30.Visible := currZHBBalance >= AMOUNT_30_YUAN;
+  btnZHBCharge50.Visible := currZHBBalance >= AMOUNT_50_YUAN;
+  btnZHBCharge100.Visible := currZHBBalance >= AMOUNT_100_YUAN;
+  btnZHBCharge200.Visible := currZHBBalance >= AMOUNT_200_YUAN;
+  btnZHBChargeAllBalance.Visible := currZHBBalance > 0;
 end;
 
 procedure TfrmMain.setCompentInParentCenter(comp: TWinControl);

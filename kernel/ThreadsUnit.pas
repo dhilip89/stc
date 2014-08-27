@@ -86,7 +86,8 @@ uses
 type
   TOnGetCityCardInfo = procedure (edt: TCustomEdit; cardInfo: string) of object;
   TOnGetCardBalance = procedure (edt: TCustomEdit; cardBalance: Integer) of object;
-
+  TOnQueryCityCardDetail = procedure (transDate, transTime, transTerminalId: ansistring;
+                                      transType, transAmount: Integer) of object;
   TBaseThread = class(TThread)
   private
     frmWaiting: TfrmWaiting;
@@ -137,11 +138,16 @@ type
 
   //查询交易明细
   TQueryCityCardDetail = class(TBaseThread)
+  private
+    FOnQueryCityCardDetail: TOnQueryCityCardDetail;
+    procedure SetOnQueryCityCardDetail(const Value: TOnQueryCityCardDetail);
   protected
     function doTask: Boolean; override;
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer);
     destructor Destroy; override;
+
+    property OnQueryCityCardDetail: TOnQueryCityCardDetail read FOnQueryCityCardDetail write SetOnQueryCityCardDetail;
   end;
 
   //读取纸币总额
@@ -580,12 +586,13 @@ begin
   Result := False;
   tip := '需 付 款 金 额:%-3d元'#13#10 +
          '已 投 币 金 额:%-3d元';
-  setWaitingTip(Format(tip, [FCashAmount, 0]));
+  setWaitingTip(Format(tip, [FCashAmount div 100, 0]));
 
   {$IFDEF test}
     Sleep(2000);
-    FAmountRead := FCashAmount;
-    setWaitingTip(Format(tip, [FCashAmount, FAmountRead]));
+    FAmountRead := FCashAmount div 100;
+    setWaitingTip(Format(tip, [FCashAmount div 100, FAmountRead]));
+    Sleep(2000);
     Result := True;
     taskRet := 0;
     Exit;
@@ -724,7 +731,7 @@ begin
               begin
                 Inc(FAmountRead, tempAmount);//stacked;
                 tempAmount := 0;
-                setWaitingTip(Format(tip, [FCashAmount, FAmountRead]));
+                setWaitingTip(Format(tip, [FCashAmount div 100, FAmountRead]));
                 //Memo1.Lines.Add('totalAmount:' + IntToStr(amountRead));
               end;
             $EC: tempAmount := 0;
@@ -1128,9 +1135,8 @@ var
   cardInfo: string;
   balance: Integer;
   I: Integer;
-  transDate, transTime: ansistring;
-  transType, transAmount:ansistring;
-  transTerminalId: ansistring;
+  transDate, transTime, transTerminalId: ansistring;
+  transType, transAmount: Integer;
 begin
   {$IFDEF test}
     sleep(2000);
@@ -1142,6 +1148,7 @@ begin
   Result := False;
   if not resetD8 then
   begin
+    taskRet := 1;
     Exit;
   end;
 
@@ -1157,20 +1164,55 @@ begin
     if (ret <> 0) or (checkRecvBufEndWith9000(recvBuf, recvLen) <> BILL_OK) then
     begin
       addSysLog('read card transaction detail err, recvBuf:' + recvBuf);
-      Exit;
+      Break;
     end;
 
-    offset := 0;
-    SetLength(tempStr, 8 * 2);
-    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-    cardInfo := tempStr;//'卡号:'
-    currCityCardNo := tempStr;
-  //
-  //  if Assigned(FOnGetCityCardInfo) then
-  //    FOnGetCityCardInfo(FEdtCardInfo, cardInfo);
+    { 1-2     交易序号
+      3-5     透支限额
 
+      6-9     交易金额
+      10      交易类型标识
+      11-16   终端编号
+      17-20   交易日期
+      21-23   交易时间
+    }
+    offset := 5 * 2;
+    SetLength(tempStr, 4 * 2);
+    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+    transAmount := bytesToInt(hexStrToByteBuf(tempstr, False), 0, false);
+
+    Inc(offset, 4 * 2);
+    SetLength(tempStr, 1 * 2);
+    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+    transType := hexStrToByteBuf(tempStr, False)[0];
+
+    Inc(offset, 1 * 2);
+    SetLength(tempStr, 6 * 2);
+    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+    transTerminalId := tempStr;
+
+    Inc(offset, 6 * 2);
+    SetLength(tempStr, 4 * 2);
+    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+    transDate := tempStr;
+
+    Inc(offset, 4 * 2);
+    SetLength(tempStr, 3 * 2);
+    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+    transTime := tempStr;
+
+
+    if Assigned(FOnQueryCityCardDetail) then
+      FOnQueryCityCardDetail(transDate, transTime, transTerminalId, transType, transAmount);
   end;
+  taskRet := 0;
   Result := True;
+end;
+
+procedure TQueryCityCardDetail.SetOnQueryCityCardDetail(
+  const Value: TOnQueryCityCardDetail);
+begin
+  FOnQueryCityCardDetail := Value;
 end;
 
 end.

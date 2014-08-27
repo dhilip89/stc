@@ -36,6 +36,7 @@ function split(src,dec : string):TStringList;
 function BCD2Byte(bcd: Byte): Byte;
 procedure StrToBcdByteArray(const srcStr: string; var bcdAry: array of Byte; aryLength: Integer);
 
+procedure initGlobalVar;
 function resetD8: Boolean;
 procedure addSysLog(logStr: string);
 function bytesToStr(buf: array of Byte): ansistring;
@@ -140,7 +141,14 @@ begin
   begin
     bcdAry[i] := StrToInt('$' + Copy(s, 2 * i + 1, 2));
   end;  
-end;  
+end;
+
+procedure initGlobalVar;
+begin
+  currCityCardBalance := 0;
+  currPrepaidCardAmount := 0;
+  currZHBBalance := 0;
+end;
 
 function resetD8: Boolean;
 var

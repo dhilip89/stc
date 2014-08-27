@@ -1,0 +1,115 @@
+; BRTKDRV.INF
+;
+; INF file for Brightek driver
+;
+
+[Version]
+Signature="$Windows NT$"
+Provider=%BRTKSTR%
+LayoutFile=ntprint.inf
+ClassGUID={4D36E979-E325-11CE-BFC1-08002BE10318}
+Class=Printer
+DriverVer=11/09/2012,1.00.007
+
+;
+; Manufacturer section.
+;
+; This section lists all of the manufacturers 
+; that we will display in the Dialog box
+;
+[Manufacturer]
+"Brightek"=Brightek, NTx86, NTamd64
+
+;
+; Model sections. 
+; 
+; Each section here corresponds with an entry listed in the
+; [Manufacturer] section, above. The models will be displayed in the order
+; that they appear in the INF file.
+;
+
+[Brightek]
+"Brightek Series Printer"      = BRTKDRV
+
+[Brightek.NTx86]
+"Brightek Series Printer"      = BRTKDRV
+
+[Brightek.NTamd64]
+"Brightek Series Printer"      = BRTKDRV
+
+;
+; Installer Sections
+;
+; These sections control file installation, and reference all files that
+; need to be copied. The section name will be assumed to be the driver
+; file, unless there is an explicit DriverFile section listed.
+;
+
+[BRTKDRV]
+CopyFiles=@BRTKDRV.GPD
+CopyFiles=@BRTKDRV.INI
+CopyFiles=BRTK
+DataFile=BRTKDRV.GPD
+DataSection=UNIDRV_DATA
+Include=NTPRINT.INF
+Needs=UNIDRV.OEM,UNIDRV_DATA
+
+
+; Copy Sections
+;
+; Lists of files that are actually copied. These sections are referenced
+; from the installer sections, above. Only create a section if it contains
+; two or more files (if we only copy a single file, identify it in the
+; installer section, using the @filename notation) or if it's a color
+; profile (since the DestinationDirs can only handle sections, and not
+; individual files).
+;
+
+[BRTK]
+BRTKCORE.DLL
+BRTKUI.DLL
+
+;
+; Data Sections
+;
+
+; These sections contain data that is shared between devices.
+;
+
+
+
+;
+;  Location of source files not in Layout.inf.
+;
+
+[SourceDisksNames]
+100 = %Floppy%
+
+[SourceDisksFiles.x86]
+brtkcore.dll    = 100,,
+BRTKUI.DLL     = 100,,
+
+[SourceDisksFiles.amd64]
+brtkcore.dll    = 100,,
+BRTKUI.DLL     = 100,,
+
+[SourceDisksFiles]
+BRTKDRV.GPD    = 100
+BRTKDRV.INI    = 100
+
+;
+; Call SetupSetDirectoryId with 66000 to set the target directory at runtime
+; (depending on which environment drivers are getting installed)
+;
+
+[DestinationDirs]
+DefaultDestDir=66000
+
+;
+; Localizable Strings
+;
+[Strings]
+BRTKSTR="Brightek"
+Floppy="Brightek Printing System Ver.1"
+
+

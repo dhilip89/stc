@@ -1,0 +1,382 @@
+*%
+*% Purpose:	Configured for all Brightek thermal printers
+*% Date:	2012-08-18
+*%
+*GPDSpecVersion: "1.0.7"
+*GPDFileName: "BRTKDRV.GPD"
+*GPDFileVersion: "1.0.7"
+*Include: "StdNames.gpd"
+*ModelName: "Brightek Series Printer"
+*MasterUnits: PAIR(18000, 23400)
+*PrinterType: SERIAL
+*ResourceDLL: "BRTKUI.dll"
+
+*% -----------------------------------------------
+*% Standard Feature
+*%
+*% -----------------------------------------------
+
+*Feature: Orientation
+{
+    *rcNameID: =ORIENTATION_DISPLAY
+    *DefaultOption: PORTRAIT
+    *Option: PORTRAIT
+    {
+        *rcNameID: =PORTRAIT_DISPLAY
+    }
+    *Option: LANDSCAPE_CC270
+    {
+        *rcNameID: =LANDSCAPE_DISPLAY
+    }
+}
+*Feature: InputBin
+{
+    *rcNameID: =PAPER_SOURCE_DISPLAY
+    *DefaultOption: MANUAL
+    *Option: AUTO
+    {
+        *rcNameID: =AUTO_DISPLAY
+    }
+    *Option: MANUAL
+    {
+        *rcNameID: =MANUAL_FEED_DISPLAY
+    }
+}
+*Feature: Resolution
+{
+    *rcNameID: =RESOLUTION_DISPLAY
+    *DefaultOption: Option7
+    *Option: Option1
+    {
+        *Name: "125 x 65 " =DOTS_PER_INCH
+        *DPI: PAIR(125, 65)
+        *TextDPI: PAIR(125, 65)
+        *%%PinsPerLogPass: 8
+        *%%PinsPerPhysPass: 8
+        EXTERN_GLOBAL: *StripBlanks: LIST(LEADING,TRAILING)
+        *SpotDiameter: 100
+        *%%Command: CmdSendBlockData { *Cmd : "<1B13>" %l{NumOfDataBytes} }
+        *Command: CmdSendBlockData { *Cmd : "" }
+    }
+    *Option: Option2
+    {
+        *Name: "72 x 72 " =DOTS_PER_INCH
+        *DPI: PAIR(72, 72)
+        *TextDPI: PAIR(72, 72)
+        *%%PinsPerLogPass: 8
+        *%%PinsPerPhysPass: 8
+        EXTERN_GLOBAL: *StripBlanks: LIST(LEADING,TRAILING)
+        *SpotDiameter: 100
+        *%%Command: CmdSendBlockData { *Cmd : "<1B13>" %l{NumOfDataBytes} }
+        *Command: CmdSendBlockData { *Cmd : "" }
+    }
+    *Option: Option3
+    {
+        *Name: "144 x 72 " =DOTS_PER_INCH
+        *DPI: PAIR(144, 72)
+        *TextDPI: PAIR(144, 72)
+        *%%PinsPerLogPass: 8
+        *%%PinsPerPhysPass: 8
+        EXTERN_GLOBAL: *StripBlanks: LIST(LEADING,TRAILING)
+        *SpotDiameter: 100
+        *%%Command: CmdSendBlockData { *Cmd : "<1B13>" %l{NumOfDataBytes} }
+        *Command: CmdSendBlockData { *Cmd : "" }
+    }
+    *Option: Option4
+    {
+        *Name: "75 x 75 " =DOTS_PER_INCH
+        *DPI: PAIR(75, 75)
+        *TextDPI: PAIR(75, 75)
+        *%%PinsPerLogPass: 8
+        *%%PinsPerPhysPass: 8
+        EXTERN_GLOBAL: *StripBlanks: LIST(LEADING,TRAILING)
+        *SpotDiameter: 100
+        *%%Command: CmdSendBlockData { *Cmd : "<1B13>" %l{NumOfDataBytes} }
+        *Command: CmdSendBlockData { *Cmd : "" }
+    }
+    *Option: Option5
+    {
+        *Name: "150 x 75 " =DOTS_PER_INCH
+        *DPI: PAIR(150, 75)
+        *TextDPI: PAIR(150, 75)
+        *%%PinsPerLogPass: 8
+        *%%PinsPerPhysPass: 8
+        EXTERN_GLOBAL: *StripBlanks: LIST(LEADING,TRAILING)
+        *SpotDiameter: 100
+        *%%Command: CmdSendBlockData { *Cmd : "<1B13>" %l{NumOfDataBytes} }
+        *Command: CmdSendBlockData { *Cmd : "" }
+    }
+    *Option: Option6
+    {
+        *Name: "125 x 75 " =DOTS_PER_INCH
+        *DPI: PAIR(125, 75)
+        *TextDPI: PAIR(125, 75)
+        *%%PinsPerLogPass: 8
+        *%%PinsPerPhysPass: 8
+        EXTERN_GLOBAL: *StripBlanks: LIST(LEADING,TRAILING)
+        *SpotDiameter: 100
+        *%%Command: CmdSendBlockData { *Cmd : "<1B13>" %l{NumOfDataBytes} }
+        *Command: CmdSendBlockData { *Cmd : "" }
+    }
+    *Option: Option7
+    {
+        *Name: "200 x 200 " =DOTS_PER_INCH
+        *DPI: PAIR(200, 200)
+        *TextDPI: PAIR(200, 200)
+        *PinsPerLogPass: 8
+        *PinsPerPhysPass: 8
+        EXTERN_GLOBAL: *StripBlanks: LIST(LEADING,TRAILING)
+        *SpotDiameter: 100
+        *%%Command: CmdSendBlockData { *Cmd : "<1B13>" %l{NumOfDataBytes} }
+        *Command: CmdSendBlockData { *Cmd : "" }
+    }
+}
+*Feature: PaperSize
+{
+    *rcNameID: =PAPER_SIZE_DISPLAY
+    *%DefaultOption:  USER_DEFINED_SIZE
+    *%Option: USER_DEFINED_SIZE
+    *DefaultOption: BRTKD-58
+
+    *Option: BRTKD-44
+    {
+        *Name: "BRTKD-44"
+        *PageDimensions: PAIR(31100, 187200)
+        *PrintableArea: PAIR(24000, 187200)
+        *PrintableOrigin: PAIR(3550, 0)
+        *MinLeftMargin: 3550
+        *Command: CmdSelect
+        {
+            *Order: DOC_SETUP.4
+            *Cmd: ""
+        }
+    }
+    *Option: BRTKD-58
+    {
+        *Name: "BRTKD-58"
+        *PageDimensions: PAIR(41100, 187200)
+        *PrintableArea: PAIR(34560, 187200)
+        *PrintableOrigin: PAIR(3270, 0)
+        *MinLeftMargin: 3270
+        *Command: CmdSelect
+        {
+            *Order: DOC_SETUP.4
+            *Cmd: ""
+        }
+    }
+    *Option: BRTKD-80
+    {
+        *Name: "BRTKD-80"
+        *PageDimensions: PAIR(56600, 187200)
+        *PrintableArea: PAIR(51840, 187200)
+        *PrintableOrigin: PAIR(2380, 0)
+        *MinLeftMargin: 2380
+        *Command: CmdSelect
+        {
+            *Order: DOC_SETUP.4
+            *Cmd: ""
+        }
+    }
+
+     *Option: CUSTOMSIZE
+    {
+        *Name: "CUSTOMSIZE"
+		*rcNameID: =USER_DEFINED_SIZE_DISPLAY
+        *MinSize: PAIR(18000, 23400)
+        *MaxSize: PAIR(180000, 234000)
+        *MaxPrintableWidth:180000
+        *MinLeftMargin: 100
+        *CenterPrintable?: FALSE
+        *%InsertBlock: =PaperConstraints
+        *%TopMargin: 135
+        *%BottomMargin: 216
+        *Command: CmdSelect
+        {
+            *Order: DOC_SETUP.4
+            *Cmd:""
+        }
+    }
+}
+
+*Feature: ColorMode
+{
+	*rcNameID: =COLOR_PRINTING_MODE_DISPLAY
+	*DefaultOption: Mono
+	*Option: Mono
+	{
+		*rcNameID: =MONO_DISPLAY
+		*DevNumOfPlanes: 0
+		*DevBPP: 0
+		*IPCallbackID: 1
+		*Color?: FALSE
+	}
+}
+
+*Feature: Halftone
+{
+    *rcNameID: =HALFTONING_DISPLAY
+    *DefaultOption: HT_PATSIZE_AUTO
+    *Option: HT_PATSIZE_AUTO
+    {
+        *rcNameID: =HT_AUTO_SELECT_DISPLAY
+    }
+*Ifdef: WINNT_50
+    *Option: HT_PATSIZE_SUPERCELL_M
+    {
+        *rcNameID: =HT_SUPERCELL_DISPLAY
+    }
+*Endif:
+    *Option: HT_PATSIZE_6x6_M
+    {
+        *rcNameID: =HT_DITHER6X6_DISPLAY
+    }
+    *Option: HT_PATSIZE_8x8_M
+    {
+        *rcNameID: =HT_DITHER8X8_DISPLAY
+    }
+}
+
+*% -----------------------------------------------
+*% Custom Feature
+*%
+*% -----------------------------------------------
+
+*Feature: PaperCut
+{
+    *rcNameID: 100
+    *%%Name: "Paper Cut Mode"
+    *DefaultOption: None
+        
+    *Option: None
+    {
+	    *rcNameID: 101
+        *%%Name: "None"
+        *Command: CmdSelect
+        {
+            *Order: JOB_FINISH.2
+		    *Cmd: ""					*% Cut None
+        }
+    }
+    *Option: HalfCut
+    {
+	    *rcNameID: 102
+        *%%Name: "Cut Half"
+        *Command: CmdSelect
+        {
+            *Order: JOB_FINISH.2
+		    *Cmd: "<1B4A501B6B01>"			*% Cut Half
+        }
+    }
+    *Option: AllCut
+    {
+	    *rcNameID: 103
+        *%%Name: "Cut All"
+        *Command: CmdSelect
+        {
+            *Order: JOB_FINISH.2
+		    *Cmd: "<1B4A501B6B00>"			*% Cut All
+        }
+    }
+}
+
+*% -----------------------------------------------
+*% Install Options
+*%
+*% -----------------------------------------------
+
+*Feature: PaperCutUnit
+{
+    *ConflictPriority: 1   *% Make priority higher than Duplex feature
+    *%%Name: "Optional Paper Cut Unit"
+    *rcNameID: 200
+    *FeatureType: PRINTER_PROPERTY
+    *DefaultOption: NotInstalled
+    
+    *Option: Installed
+    {
+	    *rcNameID: 201
+        *%%Name: "Installed"
+    }
+    *Option: NotInstalled
+    {
+	    *rcNameID: 202
+        *%%Name: "Not Installed"
+        *DisabledFeatures: LIST(PaperCut)
+        *Constraints: LIST (PaperCut.HalfCut, PaperCut.AllCut)
+    }
+}
+
+*% -----------------------------------------------
+*% Command
+*%
+*% -----------------------------------------------
+
+*Command: CmdStartDoc
+{
+    *Order: DOC_SETUP.1
+    *%%Cmd:"<1B401B63001B31001B5701>"
+    *Cmd:""
+}
+
+*Command: CmdStartPage
+{
+    *Order: PAGE_SETUP.1
+    *%%Cmd: "<0D1B401B63001B31001B5701>"
+	*Cmd:""
+}
+
+*Command: CmdEndPage
+{
+    *Order: PAGE_FINISH.1
+    *%Cmd: "<0C>"
+    *Cmd: ""
+}
+
+*Command: CmdEndJob
+{
+    *Order: JOB_FINISH.1
+    *%%Cmd: "<0D1B4A500D>"
+    *Cmd:""
+}
+
+*RotateCoordinate?: FALSE
+*RotateRaster?: FALSE
+*RotateFont?: FALSE
+
+*%%CursorXAfterCR: AT_CURSOR_X_ORIGIN
+*%%YMoveAttributes: LIST(SEND_CR_FIRST)
+*%%MaxLineSpacing: 255
+*%%YMoveThreshold: *
+
+*YMoveUnit: 200
+
+*%%Command: CmdYMoveRelDown { *Cmd : "<1B>J" %c[0,255]{max_repeat((DestYRel / 4) )} }
+*%%Command: CmdSetLineSpacing { *Cmd : "<1B31>" %c[0,255]{(LinefeedSpacing / 2) } }
+*%%Command: CmdCR { *Cmd : "<0D>" }
+*%%Command: CmdLF { *Cmd : "<0A>" }
+*%%Command: CmdFF { *Cmd : "<0C>" }
+*%%Command: CmdBackSpace { *Cmd : "<08>" }
+*%%Command: CmdUniDirectionOn { *Cmd : "<1B>c<01>" }
+*%%Command: CmdUniDirectionOff { *Cmd : "<1B>c<00>" }
+
+*Command: CmdCR { *Cmd : "" }
+*Command: CmdLF { *Cmd : "" }
+*Command: CmdFF { *Cmd : "" }
+
+*EjectPageWithFF?: TRUE
+
+*OutputDataFormat: V_BYTE
+*OptimizeLeftBound?: FALSE
+*CursorXAfterSendBlockData: AT_GRXDATA_END
+*CursorYAfterSendBlockData: AUTO_INCREMENT
+
+*%%RasterSendAllData?: TRUE
+*%%DefaultFont: 35
+*%%DefaultCTT: -1
+
+*%%Command: CmdBoldOn { *Cmd : "<1B>E" }
+*%%Command: CmdBoldOff { *Cmd : "<1B>F" }
+*%%Command: CmdItalicOn { *Cmd : "<1B>4" }
+*%%Command: CmdItalicOff { *Cmd : "<1B>5" }
+*%%Command: CmdUnderlineOn { *Cmd : "<1B>-<01>" }
+*%%Command: CmdUnderlineOff { *Cmd : "<1B>-<00>" }
