@@ -25,7 +25,9 @@ uses
   dxSkinSpringTime, dxSkinStardust, dxSkinSummer2008, dxSkinTheAsphaltWorld,
   dxSkinsDefaultPainters, dxSkinValentine, dxSkinVS2010, dxSkinWhiteprint,
   dxSkinXmas2008Blue, cxRadioGroup, Data.Bind.EngExt, Vcl.Bind.DBEngExt,
-  Data.Bind.Components, ThreadsUnit, FrmWaitingUnit;
+  Data.Bind.Components, ThreadsUnit, FrmWaitingUnit, AsgListb, cxGraphics,
+  cxControls, cxLookAndFeels, cxLookAndFeelPainters, Vcl.ComCtrls, cxTreeView,
+  cxContainer, cxEdit, cxListBox, RzListVw;
 
 type
   TfrmMain = class(TForm)
@@ -260,6 +262,10 @@ type
     btnCityCardDetailQuery: TAdvSmoothButton;
     btnZHBBalanceQuery: TAdvSmoothButton;
     RzPanel14: TRzPanel;
+    pnlCityCardTransDetail: TRzPanel;
+    RzPanel16: TRzPanel;
+    cxStyle3: TcxStyle;
+    gridCityCardTransDetail: TAdvStringGrid;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -342,6 +348,7 @@ type
     procedure AdvSmoothButton39Click(Sender: TObject);
     procedure AdvSmoothButton4Click(Sender: TObject);
     procedure AdvSmoothButton1Click(Sender: TObject);
+    procedure btnCityCardDetailQueryClick(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -390,6 +397,9 @@ type
     procedure doCityCardCharge(dlg: TfrmWaiting);
     procedure DoOnPayCash();
     procedure setBtnZHBBalanceChargeEnabled;
+    procedure clearCityCardTransDetailGrid;
+    procedure addCityCardTransDetailToGrid(transDate, transTime, transTerminalId: ansistring;
+                                      transType, transAmount: Integer);
 
     procedure waitForInsertBankCard(Sender: TObject);
     procedure waitForBankCardPassTimer(Sender: TObject);
@@ -462,6 +472,32 @@ begin
   else
     Result := '星期日'
   end;
+end;
+
+procedure TfrmMain.addCityCardTransDetailToGrid(transDate, transTime,
+  transTerminalId: ansistring; transType, transAmount: Integer);
+var
+  i: Integer;
+begin
+  with gridCityCardTransDetail do
+  begin
+    if (RowCount = 2) and (Cells[0, 1] = '') then
+    begin
+      i := 1;
+    end
+    else
+    begin
+      RowCount := RowCount + 1;
+      i := RowCount - 1;
+    end;
+
+    Cells[0, i] := transDate;
+    Cells[1, i] := transTime;
+    Cells[2, i] := '圈存';
+    Cells[3, i] := FormatFloat('0.#', transAmount) + '元';
+    Cells[4, i] := transTerminalId;
+  end;
+  gridCityCardTransDetail.SelectRows(i, 1);;
 end;
 
 procedure TfrmMain.AdvSmoothButton10Click(Sender: TObject);
@@ -594,7 +630,7 @@ begin
   try
     if currChargeType = 2 then
     begin
-      dlg.setWaitingTip('正在校验充值卡，请稍后...');
+      dlg.setWaitingTip(TIP_CHECKING_PREPAID_CARD);
       threadChargeCardCheck := TChargeCardCheck.Create(True, dlg, 10, currCityCardNo, Trim(edtPasswordForChargeCard.Text));
       threadChargeCardCheck.start;
       try
@@ -614,7 +650,7 @@ begin
     end
     else
     begin
-      dlg.setWaitingTip('正在查询账户宝余额，请稍后...');
+      dlg.setWaitingTip(TIP_GETTING_ZHB_BALANCE);
       threadQueryQFTBalance := TQueryQFTBalance.Create(True, dlg, 10, currCityCardNo, Trim(edtPasswordForChargeCard.Text));
       try
         threadQueryQFTBalance.start;
@@ -651,7 +687,7 @@ begin
   cityCardBizType := 0;
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip('请将龙城通卡放置在读卡区...');
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
     threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15,
       edtCityCardInfoWhenChosingAmount, edtCityCardBalanceWhenChosingAmount);
     threadQueryCityCard.OnGetCityCardInfo := DoOnGetCityCardInfo;
@@ -745,7 +781,7 @@ begin
   cityCardBizType := 1;
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip('请将龙城通卡放置在读卡区...');
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
     threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15, edtCityCardInfo, edtCityCardBalance);
     threadQueryCityCard.OnGetCityCardInfo := DoOnGetCityCardInfo;
     threadQueryCityCard.OnGetCardBalance := DoOnGetCityCardBalance;
@@ -845,31 +881,24 @@ procedure TfrmMain.AdvSmoothButton32Click(Sender: TObject);
 begin
   amountPaid := 100;
   cityCardBalance := amountPaid - StrToFloat(AdvSmoothLabel69.Caption.Text);
-  //Self.setBtnPayTypeVisible(False, True, True);
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
 procedure TfrmMain.btnCashCharge50Click(Sender: TObject);
 begin
   amountCharged := AMOUNT_50_YUAN;
-//  setBtnPayTypeVisible(False, False, True, True, True);
-//  Notebook1.ActivePage := 'pageSelectPayType';
   DoOnPayCash;
 end;
 
 procedure TfrmMain.btnCashCharge100Click(Sender: TObject);
 begin
   amountCharged := AMOUNT_100_YUAN;
-//  setBtnPayTypeVisible(False, False, True, True, True);
-//  Notebook1.ActivePage := 'pageSelectPayType';
   DoOnPayCash;
 end;
 
 procedure TfrmMain.btnCashCharge200Click(Sender: TObject);
 begin
   amountCharged := AMOUNT_200_YUAN;
-//  setBtnPayTypeVisible(False, False, True, True, True);
-//  Notebook1.ActivePage := 'pageSelectPayType';
   DoOnPayCash;
 end;
 
@@ -894,7 +923,7 @@ begin
   Notebook1.ActivePage := 'pageCash';
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip('请将龙城通卡放置在读卡区...');
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
     TGetCashAmount.Create(False, dlg, 55, amountCharged);
     mr := dlg.ShowModal;
     if mr = mrOk then
@@ -908,7 +937,7 @@ begin
         begin
           AdvSmoothLabel75.Visible := False;
           newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
-          AdvSmoothLabel74.Caption.Text := '充值后龙城通片余额：' + FormatFloat('0.0#', newBalance) + '元';
+          AdvSmoothLabel74.Caption.Text := TIP_BALANCE_AFTER_CHARGED + FormatFloat('0.0#', newBalance) + '元';
           AdvSmoothLabel74.Visible := True;
           Notebook1.ActivePage := 'pageMobileTopUpSuccess';
         end
@@ -1024,7 +1053,7 @@ var
 begin
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip('请将龙城通卡放置在读卡区...');
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
     threadQueryCityCard := TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
     mr := dlg.ShowModal;
     if mr = mrOk then
@@ -1085,6 +1114,30 @@ begin
   setCountdownTimerEnabled(True, 15);
 end;
 
+procedure TfrmMain.btnCityCardDetailQueryClick(Sender: TObject);
+var
+  dlg: Tfrmwaiting;
+  mr: TModalResult;
+  threadQueryCityCard: TQueryCityCardBalance;
+  queryCityCardDetail: TQueryCityCardTransDetail;
+begin
+  clearCityCardTransDetailGrid;
+  Notebook1.ActivePage := 'pageCityCardTransDetail';
+  dlg := TfrmWaiting.Create(nil);
+  try
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
+    queryCityCardDetail := TQueryCityCardTransDetail.Create(True, dlg, 30);
+    queryCityCardDetail.OnQueryCityCardDetail := addCityCardTransDetailToGrid;
+    mr := dlg.ShowModal;
+    if mr = mrAbort then
+    begin
+      backToMainFrame;
+    end;
+  finally
+    dlg.Free;
+  end;
+end;
+
 procedure TfrmMain.btnExpertClick(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageExpert';
@@ -1112,7 +1165,7 @@ begin
   //获取面额
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip('正在获取充值面额,请稍后...');
+    dlg.setWaitingTip(TIP_GETTING_PREPAID_CARD_AMOUNT);
     threadChargeCardCheck := TChargeCardCheck.Create(True, dlg, 10, currCityCardNo, password);
     threadChargeCardCheck.start;
     try
@@ -1146,7 +1199,7 @@ begin
   //获取余额
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip('正在获取账户宝余额,请稍后...');
+    dlg.setWaitingTip(TIP_GETTING_ZHB_BALANCE);
     threadQueryQFTBalance := TQueryQFTBalance.Create(True, dlg, 10, currCityCardNo, password);
     try
       threadQueryQFTBalance.start;
@@ -1246,7 +1299,7 @@ var
 begin
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip('请将龙城通卡放置在读卡区...');
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
     threadQueryCityCard := TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
     mr := dlg.ShowModal;
     if mr = mrOk then
@@ -1272,13 +1325,13 @@ begin
   Notebook1.ActivePage := 'pageCash';
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip('请将龙城通卡放置在读卡区...');
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
     TGetCashAmount.Create(False, dlg, 55, amountCharged);
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
       setCountdownTimerEnabled(True, 15);
-      dlg.setWaitingTip('正在进行充值处理，请勿移动卡片...');
+      dlg.setWaitingTip(TIP_DO_NOT_MOVE_CITY_CARD);
       threadCharge := TCityCardCharge.Create(True, dlg, 10, amountCharged);
       try
         threadCharge.Start;
@@ -1287,7 +1340,7 @@ begin
         begin
           AdvSmoothLabel75.Visible := False;
           newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
-          AdvSmoothLabel74.Caption.Text := '充值后龙城通卡余额：' + FormatFloat('0.0#', newBalance) + '元';
+          AdvSmoothLabel74.Caption.Text := TIP_BALANCE_AFTER_CHARGED + FormatFloat('0.0#', newBalance) + '元';
           AdvSmoothLabel74.Visible := True;
           Notebook1.ActivePage := 'pageMobileTopUpSuccess';
         end
@@ -1373,6 +1426,18 @@ begin
     btnZHBPasswordOk.Enabled := False;
 end;
 
+procedure TfrmMain.clearCityCardTransDetailGrid;
+begin
+  if gridCityCardTransDetail.RowCount > 1 then
+  begin
+    if (gridCityCardTransDetail.RowCount > 2) then
+    begin
+      gridCityCardTransDetail.RemoveRows(2, gridCityCardTransDetail.RowCount - 2);
+    end;
+    gridCityCardTransDetail.Rows[1].Clear;
+  end;
+end;
+
 procedure TfrmMain.connectToGateway;
 begin
   DataServer.Host := GlobalParam.Gateway.Host;
@@ -1403,13 +1468,13 @@ begin
   threadCharge := TCityCardCharge.Create(True, dlg, 10, amountCharged);
   try
     threadCharge.Start;
-    dlg.setWaitingTip('正在进行充值处理，请勿移开卡片');
+    dlg.setWaitingTip(TIP_DO_NOT_MOVE_CITY_CARD);
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
       AdvSmoothLabel75.Visible := False;
       newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
-      AdvSmoothLabel74.Caption.Text := '充值后龙城通卡余额：' + FormatFloat('0.0#', newBalance) + '元';
+      AdvSmoothLabel74.Caption.Text := TIP_BALANCE_AFTER_CHARGED + FormatFloat('0.0#', newBalance) + '元';
       AdvSmoothLabel74.Visible := True;
       Notebook1.ActivePage := 'pageMobileTopUpSuccess';
     end
@@ -1870,6 +1935,7 @@ begin
   setCompentInParentCenter(RzPanel10);
   setCompentInParentCenter(RzPanel11);
   setCompentInParentCenter(RzPanel12);
+  setCompentInParentCenter(RzPanel13);
   setCompentInParentCenter(RzPanel73);
   setCompentInParentCenter(RzPanel74);
   setCompentInParentCenter(RzPanel75);

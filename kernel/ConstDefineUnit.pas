@@ -17,6 +17,13 @@ const
   AMOUNT_100_YUAN = 100 * 100;
   AMOUNT_200_YUAN = 200 * 100;
 
+  TIP_PUT_CITY_CARD = '请将龙城通卡放置在读卡区...';
+  TIP_DO_NOT_MOVE_CITY_CARD = '正在进行充值处理，请勿移开卡片...';
+  TIP_CHECKING_PREPAID_CARD = '正在校验充值卡，请稍后...';
+  TIP_GETTING_PREPAID_CARD_AMOUNT = '正在获取充值面额,请稍后...';
+  TIP_GETTING_ZHB_BALANCE = '正在获取账户宝余额,请稍后...';
+  TIP_BALANCE_AFTER_CHARGED = '充值后龙城通片余额：';
+
   //发出命令的执行状态
   CMD_SNDNODO = 0; // 已发送未执行
   CMD_DONE = 1; // 已执行

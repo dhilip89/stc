@@ -137,7 +137,7 @@ type
   end;
 
   //查询交易明细
-  TQueryCityCardDetail = class(TBaseThread)
+  TQueryCityCardTransDetail = class(TBaseThread)
   private
     FOnQueryCityCardDetail: TOnQueryCityCardDetail;
     procedure SetOnQueryCityCardDetail(const Value: TOnQueryCityCardDetail);
@@ -1109,20 +1109,20 @@ begin
   currZHBBalance := FAmount;
 end;
 
-{ TQueryCityCardDetail }
+{ TQueryCityCardTransDetail }
 
-constructor TQueryCityCardDetail.Create(CreateSuspended: Boolean;
+constructor TQueryCityCardTransDetail.Create(CreateSuspended: Boolean;
   dlg: TfrmWaiting; timeout: Integer);
 begin
   inherited Create(CreateSuspended, dlg, timeout);
 end;
 
-destructor TQueryCityCardDetail.Destroy;
+destructor TQueryCityCardTransDetail.Destroy;
 begin
   inherited;
 end;
 
-function TQueryCityCardDetail.doTask: Boolean;
+function TQueryCityCardTransDetail.doTask: Boolean;
 var
   sendLen, recvLen: SmallInt;
   sendBuf: array[0..512] of AnsiChar;
@@ -1140,7 +1140,18 @@ var
 begin
   {$IFDEF test}
     sleep(2000);
+    for I := 1 to 10 do
+    begin
+      transAmount := 10000 + 30 * 1;
+      transType := 2;
+      transTerminalId := '9900112200' + IntToStr(10 + i);
+      transDate := FormatDateTime('yyyy-MM-dd', Now);
+      transTime := FormatDateTime('HH:nn:ss', Now);
 
+      if Assigned(FOnQueryCityCardDetail) then
+        FOnQueryCityCardDetail(transDate, transTime, transTerminalId, transType, transAmount);
+      Sleep(10);
+    end;
     Result := True;
     Exit;
   {$ENDIF}
@@ -1161,7 +1172,8 @@ begin
     sendLen := Length(sendHexStr) div 2;
     recvLen := 0;
     ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
-    if (ret <> 0) or (checkRecvBufEndWith9000(recvBuf, recvLen) <> BILL_OK) then
+    if (ret <> 0) or (checkRecvBufEndWith9000(recvBuf, recvLen) <> BILL_OK)
+      or (recvLen < 23)then
     begin
       addSysLog('read card transaction detail err, recvBuf:' + recvBuf);
       Break;
@@ -1209,7 +1221,7 @@ begin
   Result := True;
 end;
 
-procedure TQueryCityCardDetail.SetOnQueryCityCardDetail(
+procedure TQueryCityCardTransDetail.SetOnQueryCityCardDetail(
   const Value: TOnQueryCityCardDetail);
 begin
   FOnQueryCityCardDetail := Value;
