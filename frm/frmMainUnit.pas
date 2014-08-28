@@ -266,6 +266,9 @@ type
     RzPanel16: TRzPanel;
     cxStyle3: TcxStyle;
     gridCityCardTransDetail: TAdvStringGrid;
+    AdvSmoothLabel9: TAdvSmoothLabel;
+    AdvSmoothButton5: TAdvSmoothButton;
+    AdvSmoothButton6: TAdvSmoothButton;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -494,7 +497,7 @@ begin
     Cells[0, i] := transDate;
     Cells[1, i] := transTime;
     Cells[2, i] := 'È¦´æ';
-    Cells[3, i] := FormatFloat('0.#', transAmount) + 'Ôª';
+    Cells[3, i] := FormatFloat('0.#', transAmount * 1.0/100) + 'Ôª';
     Cells[4, i] := transTerminalId;
   end;
   gridCityCardTransDetail.SelectRows(i, 1);;
@@ -1128,6 +1131,7 @@ begin
     dlg.setWaitingTip(TIP_PUT_CITY_CARD);
     queryCityCardDetail := TQueryCityCardTransDetail.Create(True, dlg, 30);
     queryCityCardDetail.OnQueryCityCardDetail := addCityCardTransDetailToGrid;
+    queryCityCardDetail.Start;
     mr := dlg.ShowModal;
     if mr = mrAbort then
     begin
@@ -1936,6 +1940,7 @@ begin
   setCompentInParentCenter(RzPanel11);
   setCompentInParentCenter(RzPanel12);
   setCompentInParentCenter(RzPanel13);
+  setCompentInParentCenter(RzPanel16);
   setCompentInParentCenter(RzPanel73);
   setCompentInParentCenter(RzPanel74);
   setCompentInParentCenter(RzPanel75);
