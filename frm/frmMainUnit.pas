@@ -261,7 +261,7 @@ type
     btnCityCardBalanceQuery: TAdvSmoothButton;
     btnCityCardDetailQuery: TAdvSmoothButton;
     btnZHBBalanceQuery: TAdvSmoothButton;
-    RzPanel14: TRzPanel;
+    pnlModifyZHBPass: TRzPanel;
     pnlCityCardTransDetail: TRzPanel;
     RzPanel16: TRzPanel;
     cxStyle3: TcxStyle;
@@ -269,6 +269,16 @@ type
     AdvSmoothLabel9: TAdvSmoothLabel;
     AdvSmoothButton5: TAdvSmoothButton;
     AdvSmoothButton6: TAdvSmoothButton;
+    RzPanel14: TRzPanel;
+    AdvSmoothLabel13: TAdvSmoothLabel;
+    edtOldPass: TAdvEdit;
+    RzBorder1: TRzBorder;
+    AdvSmoothLabel14: TAdvSmoothLabel;
+    edtNewPass1: TAdvEdit;
+    RzBorder2: TRzBorder;
+    AdvSmoothLabel16: TAdvSmoothLabel;
+    edtNewPass2: TAdvEdit;
+    AdvSmoothButton33: TAdvSmoothButton;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -1052,12 +1062,12 @@ procedure TfrmMain.btnPrepaidCardChargeClick(Sender: TObject);
 var
   dlg: Tfrmwaiting;
   mr: TModalResult;
-  threadQueryCityCard: TQueryCityCardBalance;
+//  threadQueryCityCard: TQueryCityCardBalance;
 begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD);
-    threadQueryCityCard := TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
+    TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
@@ -1121,7 +1131,6 @@ procedure TfrmMain.btnCityCardDetailQueryClick(Sender: TObject);
 var
   dlg: Tfrmwaiting;
   mr: TModalResult;
-  threadQueryCityCard: TQueryCityCardBalance;
   queryCityCardDetail: TQueryCityCardTransDetail;
 begin
   clearCityCardTransDetailGrid;
@@ -1299,12 +1308,12 @@ procedure TfrmMain.btnZHBChargeClick(Sender: TObject);
 var
   dlg: Tfrmwaiting;
   mr: TModalResult;
-  threadQueryCityCard: TQueryCityCardBalance;
+//  threadQueryCityCard: TQueryCityCardBalance;
 begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD);
-    threadQueryCityCard := TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
+    TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
@@ -1940,6 +1949,7 @@ begin
   setCompentInParentCenter(RzPanel11);
   setCompentInParentCenter(RzPanel12);
   setCompentInParentCenter(RzPanel13);
+  setCompentInParentCenter(RzPanel14);
   setCompentInParentCenter(RzPanel16);
   setCompentInParentCenter(RzPanel73);
   setCompentInParentCenter(RzPanel74);

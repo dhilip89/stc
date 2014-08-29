@@ -23,6 +23,7 @@ const
   C2S_REFUND                 = $0007;//退款记录登记
   C2S_CHARGE_CARD_CHECK      = $0008;//充值卡校验
   C2S_QUERY_QFT_BALANCE      = $0009;//企福通余额查询
+  C2S_MODIFY_PASS            = $000A;//账户宝密码修改
 {******************************终端发起命令字******************************}
 
 {*****************************服务端发起命令字*****************************}
@@ -33,6 +34,7 @@ const
   S2C_REFUND_RSP             = $7007;//退款记录应答
   S2C_PRE_CARD_CHECK_RSP     = $7008;//充值卡校验应答
   S2C_QUERY_QFT_BALANCE      = $7009;//企福通余额查询应答
+  S2C_MODIFY_PASS_RSP        = $700A;//账户宝密码修改应答
 {*****************************服务端发起命令字*****************************}
 
 {*********************************公共常量*********************************}
@@ -135,6 +137,7 @@ type
   end;
   PCmdGetMac2ForChargeC2S = ^TCmdGetMac2ForChargeC2S;
 
+  //充值明细
   TCmdChargeDetailC2S = packed record
     CmdHead: TSTHead;
     ASN: array[0..9] of Byte;//IC应用序列号
@@ -181,6 +184,25 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdQueryQFTBalanceC2S = ^TCmdQueryQFTBalanceC2S;
+
+  //修改账户宝密码   结构与获取mac2相似
+  TCmdModifyZHBPassC2S = packed record
+    CmdHead: TSTHead;
+    OldPass: array[0..2] of Byte;//旧密码 BCD
+    NewPass: array[0..2] of Byte;//新密码 BCD
+    CardNo: array[0..7] of Byte;
+    TerminalId: array[0..5] of Byte;
+    ASN: array[0..9] of Byte;
+    FakeRandom: array[0..3] of Byte;//伪随机数
+    CardTradeNo: array[0..1] of Byte;//
+    CardOldBalance: LongWord;
+    ChargeAmount: LongWord;//充值金额 (单位分)
+    Mac1: array[0..3] of Byte;//mac1
+    ChargeDate: array[0..3] of Byte;//充值时间 BCD 20 14 07 20 14 45 23
+    ChargeTime: array[0..2] of Byte;//
+    CmdEnd: TSTEnd;
+  end;
+  PCmdModifyZHBPassC2S = ^TCmdModifyZHBPassC2S;
 {******************************终端发起命令******************************}
 
 
@@ -234,7 +256,7 @@ type
   //充值卡校验请求应答
   TCmdChargeCardCheckS2C = packed record
     CmdHead: TSTHead;
-    CheckRet: Byte;//校验结果  0:失败 1:成功
+    CheckRet: Byte;//校验结果  0:失败 1:成功 2：密码错
     Amount: Integer;//充值金额
     CmdEnd: TSTEnd;
   end;
@@ -243,11 +265,19 @@ type
   //企福通余额查询应答
   TCmdQueryQFTBalanceS2C = packed record
     CmdHead: TSTHead;
-    CheckRet: Byte;//校验结果   0:失败 1:成功
+    CheckRet: Byte;//校验结果   0:失败 1:成功 2：密码错
     Balance: Integer;//余额
     CmdEnd: TSTEnd;
   end;
   PCmdQueryQFTBalanceS2C = ^TCmdQueryQFTBalanceS2C;
+
+  //账户宝修改密码应答
+  TCmdModifyZHBPassRsp = packed record
+    CmdHead: TSTHead;
+    Ret: Byte;//获取结果  1:成功  2:密码错 其他:无效
+    CmdEnd: TSTEnd;
+  end;
+  PCmdModifyZHBPassRsp = ^TCmdModifyZHBPassRsp;
 {*****************************服务端发起命令*****************************}
 
 function PtrAdd(p: pointer; offset: integer): pointer;

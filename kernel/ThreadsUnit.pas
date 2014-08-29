@@ -218,6 +218,19 @@ type
     procedure noticeCmdRet(ret: Byte; amount: Integer);
   end;
 
+  TModifyZHBPass = class(TBaseThread)
+  private
+    FOldPass, FNewPass: AnsiString;
+    FRet: Byte;
+  protected
+    function doTask: Boolean; override;
+  public
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting;
+      timeout: Integer; oldPass, newPass: ansistring);
+
+    procedure noticeCmdRet(ret: Byte);
+  end;
+
 const
   BILL_OK = '9000';
 
@@ -690,7 +703,6 @@ begin
     end;
 
     //poll
-    i := 0;
     st := now;
     while (SecondsBetween(st, Now) < Self.timeout) do
     begin
@@ -1225,6 +1237,26 @@ procedure TQueryCityCardTransDetail.SetOnQueryCityCardDetail(
   const Value: TOnQueryCityCardDetail);
 begin
   FOnQueryCityCardDetail := Value;
+end;
+
+{ TModifyZHBPass }
+
+constructor TModifyZHBPass.Create(CreateSuspended: Boolean; dlg: TfrmWaiting;
+  timeout: Integer; oldPass, newPass: ansistring);
+begin
+  inherited Create(CreateSuspended, dlg, timeout);
+  FOldPass := oldPass;
+  FNewPass := newPass;
+end;
+
+function TModifyZHBPass.doTask: Boolean;
+begin
+
+end;
+
+procedure TModifyZHBPass.noticeCmdRet(ret: Byte);
+begin
+  FRet := ret;
 end;
 
 end.

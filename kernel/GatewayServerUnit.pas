@@ -16,6 +16,7 @@ type
   TOnRefundRsp = procedure(ret: Byte; recordId: LongWord) of object;
   TOnChargeCardCheckRsp = procedure(ret: Byte; amount:Integer) of object;
   TOnQueryQFTBalanceRsp = procedure(ret: Byte; amount:Integer) of object;
+  TOnModifyZHBPassRsp = procedure(ret:Byte) of object;
 
   TCmdInfo = record //命令信息
     Id: integer; //命令ID
@@ -94,6 +95,7 @@ type
     FOnRefundRsp: TOnRefundRsp;
     FOnChargeCardCheckRsp: TOnChargeCardCheckRsp;
     FOnQueryQFTBalanceRsp: TOnQueryQFTBalanceRsp;
+    FOnModifyZHBPassRsp: TOnModifyZHBPassRsp;
     procedure FSocketSocketEvent(Sender: TObject; Socket: TCustomWinSocket; SocketEvent: TSocketEvent);
     procedure FSockerWriteBufferOverflow(Sender: TObject);
 
@@ -103,6 +105,7 @@ type
     procedure dealCmdRefundRsp(buf: array of Byte);
     procedure dealCmdChargeCardCheckRsp(buf: array of Byte);
     procedure dealCmdQueryQFTBalanceRsp(buf: array of Byte);
+    procedure dealCmdModifyZHBPassRsp(buf: array of Byte);
 
     procedure initCmd(var cmdHead: TSTHead; cmdId: Word; var cmdEnd: TSTEnd; cmdMinSize: Integer);
 
@@ -112,6 +115,7 @@ type
     procedure SetOnRefundRsp(const Value: TOnRefundRsp);
     procedure SetOnChargeCardCheckRsp(const Value: TOnChargeCardCheckRsp);
     procedure SetOnQueryQFTBalanceRsp(const Value: TOnQueryQFTBalanceRsp);
+    procedure SetOnModifyZHBPassRsp(const Value: TOnModifyZHBPassRsp);
   protected
     function DirectSend(var buf; ABufSize: Integer): Boolean; //调用内部的发送函数直接发送数据
     function GetMaxCmdSNo: Word;
@@ -129,6 +133,9 @@ type
     procedure SendCmdRefund(cmd: TCmdRefundC2S);
     procedure SendCmdChargeCardCheck(cityCardNo, password: AnsiString);
     procedure SendCmdQueryQFTBalance(cityCardNo, password: AnsiString);
+    procedure SendCmdModifyZHBPass(oldPass, newPass: AnsiString;
+                cardNo, asn, CardTradeNo: array of Byte; OldBalance: Integer;
+                chargeTime, fakeRandom, mac1: array of Byte);
 
     procedure SetFTimerEnabled(enabled: Boolean);
 
@@ -146,6 +153,7 @@ type
     property OnRefundRsp: TOnRefundRsp read FOnRefundRsp write SetOnRefundRsp;
     property OnChargeCardCheckRsp: TOnChargeCardCheckRsp read FOnChargeCardCheckRsp write SetOnChargeCardCheckRsp;
     property OnQueryQFTBalanceRsp: TOnQueryQFTBalanceRsp read FOnQueryQFTBalanceRsp write SetOnQueryQFTBalanceRsp;
+    property OnModifyZHBPassRsp: TOnModifyZHBPassRsp read FOnModifyZHBPassRsp write SetOnModifyZHBPassRsp;
   end;
 
 
@@ -459,11 +467,35 @@ begin
   CopyMemory(@cmd.asn[0], @asn[0], Min(Length(cmd.asn), Length(asn)));
   CopyMemory(@cmd.FakeRandom[0], @fakeRandom[0], Min(Length(cmd.FakeRandom), Length(fakeRandom)));
   CopyMemory(@cmd.CardTradeNo[0], @CardTradeNo[0], Min(Length(cmd.CardTradeNo), Length(CardTradeNo)));
-  cmd.CardOldBalance := 0;
+  cmd.CardOldBalance := ByteOderConvert_LongWord(currCityCardBalance);
   cmd.ChargeAmount := ByteOderConvert_LongWord(chargeAmount);
   CopyMemory(@cmd.Mac1[0], @mac1[0], Min(Length(cmd.Mac1), Length(mac1)));
   CopyMemory(@cmd.ChargeTime[0], @chargeTime[0], Min(Length(cmd.ChargeTime), Length(chargeTime)));
   DirectSend(cmd, SizeOf(TCmdGetMac2ForChargeC2S));
+end;
+
+procedure TGateWayServerCom.SendCmdModifyZHBPass(oldPass, newPass: AnsiString;
+  cardNo, asn, CardTradeNo: array of Byte; OldBalance: Integer;
+  chargeTime, fakeRandom, mac1: array of Byte);
+var
+  cmd: TCmdModifyZHBPassC2S;
+  tempBuf: TByteDynArray;
+begin
+  initCmd(cmd.CmdHead, C2S_MODIFY_PASS, cmd.CmdEnd, SizeOf(TCmdModifyZHBPassC2S));
+  tempBuf := hexStrToByteBuf(oldPass, False);
+  CopyMemory(@cmd.OldPass[0], @tempBuf[0], Min(Length(cmd.OldPass), Length(tempBuf)));
+  tempBuf := hexStrToByteBuf(newPass, False);
+  CopyMemory(@cmd.NewPass[0], @tempBuf[0], Min(Length(cmd.NewPass), Length(tempBuf)));
+  CopyMemory(@cmd.cardNo[0], @cardNo[0], Min(Length(cmd.cardNo), Length(cardNo)));
+  tempBuf := hexStrToByteBuf(getFixedLenStr(GlobalParam.TerminalId, 12, '0'), False);
+  CopyMemory(@(cmd.TerminalId[0]), @tempBuf[0], SizeOf(cmd.TerminalId));
+  CopyMemory(@cmd.asn[0], @asn[0], Min(Length(cmd.asn), Length(asn)));
+  CopyMemory(@cmd.FakeRandom[0], @fakeRandom[0], Min(Length(cmd.FakeRandom), Length(fakeRandom)));
+  CopyMemory(@cmd.CardTradeNo[0], @CardTradeNo[0], Min(Length(cmd.CardTradeNo), Length(CardTradeNo)));
+  cmd.CardOldBalance := ByteOderConvert_LongWord(currCityCardBalance);
+  CopyMemory(@cmd.Mac1[0], @mac1[0], Min(Length(cmd.Mac1), Length(mac1)));
+  CopyMemory(@cmd.ChargeTime[0], @chargeTime[0], Min(Length(cmd.ChargeTime), Length(chargeTime)));
+  DirectSend(cmd, SizeOf(TCmdModifyZHBPassC2S));
 end;
 
 procedure TGateWayServerCom.SendCmdQueryQFTBalance(cityCardNo,
@@ -607,6 +639,12 @@ begin
   FOnGetMac2 := Value;
 end;
 
+procedure TGateWayServerCom.SetOnModifyZHBPassRsp(
+  const Value: TOnModifyZHBPassRsp);
+begin
+  FOnModifyZHBPassRsp := Value;
+end;
+
 procedure TGateWayServerCom.SetOnQueryQFTBalanceRsp(
   const Value: TOnQueryQFTBalanceRsp);
 begin
@@ -665,6 +703,18 @@ begin
     mac2 := bytesToHexStr(pcmd^.Mac2);
     if Assigned(FOnGetMac2) then
       FOnGetMac2(pcmd^.Ret, mac2);
+  end;
+end;
+
+procedure TGateWayServerCom.dealCmdModifyZHBPassRsp(buf: array of Byte);
+var
+  pcmd: PCmdModifyZHBPassRsp;
+begin
+  if Length(buf) >= SizeOf(TCmdModifyZHBPassRsp) then
+  begin
+    pcmd := PCmdModifyZHBPassRsp(@buf[0]);
+    if Assigned(FOnModifyZHBPassRsp) then
+      FOnModifyZHBPassRsp(pcmd^.Ret);
   end;
 end;
 
