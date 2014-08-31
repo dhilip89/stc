@@ -201,7 +201,7 @@ type
   end;
 
   //’Àªß±¶”‡∂Ó≤È—Ø
-  TQueryQFTBalance = class(TBaseThread)
+  TQueryZHBBalance = class(TBaseThread)
   private
     FCityCardNo: AnsiString;
     FPassword: AnsiString;
@@ -216,6 +216,7 @@ type
       timeout: Integer; cityCardNo, password: string);
 
     procedure noticeCmdRet(ret: Byte; amount: Integer);
+    property Balance: Integer read FAmount;
   end;
 
   TModifyZHBPass = class(TBaseThread)
@@ -1069,7 +1070,7 @@ end;
 
 { TQueryQFTBalance }
 
-constructor TQueryQFTBalance.Create(CreateSuspended: Boolean; dlg: TfrmWaiting;
+constructor TQueryZHBBalance.Create(CreateSuspended: Boolean; dlg: TfrmWaiting;
   timeout: Integer; cityCardNo, password: string);
 begin
   inherited Create(CreateSuspended, dlg, timeout);
@@ -1078,14 +1079,14 @@ begin
   FreeOnTerminate := False;
 end;
 
-procedure TQueryQFTBalance.DoOnTaskTimeout;
+procedure TQueryZHBBalance.DoOnTaskTimeout;
 begin
   setWaitingTip('≤È—Ø’Àªß±¶”‡∂Ó≥¨ ±£¨«Î…‘∫Û‘Ÿ ‘');
   Sleep(3000);
   inherited;
 end;
 
-function TQueryQFTBalance.doTask: Boolean;
+function TQueryZHBBalance.doTask: Boolean;
 begin
   addSysLog('query zhb balance');
   Result := False;
@@ -1113,7 +1114,7 @@ begin
   Result := True;
 end;
 
-procedure TQueryQFTBalance.noticeCmdRet(ret: Byte; amount: Integer);
+procedure TQueryZHBBalance.noticeCmdRet(ret: Byte; amount: Integer);
 begin
   FRet := ret;
   FAmount := amount;

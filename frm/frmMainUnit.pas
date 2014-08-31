@@ -84,7 +84,7 @@ type
     AdvSmoothButton9: TAdvSmoothButton;
     AdvSmoothButton7: TAdvSmoothButton;
     RzPanel73: TRzPanel;
-    AdvSmoothButton25: TAdvSmoothButton;
+    btnCityCardCharge: TAdvSmoothButton;
     AdvSmoothButton26: TAdvSmoothButton;
     AdvSmoothButton24: TAdvSmoothButton;
     RzPanel74: TRzPanel;
@@ -217,8 +217,8 @@ type
     edtPasswordForChargeCard: TAdvEdit;
     btnPasswordOK: TAdvSmoothButton;
     RzPanel7: TRzPanel;
-    AdvSmoothButton1: TAdvSmoothButton;
-    AdvSmoothButton2: TAdvSmoothButton;
+    btnCityCardQuery: TAdvSmoothButton;
+    btnModifyZHBPassword: TAdvSmoothButton;
     pnlSelectChargeType: TRzPanel;
     RzPanel8: TRzPanel;
     btnCashCharge: TAdvSmoothButton;
@@ -278,6 +278,17 @@ type
     RzBorder2: TRzBorder;
     AdvSmoothLabel16: TAdvSmoothLabel;
     edtNewPass2: TAdvEdit;
+    btnModifyZHBPassConfirm: TAdvSmoothButton;
+    pnlZHBBalance: TRzPanel;
+    RzPanel15: TRzPanel;
+    lblBalance: TAdvSmoothLabel;
+    AdvSmoothButton1: TAdvSmoothButton;
+    AdvSmoothButton2: TAdvSmoothButton;
+    pnlModifyZHBPassSucc: TRzPanel;
+    RzPanel17: TRzPanel;
+    Image1: TImage;
+    lblModifyZHBPassSucc: TAdvSmoothLabel;
+    AdvSmoothButton25: TAdvSmoothButton;
     AdvSmoothButton33: TAdvSmoothButton;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
@@ -309,7 +320,7 @@ type
     procedure AdvSmoothButton22Click(Sender: TObject);
     procedure AdvSmoothButton23Click(Sender: TObject);
     procedure AdvSmoothButton7Click(Sender: TObject);
-    procedure AdvSmoothButton25Click(Sender: TObject);
+    procedure btnCityCardChargeClick(Sender: TObject);
     procedure AdvSmoothButton26Click(Sender: TObject);
     procedure AdvSmoothButton24Click(Sender: TObject);
     procedure AdvSmoothButton27Click(Sender: TObject);
@@ -360,8 +371,13 @@ type
     procedure btnZHBCharge50Click(Sender: TObject);
     procedure AdvSmoothButton39Click(Sender: TObject);
     procedure AdvSmoothButton4Click(Sender: TObject);
-    procedure AdvSmoothButton1Click(Sender: TObject);
+    procedure btnCityCardQueryClick(Sender: TObject);
     procedure btnCityCardDetailQueryClick(Sender: TObject);
+    procedure btnModifyZHBPasswordClick(Sender: TObject);
+    procedure edtOldPassKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure btnModifyZHBPassConfirmClick(Sender: TObject);
+    procedure btnZHBBalanceQueryClick(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -391,12 +407,14 @@ type
 
     threadCharge: TCityCardCharge;
     threadChargeCardCheck: TChargeCardCheck;
-    threadQueryQFTBalance: TQueryQFTBalance;
+    threadQueryQFTBalance: TQueryZHBBalance;
 
     isIgnoreMainTimeOut: Boolean;//是否忽略主界面的倒计时
 
     clickCount: Integer;
     firstTime: TDateTime;
+
+    queryZHBBalanceFlag: Byte;//查询账户宝余额标识  1:单纯查询余额  2:充值时查询余额
 
     procedure initMain;
     procedure loadParam;
@@ -629,7 +647,7 @@ begin
   Timer4.Enabled := True;
 end;
 
-procedure TfrmMain.AdvSmoothButton1Click(Sender: TObject);
+procedure TfrmMain.btnCityCardQueryClick(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageQueryBiz';
 end;
@@ -664,7 +682,7 @@ begin
     else
     begin
       dlg.setWaitingTip(TIP_GETTING_ZHB_BALANCE);
-      threadQueryQFTBalance := TQueryQFTBalance.Create(True, dlg, 10, currCityCardNo, Trim(edtPasswordForChargeCard.Text));
+      threadQueryQFTBalance := TQueryZHBBalance.Create(True, dlg, 10, currCityCardNo, Trim(edtPasswordForChargeCard.Text));
       try
         threadQueryQFTBalance.start;
         mr := dlg.ShowModal;
@@ -775,7 +793,7 @@ begin
   Notebook1.ActivePage := 'pageCityCardNewCard';
 end;
 
-procedure TfrmMain.AdvSmoothButton25Click(Sender: TObject);
+procedure TfrmMain.btnCityCardChargeClick(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageSelectChargeType';
   Exit;
@@ -853,6 +871,58 @@ begin
   AdvSmoothButton31.Enabled := False;
   Notebook1.ActivePage := 'pageCityCardIDCard';
   Timer4.Enabled := True;
+end;
+
+procedure TfrmMain.btnModifyZHBPassConfirmClick(Sender: TObject);
+begin
+  if Length(edtOldPass.Text) < edtOldPass.MaxLength then
+  begin
+    edtOldPass.SetFocus;
+    Exit;
+  end;
+
+  if Length(edtNewPass1.Text) < edtNewPass1.MaxLength then
+  begin
+    edtNewPass1.SetFocus;
+    Exit;
+  end;
+
+  if Length(edtNewPass2.Text) < edtNewPass2.MaxLength then
+  begin
+    edtNewPass2.SetFocus;
+    Exit;
+  end;
+
+  if edtNewPass1.Text <> edtNewPass2.Text then
+  begin
+    edtNewPass2.SetFocus;
+    Exit;
+  end;
+
+  Notebook1.ActivePage := 'pageModifyZHBPassSuccess';
+end;
+
+procedure TfrmMain.btnModifyZHBPasswordClick(Sender: TObject);
+var
+  dlg: Tfrmwaiting;
+  mr: TModalResult;
+begin
+  dlg := TfrmWaiting.Create(nil);
+  try
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
+    TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
+    mr := dlg.ShowModal;
+    if mr = mrOk then
+    begin
+      edtOldPass.Text := '';
+      edtNewPass1.Text := '';
+      edtNewPass2.Text := '';
+      btnModifyZHBPassConfirm.Enabled := False;
+      Notebook1.ActivePage := 'pageModifyPasswordBiz';
+    end;
+  finally
+    dlg.Free;
+  end;
 end;
 
 procedure TfrmMain.btnQFTCardClick(Sender: TObject);
@@ -1113,6 +1183,7 @@ end;
 procedure TfrmMain.backToMainFrame;
 begin
   initGlobalVar;
+  queryZHBBalanceFlag := 0;
   btnHome.Click;
 end;
 
@@ -1213,26 +1284,38 @@ begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_GETTING_ZHB_BALANCE);
-    threadQueryQFTBalance := TQueryQFTBalance.Create(True, dlg, 10, currCityCardNo, password);
+    threadQueryQFTBalance := TQueryZHBBalance.Create(True, dlg, 10, currCityCardNo, password);
     try
       threadQueryQFTBalance.start;
       mr := dlg.ShowModal;
-      if mr = mrOk then
+      if queryZHBBalanceFlag = 1 then
       begin
-        bankCardNoOrPassword := password;
-        setBtnZHBBalanceChargeEnabled;
-        lblCityCardBalanceOnPnlZHB.Caption.Text := FormatFloat('0.00', currCityCardBalance * 1.0 / 100) + '元';
-        lblZHBBalance.Caption.Text := FormatFloat('0.00', currZHBBalance * 1.0 / 100) + '元';
-        Notebook1.ActivePage := 'pageZHBBalanceConfirm';
+        if mr = mrOk then
+        begin
+          lblBalance.Caption.Text := '账户宝余额：'
+            + FormatFloat('0.00', threadQueryQFTBalance.Balance * 1.0/100) + '元';
+          Notebook1.ActivePage := 'pageZHBBalance';
+        end;
       end
-      else if mr = mrAbort then
+      else if queryZHBBalanceFlag = 2 then
       begin
-        backToMainFrame;
-      end
-      else if mr = mrRetry then
-      begin
-        edtZHBPassword.Text := '';
-        edtZHBPassword.SetFocus;
+        if mr = mrOk then
+        begin
+          bankCardNoOrPassword := password;
+          setBtnZHBBalanceChargeEnabled;
+          lblCityCardBalanceOnPnlZHB.Caption.Text := FormatFloat('0.00', currCityCardBalance * 1.0 / 100) + '元';
+          lblZHBBalance.Caption.Text := FormatFloat('0.00', currZHBBalance * 1.0 / 100) + '元';
+          Notebook1.ActivePage := 'pageZHBBalanceConfirm';
+        end
+        else if mr = mrAbort then
+        begin
+          backToMainFrame;
+        end
+        else if mr = mrRetry then
+        begin
+          edtZHBPassword.Text := '';
+          edtZHBPassword.SetFocus;
+        end;
       end;
     finally
       threadQueryQFTBalance.Free;
@@ -1257,6 +1340,29 @@ end;
 procedure TfrmMain.btnRegisterOkClick(Sender: TObject);
 begin
   backToMainFrame;
+end;
+
+procedure TfrmMain.btnZHBBalanceQueryClick(Sender: TObject);
+var
+  dlg: Tfrmwaiting;
+  mr: TModalResult;
+begin
+  dlg := TfrmWaiting.Create(nil);
+  try
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
+    TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
+    mr := dlg.ShowModal;
+    if mr = mrOk then
+    begin
+      queryZHBBalanceFlag := 1;
+      btnZHBPasswordOk.Enabled := False;
+      edtZHBPassword.Text := '';
+      Notebook1.ActivePage := 'pageInputZHBPassword';
+      edtZHBPassword.SetFocus;
+    end;
+  finally
+    dlg.Free;
+  end;
 end;
 
 procedure TfrmMain.btnZHBCharge100Click(Sender: TObject);
@@ -1317,6 +1423,7 @@ begin
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
+      queryZHBBalanceFlag := 2;
       currChargeType := 3;
       btnZHBPasswordOk.Enabled := False;
       edtZHBPassword.Text := '';
@@ -1394,6 +1501,19 @@ begin
   begin
     threadQueryQFTBalance.noticeCmdRet(ret, balance);
   end;
+end;
+
+procedure TfrmMain.edtOldPassKeyUp(Sender: TObject; var Key: Word;
+  Shift: TShiftState);
+begin
+  btnModifyZHBPassConfirm.Enabled := False;
+  if (Length(edtOldPass.Text) = 6)
+    and (Length(edtNewPass1.Text) = 6)
+    and (Length(edtNewPass2.Text) = 6)then
+  begin
+    btnModifyZHBPassConfirm.Enabled := True;
+  end;
+
 end;
 
 procedure TfrmMain.edtPasswordForChargeCardKeyPress(Sender: TObject;
@@ -1767,7 +1887,8 @@ begin
     isCityCardCharging := False;
     isNewCard := False;
   end
-  else if Notebook1.ActivePage = 'pageMobileTopUpSuccess' then
+  else if (Notebook1.ActivePage = 'pageMobileTopUpSuccess')
+    or (Notebook1.ActivePage = 'pageModifyZHBPassSucc') then
   begin
     setCountdownTimerEnabled(True, 30);
   end
@@ -1951,6 +2072,7 @@ begin
   setCompentInParentCenter(RzPanel13);
   setCompentInParentCenter(RzPanel14);
   setCompentInParentCenter(RzPanel16);
+  setCompentInParentCenter(RzPanel17);
   setCompentInParentCenter(RzPanel73);
   setCompentInParentCenter(RzPanel74);
   setCompentInParentCenter(RzPanel75);
