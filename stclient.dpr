@@ -11,7 +11,6 @@ uses
   uGloabVar in 'kernel\uGloabVar.pas',
   UserUnit in 'kernel\UserUnit.pas',
   ParamUnit in 'kernel\ParamUnit.pas',
-  StructDefUnit in 'kernel\StructDefUnit.pas',
   CmdStructUnit in 'kernel\CmdStructUnit.pas',
   BusinessServerUnit in 'kernel\BusinessServerUnit.pas',
   MSXML2_TLB in 'kernel\MSXML2_TLB.pas',

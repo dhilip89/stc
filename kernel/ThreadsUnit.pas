@@ -223,6 +223,8 @@ type
   private
     FOldPass, FNewPass: AnsiString;
     FRet: Byte;
+
+    function waitForModifyRet: Boolean;
   protected
     function doTask: Boolean; override;
   public
@@ -1251,13 +1253,177 @@ begin
 end;
 
 function TModifyZHBPass.doTask: Boolean;
+var
+  tip: string;
+  cardNo, asn, tsn: TByteDynArray;
+  OperType: Byte; //操作类型 00现金充值，01银行卡充值，02充值卡充值，03账户宝充值/专有账户充值
+  oldBalance: Integer;//充值前余额
+  chargeTime, fakeRandom, mac1: TByteDynArray;
+  sendLen, recvLen: SmallInt;
+  sendBuf: array[0..512] of AnsiChar;
+  recvBuf: array[0..512] of AnsiChar;
+  ret: SmallInt;
+  sendHexStr: ansistring;
+  tempStr: AnsiString;
+  offset: Integer;
+  lw: LongWord;
+  tempBuf: TByteDynArray;
+  strChargeAmount: string;
+  strTerminalId: string;
+  cardType: Byte;
+  tac: TByteDynArray;
+  transSNo: LongWord;
+  cmd: TCmdChargeDetailC2S;
+  billStatus: AnsiString;
 begin
+  {$IFDEF test}
+    Result := False;
+    Sleep(1000);
+    taskRet := 0;
+    chargeTime := hexStrToBytes(FormatDateTime('yyyyMMddhhnnss', Now));
+    FIsCmdRet := False;
+    SetLength(cardNo, 8);
+    SetLength(tsn, 2);
+    SetLength(asn, 10);
+    SetLength(mac1, 4);
+    SetLength(fakeRandom, 4);
+    DataServer.SendCmdModifyZHBPass(FOldPass, FNewPass, cardNo, asn, tsn, oldBalance, chargeTime, fakeRandom, mac1);
+    if not waitForModifyRet then
+    begin//超时
+      taskRet := 2;
+      addSysLog('credit for load err, recvBuf:' + recvBuf);
+      Exit;
+    end;
+    Result := True;
+    Exit;
+  {$ENDIF}
+  Result := False;
+  if not resetD8 then
+  begin
+    taskRet := 1;
+    addSysLog('citycard charge reset d8 fail');
+    Exit;
+  end;
 
+  //读出卡号和应用序列号
+  sendHexStr := '00B0950000';
+  CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+
+  sendLen := Length(sendHexStr) div 2;
+  recvLen := 0;
+  ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+  if ret <> 0 then
+  begin
+    taskRet := 1;
+    addSysLog('读卡号和应用序列化失败, recvBuf:' + recvBuf);
+    Exit;
+  end;
+
+  offset := 0;
+  SetLength(tempStr, 8 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  cardNo := hexStrToBytes(tempStr);//卡号
+
+  offset := 20;
+  SetLength(tempStr, 10 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  asn := hexStrToBytes(tempStr);//应用序列号
+
+  //读出卡类型
+  sendHexStr := '00B0960000';
+  CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+
+  sendLen := Length(sendHexStr) div 2;
+  recvLen := 0;
+  ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+  if ret <> 0 then
+  begin
+    taskRet := 1;
+    addSysLog('读卡类型失败, recvBuf:' + recvBuf);
+    Exit;
+  end;
+
+  offset := 0;
+  SetLength(tempStr, 1 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  cardType := hexStrToBytes(tempStr)[0];//卡类型
+
+  //圈存初始化
+  lw := ByteOderConvert_LongWord(0);
+  strChargeAmount := bytesToHexStr(LongWordToBytes(lw));
+  strTerminalId := getFixedLenStr(GlobalParam.TerminalId, 12, '0');
+  sendHexStr := '805000020B01' + strChargeAmount + strTerminalId + '10';
+  CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+
+  sendLen := Length(sendHexStr) div 2;
+  recvLen := 0;
+  ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+  billStatus := checkRecvBufEndWith9000(recvBuf, recvLen);
+  if (ret <> 0) or (billStatus <> BILL_OK) then
+  begin
+    taskRet := 1;
+    errInfo := '充值失败，请注意保留凭条';
+    addSysLog('initialize for load err, recvBuf:' + recvBuf);
+    Exit;
+  end;
+
+  offset := 0;
+  SetLength(tempStr, 4 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  oldBalance := bytesToInt(hexStrToBytes(tempStr), 0, False);//充值前余额
+
+  offset := 8;
+  SetLength(tempStr, 4);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  tsn := hexStrToBytes(tempStr);//交易序号
+
+  offset := 16;
+  SetLength(tempStr, 4 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  fakeRandom := hexStrToBytes(tempStr);//随机数
+
+  offset := 24;
+  SetLength(tempStr, 4 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  mac1 := hexStrToBytes(tempStr);//mac1
+
+  chargeTime := hexStrToBytes(FormatDateTime('yyyyMMddhhnnss', Now));
+  FIsCmdRet := False;
+  DataServer.SendCmdModifyZHBPass(FOldPass, FNewPass, cardNo, asn, tsn, oldBalance, chargeTime, fakeRandom, mac1);
+  if not waitForModifyRet then
+  begin//超时
+    taskRet := 2;
+    addSysLog('credit for load err, recvBuf:' + recvBuf);
+    Exit;
+  end;
+
+  Result := True;
 end;
 
 procedure TModifyZHBPass.noticeCmdRet(ret: Byte);
 begin
+  FIsCmdRet := True;
   FRet := ret;
+end;
+
+function TModifyZHBPass.waitForModifyRet: Boolean;
+var
+  stime: TDateTime;
+  isTimeout: Boolean;
+begin
+  stime := Now;
+  isTimeout := False;
+  while not FIsCmdRet do
+  begin
+    if SecondsBetween(Now, stime) < Self.timeout then
+    begin
+      Sleep(200);
+      Continue;
+    end;
+    isTimeout := True;
+    Break;
+  end;
+  Result := not isTimeout;
 end;
 
 end.

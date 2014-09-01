@@ -408,8 +408,7 @@ type
     threadCharge: TCityCardCharge;
     threadChargeCardCheck: TChargeCardCheck;
     threadQueryQFTBalance: TQueryZHBBalance;
-
-    isIgnoreMainTimeOut: Boolean;//是否忽略主界面的倒计时
+    threadModifyZHBPass: TModifyZHBPass;
 
     clickCount: Integer;
     firstTime: TDateTime;
@@ -466,6 +465,7 @@ type
     procedure DoOnGetMac2(ret: Byte; mac2: AnsiString);
     procedure DoOnChargeCardCheckRsp(ret: Byte; amount: Integer);
     procedure DoOnQueryQFTBalanceRsp(ret: Byte; balance: Integer);
+    procedure DoOnModifyZHBPassRsp(ret: Byte);
 
     procedure DoOnPrinterComRecvData(Sender:TObject;Buffer:Pointer;BufferLength:Word);
   protected
@@ -874,6 +874,11 @@ begin
 end;
 
 procedure TfrmMain.btnModifyZHBPassConfirmClick(Sender: TObject);
+var
+  threadModifyZHBPass: TModifyZHBPass;
+  mr: TModalResult;
+  dlg: TfrmWaiting;
+  oldPass, newPass: AnsiString;
 begin
   if Length(edtOldPass.Text) < edtOldPass.MaxLength then
   begin
@@ -895,11 +900,31 @@ begin
 
   if edtNewPass1.Text <> edtNewPass2.Text then
   begin
+    ShowTips('两次输入的密码不一致，请确认', edtNewPass2);
     edtNewPass2.SetFocus;
     Exit;
   end;
 
-  Notebook1.ActivePage := 'pageModifyZHBPassSuccess';
+  oldPass := AnsiString(Trim(edtOldPass.Text));
+  newPass := AnsiString(Trim(edtNewPass1.Text));
+
+  dlg := TfrmWaiting.Create(nil);
+  try
+    dlg.setWaitingTip(TIP_MODIFYING_ZHB_PASS);
+    TModifyZHBPass.Create(False, dlg, 30, oldPass, newPass);
+    try
+      mr := dlg.ShowModal;
+      if mr = mrOk then
+      begin
+        Notebook1.ActivePage := 'pageModifyZHBPassSuccess';
+      end;
+    finally
+      threadChargeCardCheck.Free;
+      threadChargeCardCheck := nil;
+    end;
+  finally
+    dlg.Free;
+  end;
 end;
 
 procedure TfrmMain.btnModifyZHBPasswordClick(Sender: TObject);
@@ -1232,7 +1257,6 @@ begin
   if not pnlClient.Enabled then
     pnlClient.Enabled := True;
 
-  isIgnoreMainTimeOut := False;
   Notebook1.ActivePage := 'default';
 end;
 
@@ -1651,6 +1675,14 @@ begin
   end;
 end;
 
+procedure TfrmMain.DoOnModifyZHBPassRsp(ret: Byte);
+begin
+  if threadModifyZHBPass <> nil then
+  begin
+    threadModifyZHBPass.noticeCmdRet(ret);
+  end;
+end;
+
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 begin
   if MessageBox(Handle, '您确认关闭自助服务系统吗？', '确认', MB_YESNO + MB_ICONQUESTION) = ID_NO then
@@ -1851,6 +1883,7 @@ begin
   DataServer.OnGetMac2 := DoOnGetMac2;
   DataServer.OnChargeCardCheckRsp := DoOnChargeCardCheckRsp;
   DataServer.OnQueryQFTBalanceRsp := DoOnQueryQFTBalanceRsp;
+  DataServer.OnModifyZHBPassRsp := DoOnModifyZHBPassRsp;
   connectToGateway;
 end;
 

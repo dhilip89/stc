@@ -4,7 +4,7 @@ interface
 uses
   comCtrls, SysUtils, classes, UserUnit, BusinessServerUnit, ParamUnit,
   Forms, windows, Messages, GatewayServerUnit, cxTL, StructDefUnit,
-  SystemLog, ConstDefineUnit, system.Types, SPCOMM;
+  SystemLog, ConstDefineUnit, system.Types, SPCOMM, BeansUnit, Vcl.Controls;
 
 var
   current_user: TUser;
@@ -29,6 +29,8 @@ var
   currentTSN: LongWord = 0;
   currChargeType: Byte;//当前充值类型  0:现金 1:银联卡  2：充值卡  03企福通充值/专有账户充值
   bankCardNoOrPassword: ansistring;//充值时使用的银行卡号或者充值卡卡号
+
+  FGlobalTip: TMyHintWindow;
 
 function getCmdStat(stat: integer): string;
 function PopMsg(Title: string; Msg: string): boolean;
@@ -56,6 +58,7 @@ function checkPrinterStatus(): Boolean;
 function getNextTSN():Integer;
 function getInitTSNFromFile: Integer;
 function writeTSNToFile(tsn: Integer): Boolean;
+procedure ShowTips(aTip: string; aCom: TControl);
 
 implementation
 uses
@@ -511,6 +514,11 @@ begin
   end;
 end;
 
+procedure ShowTips(aTip: string; aCom: TControl);
+begin
+  FGlobalTip.ShowHint(aTip, aCom);
+end;
+
 initialization
   DateSeparator := '-';
   GlobalParam := TSystemParam.Create;
@@ -521,12 +529,14 @@ initialization
   FSysLog.WriteImmediate := True;
   FSysLog.LogFile := ExePath + 'log\sysLog\data';
   getInitTSNFromFile();
+  FGlobalTip := TMyHintWindow.Create(nil);
 
 finalization
   //业务服务器在主窗口Free
   GlobalParam.Free;
   ACmdManage.Free;
   FSysLog.Free;
+  FGlobalTip.Free;
 
 end.
 

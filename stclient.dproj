@@ -131,7 +131,6 @@
 			<DCCReference Include="kernel\uGloabVar.pas"/>
 			<DCCReference Include="kernel\UserUnit.pas"/>
 			<DCCReference Include="kernel\ParamUnit.pas"/>
-			<DCCReference Include="kernel\StructDefUnit.pas"/>
 			<DCCReference Include="kernel\CmdStructUnit.pas"/>
 			<DCCReference Include="kernel\BusinessServerUnit.pas"/>
 			<DCCReference Include="kernel\MSXML2_TLB.pas"/>
