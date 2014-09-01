@@ -301,6 +301,7 @@ begin
           S2C_REFUND_RSP: dealCmdRefundRsp(buf);
           S2C_PRE_CARD_CHECK_RSP: dealCmdChargeCardCheckRsp(buf);
           S2C_QUERY_QFT_BALANCE: dealCmdQueryQFTBalanceRsp(buf);
+          S2C_MODIFY_PASS_RSP: dealCmdModifyZHBPassRsp(buf);
         else
           begin
             FLog.AddLog('处理数据错误:命令字不正确 ' + bytesToHexStr(wordToBytes(cmdId)));

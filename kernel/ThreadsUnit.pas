@@ -81,11 +81,11 @@ unit ThreadsUnit;
 
 interface
 uses
-  System.classes, FrmWaitingUnit, Vcl.StdCtrls;
+  System.classes, FrmWaitingUnit;//, Vcl.StdCtrls;
 
 type
-  TOnGetCityCardInfo = procedure (edt: TCustomEdit; cardInfo: string) of object;
-  TOnGetCardBalance = procedure (edt: TCustomEdit; cardBalance: Integer) of object;
+  TOnGetCityCardInfo = procedure (cardInfo: string) of object;
+  TOnGetCardBalance = procedure (cardBalance: Integer) of object;
   TOnQueryCityCardDetail = procedure (transDate, transTime, transTerminalId: ansistring;
                                       transType, transAmount: Integer) of object;
   TBaseThread = class(TThread)
@@ -123,13 +123,13 @@ type
     timeout: Integer;
     FOnGetCityCardInfo: TOnGetCityCardInfo;
     FOnGetCardBalance: TOnGetCardBalance;
-    FEdtCardInfo: TCustomEdit;
-    FEdtCardBalance: TCustomEdit;
+//    FEdtCardInfo: TCustomEdit;
+//    FEdtCardBalance: TCustomEdit;
     function doTask: Boolean;
   protected
     procedure Execute; override;
   public
-    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer; edtCardInfo, edtCardBalance: TCustomEdit);
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer);//; edtCardInfo, edtCardBalance: TCustomEdit);
     destructor Destroy; override;
 
     property OnGetCityCardInfo: TOnGetCityCardInfo read FOnGetCityCardInfo write FOnGetCityCardInfo;
@@ -254,13 +254,13 @@ begin
 end;
 
 constructor TQueryCityCardBalance.Create(CreateSuspended:Boolean; dlg: TfrmWaiting;
-  timeout: Integer; edtCardInfo, edtCardBalance: TCustomEdit);
+  timeout: Integer);//; edtCardInfo, edtCardBalance: TCustomEdit);
 begin
   inherited Create(CreateSuspended);
   Self.frmWaiting := dlg;
   Self.timeout := timeout;
-  FEdtCardInfo := edtCardInfo;
-  FEdtCardBalance := edtCardBalance;
+//  FEdtCardInfo := edtCardInfo;
+//  FEdtCardBalance := edtCardBalance;
   FreeOnTerminate := True;
 end;
 
@@ -288,10 +288,10 @@ begin
     currCityCardBalance := 12345;
 
     if Assigned(FOnGetCityCardInfo) then
-      FOnGetCityCardInfo(FEdtCardInfo, currCityCardNo);
+      FOnGetCityCardInfo(currCityCardNo);
 
     if Assigned(FOnGetCardBalance) then
-      FOnGetCardBalance(FEdtCardBalance, currCityCardBalance);
+      FOnGetCardBalance(currCityCardBalance);
 
     Result := True;
     Exit;
@@ -349,7 +349,7 @@ begin
   CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
   cardInfo := cardInfo + '(' + bytesToStr(hexStrToByteBuf(tempStr, false)) + ')';//≥÷ø®»À–’√˚  }
   if Assigned(FOnGetCityCardInfo) then
-    FOnGetCityCardInfo(FEdtCardInfo, cardInfo);
+    FOnGetCityCardInfo(cardInfo);
 
 //    Inc(offset, 20 * 2);
 //    SetLength(tempStr, 18 * 2);
@@ -381,7 +381,7 @@ begin
   balance := tempInt;
   currCityCardBalance := balance;
   if Assigned(FOnGetCardBalance) then
-    FOnGetCardBalance(FEdtCardBalance, balance);
+    FOnGetCardBalance(balance);
 
   Result := True;
 end;
@@ -1250,6 +1250,7 @@ begin
   inherited Create(CreateSuspended, dlg, timeout);
   FOldPass := oldPass;
   FNewPass := newPass;
+  FreeOnTerminate := False;
 end;
 
 function TModifyZHBPass.doTask: Boolean;

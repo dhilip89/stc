@@ -22,7 +22,9 @@ const
   TIP_CHECKING_PREPAID_CARD = '正在校验充值卡，请稍后...';
   TIP_GETTING_PREPAID_CARD_AMOUNT = '正在获取充值面额,请稍后...';
   TIP_GETTING_ZHB_BALANCE = '正在获取账户宝余额,请稍后...';
-  TIP_BALANCE_AFTER_CHARGED = '充值后龙城通片余额：';
+  TIP_CITY_CARD_BALANCE = '龙城通余额：';
+  TIP_CITY_CARD_NO = '龙城通卡号：';
+  TIP_CITY_CARD_BALANCE_AFTER_CHARGED = '充值后龙城通余额：';
   TIP_MODIFYING_ZHB_PASS = '正在修改账户宝密码，请勿移开卡片...';
 
   //发出命令的执行状态

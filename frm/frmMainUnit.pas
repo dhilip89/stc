@@ -88,17 +88,8 @@ type
     AdvSmoothButton26: TAdvSmoothButton;
     AdvSmoothButton24: TAdvSmoothButton;
     RzPanel74: TRzPanel;
-    AdvSmoothLabel52: TAdvSmoothLabel;
-    AdvSmoothLabel51: TAdvSmoothLabel;
-    edtCityCardBalance: TAdvEdit;
-    edtCityCardInfo: TAdvEdit;
-    AdvSmoothButton27: TAdvSmoothButton;
     RzPanel75: TRzPanel;
     RzPanel76: TRzPanel;
-    edtCityCardInfoWhenChosingAmount: TAdvEdit;
-    AdvSmoothLabel62: TAdvSmoothLabel;
-    AdvSmoothLabel63: TAdvSmoothLabel;
-    edtCityCardBalanceWhenChosingAmount: TAdvEdit;
     btnCashCharge200: TAdvSmoothButton;
     btnCashCharge100: TAdvSmoothButton;
     btnCashCharge50: TAdvSmoothButton;
@@ -290,6 +281,11 @@ type
     lblModifyZHBPassSucc: TAdvSmoothLabel;
     AdvSmoothButton25: TAdvSmoothButton;
     AdvSmoothButton33: TAdvSmoothButton;
+    lblCityCardBalanceOnPanelCashCharge: TAdvSmoothLabel;
+    lblCityCardBalance: TAdvSmoothLabel;
+    lblCityCardNo: TAdvSmoothLabel;
+    AdvSmoothButton27: TAdvSmoothButton;
+    AdvSmoothButton34: TAdvSmoothButton;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -414,6 +410,7 @@ type
     firstTime: TDateTime;
 
     queryZHBBalanceFlag: Byte;//查询账户宝余额标识  1:单纯查询余额  2:充值时查询余额
+    queryCityCardBalanceFlag: Byte;//查询市民卡余额标识  1:纯查余额信息  2:现金充值时查询余额信息
 
     procedure initMain;
     procedure loadParam;
@@ -459,8 +456,8 @@ type
 //    procedure setProgressTopPos(iTop: Integer);
     procedure setDlgProgressTransparent(isTransparent: Boolean);
 
-    procedure DoOnGetCityCardInfo(edt: TCustomEdit; cardInfo: string);
-    procedure DoOnGetCityCardBalance(edt: TCustomEdit; balance: Integer);
+    procedure DoOnGetCityCardInfo(cardInfo: string);
+    procedure DoOnGetCityCardBalance(balance: Integer);
 
     procedure DoOnGetMac2(ret: Byte; mac2: AnsiString);
     procedure DoOnChargeCardCheckRsp(ret: Byte; amount: Integer);
@@ -712,16 +709,13 @@ var
 begin
   currChargeType := 0;
   isCityCardCharging := True;
-  edtCityCardInfoWhenChosingAmount.Text := '';
-  edtCityCardBalanceWhenChosingAmount.Text := '';
   Notebook1.ActivePage := 'pageCityCardChooseChargeAmount';
   cityCardBizType := 0;
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD);
-    threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15,
-      edtCityCardInfoWhenChosingAmount, edtCityCardBalanceWhenChosingAmount);
-    threadQueryCityCard.OnGetCityCardInfo := DoOnGetCityCardInfo;
+    threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15);
+    queryCityCardBalanceFlag := 2;
     threadQueryCityCard.OnGetCardBalance := DoOnGetCityCardBalance;
     threadQueryCityCard.Start;
     mr := dlg.ShowModal;
@@ -805,15 +799,13 @@ var
   mr: TModalResult;
   threadQueryCityCard: TQueryCityCardBalance;
 begin
-  edtCityCardBalance.Text := '';
-  edtCityCardInfo.Text := '';
-  AdvSmoothButton27.Caption := '返回首页';
   Notebook1.ActivePage := 'pageCityCardCharge';
   cityCardBizType := 1;
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD);
-    threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15, edtCityCardInfo, edtCityCardBalance);
+    threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15);
+    queryCityCardBalanceFlag := 1;
     threadQueryCityCard.OnGetCityCardInfo := DoOnGetCityCardInfo;
     threadQueryCityCard.OnGetCardBalance := DoOnGetCityCardBalance;
     threadQueryCityCard.Start;
@@ -875,7 +867,6 @@ end;
 
 procedure TfrmMain.btnModifyZHBPassConfirmClick(Sender: TObject);
 var
-  threadModifyZHBPass: TModifyZHBPass;
   mr: TModalResult;
   dlg: TfrmWaiting;
   oldPass, newPass: AnsiString;
@@ -911,7 +902,8 @@ begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_MODIFYING_ZHB_PASS);
-    TModifyZHBPass.Create(False, dlg, 30, oldPass, newPass);
+    threadModifyZHBPass := TModifyZHBPass.Create(True, dlg, 30, oldPass, newPass);
+    threadModifyZHBPass.Start;
     try
       mr := dlg.ShowModal;
       if mr = mrOk then
@@ -935,7 +927,7 @@ begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD);
-    TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
+    TQueryCityCardBalance.Create(False, dlg, 15);
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
@@ -1045,7 +1037,7 @@ begin
         begin
           AdvSmoothLabel75.Visible := False;
           newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
-          AdvSmoothLabel74.Caption.Text := TIP_BALANCE_AFTER_CHARGED + FormatFloat('0.0#', newBalance) + '元';
+          AdvSmoothLabel74.Caption.Text := TIP_CITY_CARD_BALANCE_AFTER_CHARGED + FormatFloat('0.0#', newBalance) + '元';
           AdvSmoothLabel74.Visible := True;
           Notebook1.ActivePage := 'pageMobileTopUpSuccess';
         end
@@ -1162,7 +1154,7 @@ begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD);
-    TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
+    TQueryCityCardBalance.Create(False, dlg, 15);
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
@@ -1374,7 +1366,7 @@ begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD);
-    TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
+    TQueryCityCardBalance.Create(False, dlg, 15);
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
@@ -1443,7 +1435,7 @@ begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD);
-    TQueryCityCardBalance.Create(False, dlg, 15, nil, nil);
+    TQueryCityCardBalance.Create(False, dlg, 15);
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
@@ -1484,7 +1476,7 @@ begin
         begin
           AdvSmoothLabel75.Visible := False;
           newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
-          AdvSmoothLabel74.Caption.Text := TIP_BALANCE_AFTER_CHARGED + FormatFloat('0.0#', newBalance) + '元';
+          AdvSmoothLabel74.Caption.Text := TIP_CITY_CARD_BALANCE_AFTER_CHARGED + FormatFloat('0.0#', newBalance) + '元';
           AdvSmoothLabel74.Visible := True;
           Notebook1.ActivePage := 'pageMobileTopUpSuccess';
         end
@@ -1631,7 +1623,7 @@ begin
     begin
       AdvSmoothLabel75.Visible := False;
       newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
-      AdvSmoothLabel74.Caption.Text := TIP_BALANCE_AFTER_CHARGED + FormatFloat('0.0#', newBalance) + '元';
+      AdvSmoothLabel74.Caption.Text := TIP_CITY_CARD_BALANCE_AFTER_CHARGED + FormatFloat('0.0#', newBalance) + '元';
       AdvSmoothLabel74.Visible := True;
       Notebook1.ActivePage := 'pageMobileTopUpSuccess';
     end
@@ -1657,14 +1649,30 @@ begin
   end;
 end;
 
-procedure TfrmMain.DoOnGetCityCardBalance(edt: TCustomEdit; balance: Integer);
+procedure TfrmMain.DoOnGetCityCardBalance(balance: Integer);
 begin
-  edt.Text := FormatFloat('0.##', balance / 100.0) + '元';
+  if queryCityCardBalanceFlag = 1 then
+  begin
+    lblCityCardBalance.Caption.Text := TIP_CITY_CARD_BALANCE
+                                + FormatFloat('0.00', balance / 100.0) + '元';
+  end
+  else if queryCityCardBalanceFlag = 2 then
+  begin
+    lblCityCardBalanceOnPanelCashCharge.Caption.Text := TIP_CITY_CARD_BALANCE
+                                + FormatFloat('0.00', balance / 100.0) + '元';
+  end;
 end;
 
-procedure TfrmMain.DoOnGetCityCardInfo(edt: TCustomEdit; cardInfo: string);
+procedure TfrmMain.DoOnGetCityCardInfo(cardInfo: string);
 begin
-  edt.Text := cardInfo;
+  if queryCityCardBalanceFlag = 1 then
+  begin
+    lblCityCardNo.Caption.Text := TIP_CITY_CARD_NO + cardInfo;
+  end
+  else if queryCityCardBalanceFlag = 2 then
+  begin
+
+  end;
 end;
 
 procedure TfrmMain.DoOnGetMac2(ret: Byte; mac2: AnsiString);
@@ -1950,7 +1958,6 @@ begin
     clickCount := 1;
     firstTime := Now;
   end;
-  AdvSmoothButton7.Caption := IntToStr(clickCount);
   if (clickCount >= 5) then
   begin
     Close;
@@ -1968,7 +1975,6 @@ begin
     clickCount := 1;
     firstTime := Now;
   end;
-  AdvSmoothButton7.Caption := IntToStr(clickCount);
   if (clickCount >= 5) then
   begin
     Close;
@@ -2104,6 +2110,7 @@ begin
   setCompentInParentCenter(RzPanel12);
   setCompentInParentCenter(RzPanel13);
   setCompentInParentCenter(RzPanel14);
+  setCompentInParentCenter(RzPanel15);
   setCompentInParentCenter(RzPanel16);
   setCompentInParentCenter(RzPanel17);
   setCompentInParentCenter(RzPanel73);
