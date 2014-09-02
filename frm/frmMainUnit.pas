@@ -1190,11 +1190,17 @@ begin
 end;
 
 procedure TfrmMain.AdvSmoothButton9Click(Sender: TObject);
+var
+  printInfo: ansistring;
 begin
-  currCityCardNo := '1122334455667788';
-  amountCharged := 100 * 100;
-  setBtnPayTypeVisible(False, False, True, True, True);
-  Notebook1.ActivePage := 'pageSelectPayType';
+  printInfo := '退款凭证'#13#10
+             + '---------------------------'#13#10
+             + '卡号:9512345678001122' + #13#10
+             + '金额:' + IntToStr(100) + '元'#13#10
+             + '时间:' + FormatDateTime('yyyy-MM-dd hh:nn:ss', now) + #13#10
+             + '---------------------------'#13#10
+             + '注:请带凭证到人工窗口退款';
+  printContent(printInfo);
 end;
 
 procedure TfrmMain.backToMainFrame;
@@ -1651,6 +1657,7 @@ end;
 
 procedure TfrmMain.DoOnGetCityCardBalance(balance: Integer);
 begin
+  addSysLog('DoOnGetCityCardInfo ' + IntToStr(balance));
   if queryCityCardBalanceFlag = 1 then
   begin
     lblCityCardBalance.Caption.Text := TIP_CITY_CARD_BALANCE
@@ -1665,6 +1672,7 @@ end;
 
 procedure TfrmMain.DoOnGetCityCardInfo(cardInfo: string);
 begin
+  addSysLog('DoOnGetCityCardInfo ' + cardInfo);
   if queryCityCardBalanceFlag = 1 then
   begin
     lblCityCardNo.Caption.Text := TIP_CITY_CARD_NO + cardInfo;
@@ -1854,6 +1862,7 @@ begin
   icdev := dc_init(GlobalParam.D8ComPort, GlobalParam.D8BaudRate);
   if icdev < 0 then
   begin
+    addSysLog('dc init fail');
     Exit;
   end;
   dc_beep(icdev, 15);

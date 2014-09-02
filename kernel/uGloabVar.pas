@@ -39,8 +39,8 @@ function BCD2Byte(bcd: Byte): Byte;
 procedure StrToBcdByteArray(const srcStr: string; var bcdAry: array of Byte; aryLength: Integer);
 
 procedure initGlobalVar;
-function resetD8: Boolean;
 procedure addSysLog(logStr: string);
+function resetD8: Boolean;
 function bytesToStr(buf: array of Byte): ansistring;
 function bytesToHexStr(buf: array of Byte): AnsiString;
 function hexStrToByteBuf(const hexStr: ansiString; isIncludeFF: Boolean): TByteDynArray;
@@ -167,27 +167,31 @@ var
   recvHexStr: AnsiString;
 begin
   Result := False;
-  if dc_reset(icdev, 0) <> 0 then
+  ret := dc_reset(icdev, 5);
+  if ret <> 0 then
   begin
-    FSysLog.AddLog('dc_reset fail');
+    FSysLog.AddLog('dc_reset fail, ' + IntToStr(ret));
     Exit;
   end;  ;
 
-  if dc_card(icdev, 0, lw) <> 0 then
+  ret := dc_config_card(icdev, 'A');
+  if ret <> 0 then
   begin
-    FSysLog.AddLog('no card');
+    FSysLog.AddLog('dc_config_card fail, ' + IntToStr(ret));
     Exit;
   end;
 
-  if dc_config_card(icdev, 'A') <> 0 then
+  ret := dc_card(icdev, 0, lw);
+  if ret <> 0 then
   begin
-    FSysLog.AddLog('dc_config_card fail');
+    FSysLog.AddLog('no card, ' + IntToStr(ret));
     Exit;
   end;
 
-  if dc_pro_reset_hex(icdev, rlen, rdata) <> 0 then
+  ret := dc_pro_reset_hex(icdev, rlen, rdata);
+  if ret <> 0 then
   begin
-    FSysLog.AddLog('dc_pro_reset_hex fail');
+    FSysLog.AddLog('dc_pro_reset_hex fail, ' + IntToStr(ret));
     Exit;
   end;
 
@@ -370,10 +374,6 @@ end;
 
 function initPrinterCom(): Boolean;
 begin
-  {$IFDEF test}
-    Exit;
-  {$ENDIF}
-
   if printerCom = nil then
   begin
 

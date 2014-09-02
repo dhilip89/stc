@@ -282,27 +282,28 @@ var
   cardInfo: string;
   balance: Integer;
 begin
-  {$IFDEF test}
-    Sleep(1000);
-    currCityCardNo := '1234567890123456';
-    currCityCardBalance := 12345;
-
-    if Assigned(FOnGetCityCardInfo) then
-      FOnGetCityCardInfo(currCityCardNo);
-
-    if Assigned(FOnGetCardBalance) then
-      FOnGetCardBalance(currCityCardBalance);
-
-    Result := True;
-    Exit;
-  {$ENDIF}
+//  {$IFDEF test}
+//    Sleep(1000);
+//    currCityCardNo := '1234567890123456';
+//    currCityCardBalance := 12345;
+//
+//    if Assigned(FOnGetCityCardInfo) then
+//      FOnGetCityCardInfo(currCityCardNo);
+//
+//    if Assigned(FOnGetCardBalance) then
+//      FOnGetCardBalance(currCityCardBalance);
+//
+//    Result := True;
+//    Exit;
+//  {$ENDIF}
 
   Result := False;
   if not resetD8 then
   begin
+    addSysLog('resetd8 fail');
     Exit;
   end;
-
+  addSysLog('resetd8 ok');
   sendHexStr := '00B0950000';
   CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
 
@@ -320,7 +321,7 @@ begin
   CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
   cardInfo := tempStr;//'卡号:'
   currCityCardNo := tempStr;
-
+  addSysLog('get city card info ok ' + cardInfo);
 //    Inc(offset, 20 * 2);
 //    SetLength(tempStr, 4 * 2);
 //    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
@@ -1153,23 +1154,23 @@ var
   transDate, transTime, transTerminalId: ansistring;
   transType, transAmount: Integer;
 begin
-  {$IFDEF test}
-    sleep(2000);
-    for I := 1 to 10 do
-    begin
-      transAmount := 10000 + 30 * 1;
-      transType := 2;
-      transTerminalId := '9900112200' + IntToStr(10 + i);
-      transDate := FormatDateTime('yyyy-MM-dd', Now);
-      transTime := FormatDateTime('HH:nn:ss', Now);
-
-      if Assigned(FOnQueryCityCardDetail) then
-        FOnQueryCityCardDetail(transDate, transTime, transTerminalId, transType, transAmount);
-      Sleep(10);
-    end;
-    Result := True;
-    Exit;
-  {$ENDIF}
+//  {$IFDEF test}
+//    sleep(2000);
+//    for I := 1 to 10 do
+//    begin
+//      transAmount := 10000 + 30 * 1;
+//      transType := 2;
+//      transTerminalId := '9900112200' + IntToStr(10 + i);
+//      transDate := FormatDateTime('yyyy-MM-dd', Now);
+//      transTime := FormatDateTime('HH:nn:ss', Now);
+//
+//      if Assigned(FOnQueryCityCardDetail) then
+//        FOnQueryCityCardDetail(transDate, transTime, transTerminalId, transType, transAmount);
+//      Sleep(10);
+//    end;
+//    Result := True;
+//    Exit;
+//  {$ENDIF}
 
   Result := False;
   if not resetD8 then
@@ -1190,9 +1191,10 @@ begin
     if (ret <> 0) or (checkRecvBufEndWith9000(recvBuf, recvLen) <> BILL_OK)
       or (recvLen < 23)then
     begin
-      addSysLog('read card transaction detail err, recvBuf:' + recvBuf);
+      addSysLog('read card transaction detail err, recvBuf:' + recvBuf + ',sendHexStr:' + sendHexStr);
       Break;
     end;
+
 
     { 1-2     交易序号
       3-5     透支限额
