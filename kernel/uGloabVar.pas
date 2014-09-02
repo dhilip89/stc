@@ -37,7 +37,7 @@ function PopMsg(Title: string; Msg: string): boolean;
 function split(src,dec : string):TStringList;
 function BCD2Byte(bcd: Byte): Byte;
 procedure StrToBcdByteArray(const srcStr: string; var bcdAry: array of Byte; aryLength: Integer);
-
+function getChargeType: AnsiString;//0:现金 1:银联卡  2：充值卡  03企福通充值/专有账户充值
 procedure initGlobalVar;
 procedure addSysLog(logStr: string);
 function resetD8: Boolean;
@@ -144,6 +144,16 @@ begin
   begin
     bcdAry[i] := StrToInt('$' + Copy(s, 2 * i + 1, 2));
   end;  
+end;
+
+function getChargeType: AnsiString;//0:现金 1:银联卡  2：充值卡  03企福通充值/专有账户充值
+begin
+  case currChargeType  of
+    0: Result := '现金';
+    1: Result := '银联卡';
+    2: Result := '充值卡';
+    3: Result := '账户宝';
+  end;
 end;
 
 procedure initGlobalVar;
@@ -407,6 +417,7 @@ function printContent(content: AnsiString): Boolean;
 var
   buf: TByteDynArray;
 begin
+  addSysLog('printContent'#13#10 + content);
   if isPrinterComOpen and (content <> '') then
   begin
     //初始化、并设置汉字模式

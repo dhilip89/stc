@@ -282,20 +282,20 @@ var
   cardInfo: string;
   balance: Integer;
 begin
-//  {$IFDEF test}
-//    Sleep(1000);
-//    currCityCardNo := '1234567890123456';
-//    currCityCardBalance := 12345;
-//
-//    if Assigned(FOnGetCityCardInfo) then
-//      FOnGetCityCardInfo(currCityCardNo);
-//
-//    if Assigned(FOnGetCardBalance) then
-//      FOnGetCardBalance(currCityCardBalance);
-//
-//    Result := True;
-//    Exit;
-//  {$ENDIF}
+  {$IFDEF test}
+    Sleep(1000);
+    currCityCardNo := '1234567890123456';
+    currCityCardBalance := 12345;
+
+    if Assigned(FOnGetCityCardInfo) then
+      FOnGetCityCardInfo(currCityCardNo);
+
+    if Assigned(FOnGetCardBalance) then
+      FOnGetCardBalance(currCityCardBalance);
+
+    Result := True;
+    Exit;
+  {$ENDIF}
 
   Result := False;
   if not resetD8 then
@@ -1154,23 +1154,23 @@ var
   transDate, transTime, transTerminalId: ansistring;
   transType, transAmount: Integer;
 begin
-//  {$IFDEF test}
-//    sleep(2000);
-//    for I := 1 to 10 do
-//    begin
-//      transAmount := 10000 + 30 * 1;
-//      transType := 2;
-//      transTerminalId := '9900112200' + IntToStr(10 + i);
-//      transDate := FormatDateTime('yyyy-MM-dd', Now);
-//      transTime := FormatDateTime('HH:nn:ss', Now);
-//
-//      if Assigned(FOnQueryCityCardDetail) then
-//        FOnQueryCityCardDetail(transDate, transTime, transTerminalId, transType, transAmount);
-//      Sleep(10);
-//    end;
-//    Result := True;
-//    Exit;
-//  {$ENDIF}
+  {$IFDEF test}
+    sleep(1000);
+    for I := 1 to 10 do
+    begin
+      transAmount := 10000 + 30 * 1;
+      transType := 2;
+      transTerminalId := '9900112200' + IntToStr(10 + i);
+      transDate := FormatDateTime('yyyy-MM-dd', Now);
+      transTime := FormatDateTime('HH:nn:ss', Now);
+
+      if Assigned(FOnQueryCityCardDetail) then
+        FOnQueryCityCardDetail(transDate, transTime, transTerminalId, transType, transAmount);
+      Sleep(10);
+    end;
+    Result := True;
+    Exit;
+  {$ENDIF}
 
   Result := False;
   if not resetD8 then

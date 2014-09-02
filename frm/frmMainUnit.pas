@@ -374,6 +374,7 @@ type
       Shift: TShiftState);
     procedure btnModifyZHBPassConfirmClick(Sender: TObject);
     procedure btnZHBBalanceQueryClick(Sender: TObject);
+    procedure AdvSmoothButton3Click(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -1096,6 +1097,28 @@ begin
   backToMainFrame;
 end;
 
+procedure TfrmMain.AdvSmoothButton3Click(Sender: TObject);
+var
+  content: AnsiString;
+begin
+  content := '             充值凭证'#13#10 +
+             '----------------------------------'#13#10 +
+             ' 龙城通卡号：' + currCityCardNo + #13#10 +
+             ' 充值 金 额：' + FormatFloat('0.00', currCityCardBalance * 1.0/100) + '元'#13#10 +
+             ' 充值后余额：' + FormatFloat('0.00', (amountCharged + currCityCardBalance) * 1.0/100) + '元'#13#10 +
+             ' 充值 方 式：' + getChargeType + #13#10;
+  if currChargeType = 3 then
+  begin
+    content := content +
+             ' 账户宝余额：' + FormatFloat('0.00', (currZHBBalance - amountCharged) * 1.0/100) + '元'#13#10;
+  end;
+
+  content := content +
+             ' 充值 时 间：' + FormatDateTime('yyyy-MM-dd HH:nn:ss', Now);
+
+  printContent(content);
+end;
+
 procedure TfrmMain.AdvSmoothButton40Click(Sender: TObject);
 begin
   try
@@ -1714,6 +1737,9 @@ end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
 begin
+  {$IFDEF test}
+    RzPanel7.Caption := 'DEMO';
+  {$ENDIF}
   setPanelInvisible;
   setTimeInfo;
   Self.DoubleBuffered := True;
@@ -1938,7 +1964,8 @@ begin
     isNewCard := False;
   end
   else if (Notebook1.ActivePage = 'pageMobileTopUpSuccess')
-    or (Notebook1.ActivePage = 'pageModifyZHBPassSucc') then
+    or (Notebook1.ActivePage = 'pageModifyZHBPassSucc')
+    or (Notebook1.ActivePage = 'pageCityCardTransDetail') then
   begin
     setCountdownTimerEnabled(True, 30);
   end
