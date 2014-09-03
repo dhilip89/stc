@@ -630,15 +630,6 @@ begin
 
   //打开串口
   try
-//    addSysLog('open ssp com');
-//    i := OpenSSPComPort(@sspCmd);
-//    if (i = 0) then
-//    begin
-//      taskRet := 2;
-//      errInfo := '纸币器无法正常工作';
-//      //ShowMessage('串口打开失败');
-//      Exit;
-//    end;
 
     //发送 0x11 号命令查找识币器是否连接
     sspCmd.CommandData[0] := $11;
@@ -763,7 +754,7 @@ begin
           Inc(j);
         end;
       end;
-      if (FAmountRead >= totalAmount) then
+      if (FAmountRead * 100 >= totalAmount) then
       begin
         Sleep(100);
         Break;
@@ -786,7 +777,7 @@ begin
       end;
     end;
   end;
-  if (FAmountRead < totalAmount) then
+  if (FAmountRead * 100 < totalAmount) then
   begin//timeout and amount is not enough
     Exit;
   end;
