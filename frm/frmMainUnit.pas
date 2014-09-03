@@ -78,11 +78,6 @@ type
     RzPanel70: TRzPanel;
     pnlSuccess: TRzPanel;
     Image38: TImage;
-    RzPanel72: TRzPanel;
-    AdvSmoothButton10: TAdvSmoothButton;
-    AdvSmoothButton11: TAdvSmoothButton;
-    AdvSmoothButton9: TAdvSmoothButton;
-    AdvSmoothButton7: TAdvSmoothButton;
     RzPanel73: TRzPanel;
     btnCityCardCharge: TAdvSmoothButton;
     AdvSmoothButton26: TAdvSmoothButton;
@@ -177,8 +172,6 @@ type
     edtPhoneNo: TAdvEdit;
     AdvSmoothButton41: TAdvSmoothButton;
     AdvSmoothButton42: TAdvSmoothButton;
-    AdvSmoothButton43: TAdvSmoothButton;
-    AdvSmoothButton44: TAdvSmoothButton;
     RzPanel93: TRzPanel;
     RzPanel94: TRzPanel;
     AdvSmoothButton12: TAdvSmoothButton;
@@ -286,6 +279,14 @@ type
     lblCityCardNo: TAdvSmoothLabel;
     AdvSmoothButton27: TAdvSmoothButton;
     AdvSmoothButton34: TAdvSmoothButton;
+    RzPanel18: TRzPanel;
+    pnlMainBtn: TRzPanel;
+    btn2: TAdvSmoothButton;
+    btn4: TAdvSmoothButton;
+    btn6: TAdvSmoothButton;
+    btn1: TAdvSmoothButton;
+    btn5: TAdvSmoothButton;
+    btn3: TAdvSmoothButton;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -300,7 +301,7 @@ type
     procedure btnRegisterOkClick(Sender: TObject);
     procedure btnPrepaidCardChargeClick(Sender: TObject);
     procedure btnPayInPageQueryFeeUnpaidClick(Sender: TObject);
-    procedure AdvSmoothButton11Click(Sender: TObject);
+    procedure btn4Click(Sender: TObject);
     procedure AdvSmoothButton13Click(Sender: TObject);
     procedure AdvSmoothButton14Click(Sender: TObject);
     procedure AdvSmoothButton15Click(Sender: TObject);
@@ -309,13 +310,13 @@ type
     procedure AdvSmoothButton17Click(Sender: TObject);
     procedure AdvSmoothButton18Click(Sender: TObject);
     procedure AdvSmoothButton8Click(Sender: TObject);
-    procedure AdvSmoothButton10Click(Sender: TObject);
+    procedure btn2Click(Sender: TObject);
     procedure AdvSmoothButton20Click(Sender: TObject);
     procedure AdvSmoothButton19Click(Sender: TObject);
     procedure AdvSmoothButton21Click(Sender: TObject);
     procedure AdvSmoothButton22Click(Sender: TObject);
     procedure AdvSmoothButton23Click(Sender: TObject);
-    procedure AdvSmoothButton7Click(Sender: TObject);
+    procedure btn1Click(Sender: TObject);
     procedure btnCityCardChargeClick(Sender: TObject);
     procedure AdvSmoothButton26Click(Sender: TObject);
     procedure AdvSmoothButton24Click(Sender: TObject);
@@ -338,7 +339,7 @@ type
     procedure AdvSmoothButton40Click(Sender: TObject);
     procedure AdvSmoothButton41Click(Sender: TObject);
     procedure AdvSmoothButton42Click(Sender: TObject);
-    procedure AdvSmoothButton44Click(Sender: TObject);
+    procedure btn3Click(Sender: TObject);
     procedure Timer3Timer(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnQFTCardClick(Sender: TObject);
@@ -347,7 +348,7 @@ type
     procedure edtPasswordForChargeCardKeyPress(Sender: TObject; var Key: Char);
     procedure edtPasswordForChargeCardKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
-    procedure AdvSmoothButton9Click(Sender: TObject);
+    procedure btn6Click(Sender: TObject);
     procedure RzPanel7Click(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure RzPanel7DblClick(Sender: TObject);
@@ -449,6 +450,7 @@ type
     function initPrinter: Boolean;
     procedure setTimeInfo();
     procedure setPanelInitPos;
+    procedure resetMainBtnPos;//初始化主界面上的按钮位置
     procedure setCompentInParentCenter(comp: TWinControl);
     procedure setBtnPayTypeVisible(btnCityCardVisible,btnBankCardVisible,
       btnCashVisible, btnChargeCardVisible, btnQFTCardVisible: Boolean);
@@ -529,12 +531,12 @@ begin
   gridCityCardTransDetail.SelectRows(i, 1);;
 end;
 
-procedure TfrmMain.AdvSmoothButton10Click(Sender: TObject);
+procedure TfrmMain.btn2Click(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pagePublicFee';
 end;
 
-procedure TfrmMain.AdvSmoothButton11Click(Sender: TObject);
+procedure TfrmMain.btn4Click(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageMobileTopUp';
   edtPhoneNo.Text := '1';
@@ -1101,6 +1103,8 @@ procedure TfrmMain.AdvSmoothButton3Click(Sender: TObject);
 var
   content: AnsiString;
 begin
+  AdvSmoothButton3.Enabled := False;
+
   content := '             充值凭证'#13#10 +
              '----------------------------------'#13#10 +
              ' 龙城通卡号：' + currCityCardNo + #13#10 +
@@ -1151,7 +1155,7 @@ begin
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
-procedure TfrmMain.AdvSmoothButton44Click(Sender: TObject);
+procedure TfrmMain.btn3Click(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageBankBiz';
 end;
@@ -1192,7 +1196,7 @@ begin
   end;
 end;
 
-procedure TfrmMain.AdvSmoothButton7Click(Sender: TObject);
+procedure TfrmMain.btn1Click(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageCityCard';
 end;
@@ -1212,7 +1216,7 @@ begin
   Notebook1.ActivePage := 'pageBankCardTransfer';
 end;
 
-procedure TfrmMain.AdvSmoothButton9Click(Sender: TObject);
+procedure TfrmMain.btn6Click(Sender: TObject);
 var
   printInfo: ansistring;
 begin
@@ -1835,6 +1839,7 @@ begin
   // lblCompany.Left := pnlBottom.Width - lblCompany.Width - 30;
   // *************调整时间的位置使其居中，在右下角显示公司信息
 
+  resetMainBtnPos;
   setPanelInitPos;
 end;
 
@@ -1968,6 +1973,10 @@ begin
     or (Notebook1.ActivePage = 'pageCityCardTransDetail') then
   begin
     setCountdownTimerEnabled(True, 30);
+    if Notebook1.ActivePage = 'pageMobileTopUpSuccess' then
+    begin
+      AdvSmoothButton3.Enabled := True;
+    end;
   end
   else
   begin
@@ -1977,10 +1986,34 @@ begin
   pnlTimeBar.SetFocus;
 end;
 
+procedure TfrmMain.resetMainBtnPos;
+  procedure setBtnLeftTop(btn: TAdvSmoothButton; x, y: Integer);
+  begin
+    btn.Left := x;
+    btn.Top := y;
+  end;
+var
+  xDistance, yDistance: Integer;
+  btnWidth, btnHeight: Integer;
+begin
+  btnWidth := btn1.Width;
+  btnHeight := btn1.Height;
+  xDistance := (pnlMainBtn.Width - 2 * btnWidth) div 3;
+  yDistance := (pnlMainBtn.Height - 3 * btnHeight) div 4;
+
+
+  setBtnLeftTop(btn1, xDistance, yDistance);
+  setBtnLeftTop(btn2, 2 * xDistance + btnWidth, btn1.Top);
+  setBtnLeftTop(btn3, btn1.Left, 2 * yDistance + btnHeight);
+  setBtnLeftTop(btn4, btn2.Left, btn3.Top);
+  setBtnLeftTop(btn5, btn1.Left, 3 * yDistance + 2 * btnHeight);
+  setBtnLeftTop(btn6, btn2.Left, btn5.Top);
+end;
+
 procedure TfrmMain.RzPanel2Resize(Sender: TObject);
 begin
-  RzPanel72.Left := RzPanel2.Width - RzPanel72.Width - 40;
-  RzPanel72.Top := (RzPanel2.Height - RzPanel72.Height) div 2;
+//  RzPanel72.Left := RzPanel2.Width - RzPanel72.Width - 40;
+//  RzPanel72.Top := (RzPanel2.Height - RzPanel72.Height) div 2;
 end;
 
 procedure TfrmMain.RzPanel7Click(Sender: TObject);
