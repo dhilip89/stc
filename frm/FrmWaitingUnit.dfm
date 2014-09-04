@@ -4,8 +4,8 @@ object frmWaiting: TfrmWaiting
   BorderIcons = []
   BorderStyle = bsNone
   Caption = 'waiting'
-  ClientHeight = 287
-  ClientWidth = 723
+  ClientHeight = 361
+  ClientWidth = 830
   Color = clBlack
   TransparentColor = True
   Font.Charset = DEFAULT_CHARSET
@@ -24,8 +24,8 @@ object frmWaiting: TfrmWaiting
   object AdvSmoothPanel1: TAdvSmoothPanel
     Left = 0
     Top = 0
-    Width = 723
-    Height = 287
+    Width = 830
+    Height = 361
     Cursor = crDefault
     Caption.HTMLFont.Charset = DEFAULT_CHARSET
     Caption.HTMLFont.Color = clWindowText
@@ -52,11 +52,13 @@ object frmWaiting: TfrmWaiting
     Version = '1.1.0.0'
     Align = alClient
     TabOrder = 0
+    ExplicitWidth = 723
+    ExplicitHeight = 287
     object AdvSmoothLabel1: TAdvSmoothLabel
       Left = 0
-      Top = 122
-      Width = 723
-      Height = 165
+      Top = 104
+      Width = 830
+      Height = 257
       Fill.ColorMirror = clNone
       Fill.ColorMirrorTo = clNone
       Fill.GradientType = gtVertical
@@ -82,12 +84,9 @@ object frmWaiting: TfrmWaiting
       Version = '1.5.0.1'
       WordWrap = True
       Align = alBottom
-      ExplicitLeft = 3
-      ExplicitTop = 88
-      ExplicitWidth = 705
     end
     object AdvCircularProgress1: TAdvCircularProgress
-      Left = 322
+      Left = 375
       Top = 10
       Width = 80
       Height = 80

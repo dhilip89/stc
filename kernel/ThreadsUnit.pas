@@ -736,6 +736,7 @@ begin
             $CC:;//stacking
             $EB:
               begin
+                addSysLog('CityCardNo:' + currCityCardNo + ', Current Stacked: ' + IntToStr(tempAmount) + 'RMB, Total Stacked:' + IntToStr(FAmountRead) + 'RMB');
                 Inc(FAmountRead, tempAmount);//stacked;
                 tempAmount := 0;
                 setWaitingTip(Format(tip, [FCashAmount div 100, FAmountRead]));
@@ -746,7 +747,6 @@ begin
             $EE://detecting cash
               begin
                 tempAmount := cashAmount[sspCmd.ResponseData[j + 1]];
-                //Memo1.Lines.Add('tempAount=' + IntToStr(tempAmount));
                 Inc(j);
               end;
             $EF:;//reading
@@ -1167,6 +1167,21 @@ begin
   if not resetD8 then
   begin
     taskRet := 1;
+    Exit;
+  end;
+
+  //verify pin
+  sendHexStr := '0020000003951246';
+  CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+
+  sendLen := Length(sendHexStr) div 2;
+  recvLen := 0;
+  ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+  if (ret <> 0) or (checkRecvBufEndWith9000(recvBuf, recvLen) <> '9000') then
+  begin
+    addSysLog('verify pin err,recvBuf:' + recvBuf);
+    taskRet := 2;
+    errInfo := 'ø®∆¨–£—ÈPIN ß∞‹';
     Exit;
   end;
 

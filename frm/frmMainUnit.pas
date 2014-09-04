@@ -97,7 +97,6 @@ type
     AdvEdit2: TAdvEdit;
     AdvSmoothButton15: TAdvSmoothButton;
     AdvSmoothLabel40: TAdvSmoothLabel;
-    Timer4: TTimer;
     RzPanel80: TRzPanel;
     AdvEdit1: TAdvEdit;
     AdvSmoothButton16: TAdvSmoothButton;
@@ -287,6 +286,7 @@ type
     btn1: TAdvSmoothButton;
     btn5: TAdvSmoothButton;
     btn3: TAdvSmoothButton;
+    btnLoginStatus: TAdvGlowButton;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -430,16 +430,6 @@ type
     procedure addCityCardTransDetailToGrid(transDate, transTime, transTerminalId: ansistring;
                                       transType, transAmount: Integer);
 
-    procedure waitForInsertBankCard(Sender: TObject);
-    procedure waitForBankCardPassTimer(Sender: TObject);
-    procedure WaitForBankCardSuccessTimer(Sender: TObject);
-    procedure waitForIDCardReadTimer(Sender: TObject);
-    procedure WaitForCityCardWhenPayTimer(Sender: TObject);
-    procedure waitForInputPhoneNumberTimer(Sender: TObject);
-    procedure waitForInputBankCardNoTimer(Sender: TObject);
-    procedure waitForInputWEGTimer(Sender: TObject); // 水电煤
-    procedure waitForGetPubFeeTimer(Sender: TObject);
-
     procedure setCountdownTimerEnabled(isEnabled: Boolean;
       overTimeSeconds: Integer = 60);
     procedure setPanelInvisible;
@@ -462,6 +452,7 @@ type
     procedure DoOnGetCityCardInfo(cardInfo: string);
     procedure DoOnGetCityCardBalance(balance: Integer);
 
+    procedure DoOnLoginStatusChanged(loginStatus: Byte);
     procedure DoOnGetMac2(ret: Byte; mac2: AnsiString);
     procedure DoOnChargeCardCheckRsp(ret: Byte; amount: Integer);
     procedure DoOnQueryQFTBalanceRsp(ret: Byte; balance: Integer);
@@ -507,8 +498,18 @@ end;
 
 procedure TfrmMain.addCityCardTransDetailToGrid(transDate, transTime,
   transTerminalId: ansistring; transType, transAmount: Integer);
+  function getTransType(transType: Integer): string;
+  begin
+    case transType of
+      2: Result := '圈存';
+      6: Result := '消费';
+    else
+      Result := '其他[' + IntToHex(transType, 2) + ']';
+    end;
+  end;
 var
   i: Integer;
+  tempStr: AnsiString;
 begin
   with gridCityCardTransDetail do
   begin
@@ -522,10 +523,15 @@ begin
       i := RowCount - 1;
     end;
 
-    Cells[0, i] := transDate;
-    Cells[1, i] := transTime;
-    Cells[2, i] := '圈存';
-    Cells[3, i] := FormatFloat('0.#', transAmount * 1.0/100) + '元';
+
+    tempStr := Copy(transDate, 1, 4) + '-' + Copy(transDate, 5, 2) + '-' + Copy(transDate, 7, 2);
+    Cells[0, i] := tempStr;
+
+    tempStr := Copy(transTime, 1, 2) + ':' + Copy(transDate, 3, 2) + ':' + Copy(transDate, 5, 2);
+    Cells[1, i] := tempStr;
+
+    Cells[2, i] := getTransType(transType);
+    Cells[3, i] := FormatFloat('0.00', transAmount * 1.0/100) + '元';
     Cells[4, i] := transTerminalId;
   end;
   gridCityCardTransDetail.SelectRows(i, 1);;
@@ -543,10 +549,6 @@ begin
   AdvSmoothButton13.Enabled := False;
   AdvSmoothButton41.Enabled := False;
   AdvSmoothButton42.Enabled := False;
-  Timer4.Interval := 400;
-  Timer4.OnTimer := waitForInputPhoneNumberTimer;
-  waitForInputPhoneNumberTimerFlag := 0;
-  Timer4.Enabled := True;
 end;
 
 procedure TfrmMain.AdvSmoothButton12Click(Sender: TObject);
@@ -557,10 +559,6 @@ begin
   AdvSmoothButton17.Enabled := False;
   AdvSmoothLabel42.Caption.Text := '请输入信用卡号:';
   AdvSmoothLabel43.Caption.Text := '请输入还款金额:';
-  Timer4.OnTimer := waitForInputBankCardNoTimer;
-  Timer4.Interval := 200;
-  Timer4.Enabled := True;
-
   Notebook1.ActivePage := 'pageBankCardTransfer';
 end;
 
@@ -588,10 +586,6 @@ begin
   AdvEdit1.Text := '';
   AdvSmoothButton16.Enabled := False;
   Notebook1.ActivePage := 'pageInputBankPassword';
-  Timer4.OnTimer := waitForBankCardPassTimer;
-  waitForBankCardPassFlag := 0;
-  Timer4.Interval := 300;
-  Timer4.Enabled := True;
 end;
 
 procedure TfrmMain.AdvSmoothButton16Click(Sender: TObject);
@@ -599,7 +593,6 @@ begin
   AdvSmoothButton16.Enabled := False;
   FDlgProgress.RzMemo1.Text := '正在处理银行卡交易请求,请稍后...';
   setDlgProgressTransparent(True);
-  FDlgProgress.Timer1.OnTimer := WaitForBankCardSuccessTimer;
   FDlgProgress.Timer1.Interval := 3000;
   FDlgProgress.Show;
   waitForBankCardSuccessFlag := 0;
@@ -629,9 +622,6 @@ begin
   AdvEdit2.Text := '';
   Notebook1.ActivePage := 'pagePayTypeBank';
   WaitForInsertBankCardFlag := 0;
-  Timer4.OnTimer := waitForInsertBankCard;
-  Timer4.Interval := 1000;
-  Timer4.Enabled := True;
 end;
 
 procedure TfrmMain.AdvSmoothButton19Click(Sender: TObject);
@@ -642,9 +632,6 @@ begin
   AdvSmoothLabel48.Caption.Text := '电卡户号：';
   AdvSmoothButton22.Enabled := False;
   AdvEdit8.Text := '';
-  Timer4.OnTimer := waitForInputWEGTimer;
-  Timer4.Interval := 300;
-  Timer4.Enabled := True;
 end;
 
 procedure TfrmMain.btnCityCardQueryClick(Sender: TObject);
@@ -746,9 +733,6 @@ begin
   AdvSmoothLabel48.Caption.Text := '水卡户号：';
   AdvEdit8.Text := '';
   AdvSmoothButton22.Enabled := False;
-  Timer4.OnTimer := waitForInputWEGTimer;
-  Timer4.Interval := 300;
-  Timer4.Enabled := True;
 end;
 
 procedure TfrmMain.AdvSmoothButton21Click(Sender: TObject);
@@ -759,9 +743,6 @@ begin
   AdvSmoothLabel48.Caption.Text := '气卡户号：';
   AdvSmoothButton22.Enabled := False;
   AdvEdit8.Text := '';
-  Timer4.OnTimer := waitForInputWEGTimer;
-  Timer4.Interval := 300;
-  Timer4.Enabled := True;
 end;
 
 procedure TfrmMain.AdvSmoothButton22Click(Sender: TObject);
@@ -771,7 +752,6 @@ begin
   Notebook1.ActivePage := 'pagePubliGetFee';
   FDlgProgress.RzMemo1.Text := '正在获取应缴金额，请稍后...';
   FDlgProgress.Timer1.Interval := 2000;
-  FDlgProgress.Timer1.OnTimer := waitForGetPubFeeTimer;
   setDlgProgressTransparent(True);
   setProgressInTop;
   FDlgProgress.Show;
@@ -858,14 +838,11 @@ end;
 procedure TfrmMain.AdvSmoothButton29Click(Sender: TObject);
 begin
   isNewCard := True;
-  Timer4.Interval := 1200;
-  Timer4.OnTimer := waitForIDCardReadTimer;
   AdvEdit12.Text := '';
   AdvEdit13.Text := '';
   AdvSmoothButton31.Caption := '下一步';
   AdvSmoothButton31.Enabled := False;
   Notebook1.ActivePage := 'pageCityCardIDCard';
-  Timer4.Enabled := True;
 end;
 
 procedure TfrmMain.btnModifyZHBPassConfirmClick(Sender: TObject);
@@ -1010,9 +987,6 @@ begin
   AdvEdit2.Text := '';
   Notebook1.ActivePage := 'pagePayTypeBank';
   WaitForInsertBankCardFlag := 0;
-  Timer4.OnTimer := waitForInsertBankCard;
-  Timer4.Interval := 1000;
-  Timer4.Enabled := True;
   currChargeType := 1;
 end;
 
@@ -1071,7 +1045,6 @@ begin
   AdvEdit17.Text := '';
   Notebook1.ActivePage := 'pagePayFromCityCard';
   FDlgProgress.Timer1.Interval := 1000;
-  FDlgProgress.Timer1.OnTimer := WaitForCityCardWhenPayTimer;
   FDlgProgress.RzMemo1.Text := '正在读取龙城通卡，请稍后...';
   setDlgProgressTransparent(True);
   setProgressInTop;
@@ -1133,12 +1106,11 @@ begin
   end;
   FDlgProgress.RzMemo1.Text := '正在处理龙城通卡交易请求,请稍后...';
   setDlgProgressTransparent(True);
-  FDlgProgress.Timer1.OnTimer := WaitForBankCardSuccessTimer;
   FDlgProgress.Timer1.Interval := 3000;
   waitForBankCardSuccessFlag := 0;
-  setDlgProgressTransparent(True);
   setProgressInTop;
   FDlgProgress.Show;
+  setDlgProgressTransparent(True);
 end;
 
 procedure TfrmMain.AdvSmoothButton41Click(Sender: TObject);
@@ -1209,10 +1181,6 @@ begin
   AdvSmoothButton17.Enabled := False;
   AdvSmoothLabel42.Caption.Text := '请输入对方借记卡号:';
   AdvSmoothLabel43.Caption.Text := '请输入转账金额:';
-  Timer4.OnTimer := waitForInputBankCardNoTimer;
-  Timer4.Interval := 200;
-  Timer4.Enabled := True;
-
   Notebook1.ActivePage := 'pageBankCardTransfer';
 end;
 
@@ -1718,6 +1686,13 @@ begin
   end;
 end;
 
+procedure TfrmMain.DoOnLoginStatusChanged(loginStatus: Byte);
+begin
+  addSysLog('loginStatus:' + IntToStr(loginStatus));
+  btnLoginStatus.Visible := loginStatus <> LOGIN_STATUS_OK;
+  btnLoginStatus.Caption := '未登录成功[' + IntToStr(loginStatus) + ']';
+end;
+
 procedure TfrmMain.DoOnModifyZHBPassRsp(ret: Byte);
 begin
   if threadModifyZHBPass <> nil then
@@ -1750,7 +1725,6 @@ begin
   RzPanel1.DoubleBuffered := True;
   firstTime := Now;
   clickCount := 0;
-  initMain;
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
@@ -1773,7 +1747,8 @@ begin
   pnlBottom.SetFocus;
   for i := Notebook1.Pages.Count - 1 downto 0 do
     Notebook1.PageIndex := i;
-
+  Notebook1.ActivePage := 'pageCash';
+  initMain;
   initDev;
 end;
 
@@ -1932,6 +1907,7 @@ begin
   DataServer.OnChargeCardCheckRsp := DoOnChargeCardCheckRsp;
   DataServer.OnQueryQFTBalanceRsp := DoOnQueryQFTBalanceRsp;
   DataServer.OnModifyZHBPassRsp := DoOnModifyZHBPassRsp;
+  DataServer.OnLoginStatusChanged := DoOnLoginStatusChanged;
   connectToGateway;
 end;
 
@@ -2241,9 +2217,6 @@ begin
     overTime := overTime - 1;
     lblCountdown.Caption.Text := IntToStr(overTime);
   end;
-  if Notebook1.ActivePage = 'pageSelfPay' then
-  begin
-  end;
 end;
 
 //定时上报终端各模块的状态
@@ -2263,189 +2236,16 @@ procedure TfrmMain.Timer3Timer(Sender: TObject);
 var
   moduleStatus: array of Byte;
 begin
-  if not isCheckModuleStatusOk then
-    Exit;
-
-  SetLength(moduleStatus, 3 * 2);
-  moduleStatus[0] := $01;
-  moduleStatus[1] := getD8Status;
-  moduleStatus[2] := $02;
-  moduleStatus[3] := getBillAcceptorStatus;
-  moduleStatus[4] := $04;
-  moduleStatus[5] := getPrinterStatus;
-  DataServer.SendCmdUploadModuleStatus(moduleStatus);
-end;
-
-procedure TfrmMain.waitForBankCardPassTimer(Sender: TObject);
-begin
-  if waitForBankCardPassFlag = 0 then
+  if DataServer.Active and isCheckModuleStatusOk then
   begin
-    AdvEdit1.Text := AdvEdit1.Text + '2';
-    if length(AdvEdit1.Text) = 6 then
-      waitForBankCardPassFlag := 1;
-  end
-  else if waitForBankCardPassFlag = 1 then
-  begin
-    Timer4.Enabled := False;
-    AdvSmoothButton16.Enabled := True;
-    FDlgProgress.Hide;
-    // Notebook1.ActivePage := 'pageMobileTopUpSuccess';
-  end;
-end;
-
-procedure TfrmMain.WaitForBankCardSuccessTimer(Sender: TObject);
-begin
-  // if waitForBankCardSuccessFlag = 0 then
-  // begin
-  // waitForBankCardSuccessFlag := 1;
-  // end
-  // else if waitForBankCardSuccessFlag = 1 then
-  // begin
-  // FDlgProgress.Hide;
-  // Timer4.Enabled := False;
-  // Notebook1.ActivePage := 'pageMobileTopUpSuccess';
-  // end;
-  FDlgProgress.Hide;
-  Timer4.Enabled := False;
-  if isCityCardCharging then
-  begin
-    AdvSmoothLabel74.Visible := True;
-    AdvSmoothLabel74.Caption.Text := '卡片余额:' +
-      FloatToStr(cityCardBalance) + '元';
-  end;
-  Notebook1.ActivePage := 'pageMobileTopUpSuccess';
-end;
-
-procedure TfrmMain.WaitForCityCardWhenPayTimer(Sender: TObject);
-begin
-  if WaitForCityCardWhenPayTimerFlag = 0 then
-  begin
-    AdvEdit14.Text := '记名卡(王小明 2837277273730230)';
-    AdvEdit17.Text := '207.8';
-    WaitForCityCardWhenPayTimerFlag := 1;
-  end
-  else if WaitForCityCardWhenPayTimerFlag = 1 then
-  begin
-    AdvSmoothButton40.Enabled := True;
-    FDlgProgress.Hide;
-  end;
-end;
-
-procedure TfrmMain.waitForGetPubFeeTimer(Sender: TObject);
-begin
-  AdvEdit9.Text := '130.8';
-  AdvSmoothButton23.Enabled := True;
-  FDlgProgress.Hide;
-end;
-
-procedure TfrmMain.waitForIDCardReadTimer(Sender: TObject);
-begin
-  if waitForIDCardReadFlag = 0 then
-  begin
-    FDlgProgress.RzMemo1.Text := '正在读取身份证信息，请稍后...';
-    setProgressInTop;
-    setDlgProgressTransparent(True);
-    FDlgProgress.Show;
-    waitForIDCardReadFlag := 1;
-  end
-  else if waitForIDCardReadFlag = 1 then
-  begin
-    AdvEdit12.Text := '32088298712130288';
-    AdvEdit13.Text := '王小明';
-    FDlgProgress.Hide;
-    Timer4.Enabled := False;
-    AdvSmoothButton31.Enabled := True;
-  end;
-end;
-
-procedure TfrmMain.waitForInputBankCardNoTimer(Sender: TObject);
-const
-  cardNo: array [0 .. 18] of char = ('4', '3', '9', '2', ' ', '4', '5', '3',
-    '2', ' ', '7', '8', '9', '6', ' ', '2', '9', '4', '8');
-  amount: array [0 .. 2] of char = ('8', '0', '0');
-begin
-  if waitForInputBankCardNoTimerFlag = 0 then
-  begin
-    if length(AdvEdit3.Text) < length(cardNo) then
-    begin
-      AdvEdit3.Text := AdvEdit3.Text + cardNo[length(AdvEdit3.Text)];
-    end
-    else if length(AdvEdit4.Text) < length(amount) then
-    begin
-      AdvEdit4.Text := AdvEdit4.Text + amount[length(AdvEdit4.Text)];
-    end
-    else
-    begin
-      Timer4.Enabled := False;
-      AdvSmoothButton17.Enabled := True;
-    end;
-    // end
-    // else if waitForInputBankCardNoTimerFlag = 1 then
-    // begin
-
-  end;
-
-end;
-
-procedure TfrmMain.waitForInputPhoneNumberTimer(Sender: TObject);
-const
-  phoneNo: array [0 .. 10] of char = ('1', '8', '6', '5', '2', '3', '3', '6',
-    '7', '9', '8');
-var
-  len: Integer;
-
-begin
-  if waitForInputPhoneNumberTimerFlag = 0 then
-  begin // 18628764523
-    len := length(edtPhoneNo.Text);
-    if len < 11 then
-    begin
-      edtPhoneNo.Text := edtPhoneNo.Text + phoneNo[len];
-      len := len + 1;
-    end;
-    if len >= 11 then
-    begin
-      waitForInputPhoneNumberTimerFlag := 1;
-    end;
-  end
-  else if waitForInputPhoneNumberTimerFlag = 1 then
-  begin
-    AdvSmoothButton13.Enabled := True;
-    AdvSmoothButton41.Enabled := True;
-    AdvSmoothButton42.Enabled := True;
-  end;
-end;
-
-procedure TfrmMain.waitForInputWEGTimer(Sender: TObject);
-const
-  cardNo: array [0 .. 9] of char = ('0', '4', '2', '3', '8', '7', '4', '5',
-    '1', '9');
-begin
-  if waitForInputWEGTimerFlag = 0 then
-  begin
-    if length(AdvEdit8.Text) < length(cardNo) then
-    begin
-      AdvEdit8.Text := AdvEdit8.Text + cardNo[length(AdvEdit8.Text)];
-    end
-    else
-    begin
-      Timer4.Enabled := False;
-      AdvSmoothButton22.Enabled := True;
-    end;
-  end;
-end;
-
-procedure TfrmMain.waitForInsertBankCard(Sender: TObject);
-begin
-  if WaitForInsertBankCardFlag = 0 then
-  begin
-    AdvEdit2.Text := '6226 0229 3456 7892';
-    WaitForInsertBankCardFlag := 1;
-  end
-  else if WaitForInsertBankCardFlag = 1 then
-  begin
-    Timer4.Enabled := False;
-    AdvSmoothButton15.Click;
+    SetLength(moduleStatus, 3 * 2);
+    moduleStatus[0] := $01;
+    moduleStatus[1] := getD8Status;
+    moduleStatus[2] := $02;
+    moduleStatus[3] := getBillAcceptorStatus;
+    moduleStatus[4] := $04;
+    moduleStatus[5] := getPrinterStatus;
+    DataServer.SendCmdUploadModuleStatus(moduleStatus);
   end;
 end;
 

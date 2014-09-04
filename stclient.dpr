@@ -30,7 +30,5 @@ begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TfrmMain, frmMain);
-  Application.CreateForm(TfrmWaiting, frmWaiting);
-  Application.CreateForm(TFrmTip, FrmTip);
   Application.Run;
 end.

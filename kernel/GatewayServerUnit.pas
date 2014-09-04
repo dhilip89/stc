@@ -17,6 +17,7 @@ type
   TOnChargeCardCheckRsp = procedure(ret: Byte; amount:Integer) of object;
   TOnQueryQFTBalanceRsp = procedure(ret: Byte; amount:Integer) of object;
   TOnModifyZHBPassRsp = procedure(ret:Byte) of object;
+  TOnLoginStatusChanged = procedure(loginStatus: Byte) of object;
 
   TCmdInfo = record //命令信息
     Id: integer; //命令ID
@@ -96,10 +97,13 @@ type
     FOnChargeCardCheckRsp: TOnChargeCardCheckRsp;
     FOnQueryQFTBalanceRsp: TOnQueryQFTBalanceRsp;
     FOnModifyZHBPassRsp: TOnModifyZHBPassRsp;
+    FLoginStatus: Byte;
+    FOnLoginStatusChanged: TOnLoginStatusChanged;
     procedure FSocketSocketEvent(Sender: TObject; Socket: TCustomWinSocket; SocketEvent: TSocketEvent);
     procedure FSockerWriteBufferOverflow(Sender: TObject);
 
     procedure dealCmdTYRet(buf: array of Byte);
+    procedure dealCmdLoginRsp(buf: array of Byte);
     procedure dealCmdGetMac2Rsp(buf: array of Byte);
     procedure dealCmdChargeDetailRsp(buf: array of Byte);
     procedure dealCmdRefundRsp(buf: array of Byte);
@@ -116,6 +120,7 @@ type
     procedure SetOnChargeCardCheckRsp(const Value: TOnChargeCardCheckRsp);
     procedure SetOnQueryQFTBalanceRsp(const Value: TOnQueryQFTBalanceRsp);
     procedure SetOnModifyZHBPassRsp(const Value: TOnModifyZHBPassRsp);
+    procedure SetOnLoginStatusChanged(const Value: TOnLoginStatusChanged);
   protected
     function DirectSend(var buf; ABufSize: Integer): Boolean; //调用内部的发送函数直接发送数据
     function GetMaxCmdSNo: Word;
@@ -148,12 +153,15 @@ type
     property AutoLogin: Boolean read FAutoLogin write SetAutoLogin; // 如果和服务器断开是否自动重新登录}
     property Socket: TClientSocketThread read FSocket;
 
+    property LoginStatus: Byte read FLoginStatus;
+
     property OnGetMac2: TOnGetMac2 read FOnGetMac2 write SetOnGetMac2;
     property OnChargeDetailRsp: TOnChargeDetailRsp read FOnChargeDetailRsp write SetOnChargeDetailRsp;
     property OnRefundRsp: TOnRefundRsp read FOnRefundRsp write SetOnRefundRsp;
     property OnChargeCardCheckRsp: TOnChargeCardCheckRsp read FOnChargeCardCheckRsp write SetOnChargeCardCheckRsp;
     property OnQueryQFTBalanceRsp: TOnQueryQFTBalanceRsp read FOnQueryQFTBalanceRsp write SetOnQueryQFTBalanceRsp;
     property OnModifyZHBPassRsp: TOnModifyZHBPassRsp read FOnModifyZHBPassRsp write SetOnModifyZHBPassRsp;
+    property OnLoginStatusChanged: TOnLoginStatusChanged read FOnLoginStatusChanged write SetOnLoginStatusChanged;
   end;
 
 
@@ -201,6 +209,7 @@ begin
   FReadBuf.Data := nil;
   ReallocMem(FReadBuf.Data, MAX_BUFF_SIZE);
   FReadBuf.Size := MAX_BUFF_SIZE;
+  FLoginStatus := LOGIN_STATUS_SERVER_DISCONNECTED;
 end;
 
 procedure TGateWayServerCom.DealReceiveData; // 处理接收到的服务器数据,这里主要是分检工作
@@ -296,6 +305,7 @@ begin
         cmdId := ByteOderConvert_Word(PWord(@buf[1])^);
         case cmdId of// PByte(PtrAdd(FReadBuf.Data, 2))^ of
           S2C_TYRET: dealCmdTYRet(buf);
+          S2C_LOGIN_RSP: dealCmdLoginRsp(buf);
           S2C_GET_MAC2_RSP: dealCmdGetMac2Rsp(buf);
           S2C_CHARGE_DETAIL_RSP: dealCmdChargeDetailRsp(buf);
           S2C_REFUND_RSP: dealCmdRefundRsp(buf);
@@ -360,24 +370,16 @@ begin
   case SocketEvent of
     seConnect:
       begin
-        if LoginToServer then
-        begin
-          //GetAllPos;
-          {f GlobalParam.isUseDriverCard then
-          begin
-            for i := 0 to ADeviceManage.Count - 1 do
-            begin
-              Self.ReadDriverNO(ADeviceManage.Items[i]);
-            end;
-          end; }
-        end;
-{$IFDEF debug_sha}
-        TDebug.GetInstance.SendDebug('FSocketSocketEvent: Logined Server');
-{$ENDIF}
+        LoginToServer;
+        FLoginStatus := LOGIN_STATUS_NO_RSP;
+        if Assigned(FOnLoginStatusChanged) then
+          FOnLoginStatusChanged(FLoginStatus);
       end;
     seDisconnect:
       begin
-        addSysLog('disconnect from server');
+        FLoginStatus := LOGIN_STATUS_SERVER_DISCONNECTED;
+        if Assigned(FOnLoginStatusChanged) then
+          FOnLoginStatusChanged(FLoginStatus);
       end;
   end;
 end;
@@ -640,6 +642,12 @@ begin
   FOnGetMac2 := Value;
 end;
 
+procedure TGateWayServerCom.SetOnLoginStatusChanged(
+  const Value: TOnLoginStatusChanged);
+begin
+  FOnLoginStatusChanged := Value;
+end;
+
 procedure TGateWayServerCom.SetOnModifyZHBPassRsp(
   const Value: TOnModifyZHBPassRsp);
 begin
@@ -704,6 +712,19 @@ begin
     mac2 := bytesToHexStr(pcmd^.Mac2);
     if Assigned(FOnGetMac2) then
       FOnGetMac2(pcmd^.Ret, mac2);
+  end;
+end;
+
+procedure TGateWayServerCom.dealCmdLoginRsp(buf: array of Byte);
+var
+  pcmd: PCmdLoginRspS2C;
+begin
+  if Length(buf) >= SizeOf(TCmdLoginRspS2C) then
+  begin
+    pcmd := PCmdLoginRspS2C(@buf[0]);
+    FLoginStatus := pcmd^.Ret;
+    if Assigned(FOnLoginStatusChanged) then
+      FOnLoginStatusChanged(FLoginStatus);
   end;
 end;
 

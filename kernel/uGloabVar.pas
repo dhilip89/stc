@@ -32,7 +32,6 @@ var
 
   FGlobalTip: TMyHintWindow;
 
-function getCmdStat(stat: integer): string;
 function PopMsg(Title: string; Msg: string): boolean;
 function split(src,dec : string):TStringList;
 function BCD2Byte(bcd: Byte): Byte;
@@ -63,24 +62,6 @@ procedure ShowTips(aTip: string; aCom: TControl);
 implementation
 uses
   Dialogs, drv_unit;
-
-function getCmdStat(stat: integer): string;
-begin
-  case stat of
-    CMD_SNDNODO: result := '正在发送...'; //  =0   // 已发送未执行
-    CMD_DONE: result := '已执行!'; //  =1   // 已执行
-    CMD_DOERROR: result := '执行错!'; //  =2   // 执行出错
-    CMD_CANCELByUSER: result := '正在取消...'; //  =3   // 被用户取消
-    CMD_CANCELED: result := '已取消!'; //  =4   // 已取消
-    CMD_CANCELFAIL: result := '取消失败!'; //  =5   // 取消失败
-    CMD_RESND: result := '再次发送...'; //  =6   // 重发
-    CMD_DELETED: result := '被删除'; //  =7   // 被删除
-    CMD_REPLACE: result := '被替代'; //  =8   // 被替代
-    CMD_OVERTIME: result := '超时'; //  =9   // 超时
-    CMD_SND2SMSSENDSVR: result := '已转给SMS发送服务器'; // =10
-    CMD_INVALIDDEV: result := '无效的车机ID号'; //=11
-  end;
-end;
 
 function split(src,dec : string):TStringList;
 var
