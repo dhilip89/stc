@@ -387,16 +387,6 @@ type
     publicFeeType: Byte; // 公共缴费类型 0:水 1:电 2:煤
     cityCardBizType: Byte; // 市民卡业务类型 0:充值 1:余额查询
 
-    WaitForInsertBankCardFlag: Byte; // 0:初始  1：已读取
-    waitForBankCardPassFlag: Byte; // 0:  1:
-    waitForBankCardSuccessFlag: Byte; // 0:  1:
-    waitForIDCardReadFlag: Byte; // 0:  1:
-//    waitForNewCardReadFlag: Byte; // 0:  1:
-    WaitForCityCardWhenPayTimerFlag: Byte; //
-    waitForInputPhoneNumberTimerFlag: Byte; //
-    waitForInputBankCardNoTimerFlag: Byte; //
-    waitForInputWEGTimerFlag: Byte;
-
     amountPaid: Double; // 充值现金金额
     cityCardBalance: Double; // 市民卡充值后卡片余额
     isCityCardCharging: Boolean;
@@ -595,7 +585,6 @@ begin
   setDlgProgressTransparent(True);
   FDlgProgress.Timer1.Interval := 3000;
   FDlgProgress.Show;
-  waitForBankCardSuccessFlag := 0;
 end;
 
 procedure TfrmMain.AdvSmoothButton17Click(Sender: TObject);
@@ -621,7 +610,6 @@ procedure TfrmMain.AdvSmoothButton18Click(Sender: TObject);
 begin
   AdvEdit2.Text := '';
   Notebook1.ActivePage := 'pagePayTypeBank';
-  WaitForInsertBankCardFlag := 0;
 end;
 
 procedure TfrmMain.AdvSmoothButton19Click(Sender: TObject);
@@ -986,7 +974,6 @@ procedure TfrmMain.btnPayBankCardClick(Sender: TObject);
 begin
   AdvEdit2.Text := '';
   Notebook1.ActivePage := 'pagePayTypeBank';
-  WaitForInsertBankCardFlag := 0;
   currChargeType := 1;
 end;
 
@@ -1048,7 +1035,6 @@ begin
   FDlgProgress.RzMemo1.Text := '正在读取龙城通卡，请稍后...';
   setDlgProgressTransparent(True);
   setProgressInTop;
-  WaitForCityCardWhenPayTimerFlag := 0;
   FDlgProgress.Show;
 end;
 
@@ -1107,7 +1093,6 @@ begin
   FDlgProgress.RzMemo1.Text := '正在处理龙城通卡交易请求,请稍后...';
   setDlgProgressTransparent(True);
   FDlgProgress.Timer1.Interval := 3000;
-  waitForBankCardSuccessFlag := 0;
   setProgressInTop;
   FDlgProgress.Show;
   setDlgProgressTransparent(True);
@@ -1747,7 +1732,6 @@ begin
   pnlBottom.SetFocus;
   for i := Notebook1.Pages.Count - 1 downto 0 do
     Notebook1.PageIndex := i;
-  Notebook1.ActivePage := 'pageCash';
   initMain;
   initDev;
 end;

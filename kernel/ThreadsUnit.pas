@@ -1152,8 +1152,8 @@ begin
       transAmount := 10000 + 30 * 1;
       transType := 2;
       transTerminalId := '9900112200' + IntToStr(10 + i);
-      transDate := FormatDateTime('yyyy-MM-dd', Now);
-      transTime := FormatDateTime('HH:nn:ss', Now);
+      transDate := FormatDateTime('yyyyMMdd', Now);
+      transTime := FormatDateTime('HHnnss', Now);
 
       if Assigned(FOnQueryCityCardDetail) then
         FOnQueryCityCardDetail(transDate, transTime, transTerminalId, transType, transAmount);
