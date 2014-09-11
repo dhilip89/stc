@@ -131,8 +131,7 @@ type
     CardOldBalance: LongWord;
     ChargeAmount: LongWord;//充值金额 (单位分)
     Mac1: array[0..3] of Byte;//mac1
-    ChargeDate: array[0..3] of Byte;//充值时间 BCD 20 14 07 20 14 45 23
-    ChargeTime: array[0..2] of Byte;//
+    ChargeTime: array[0..6] of Byte;//充值时间 BCD 20 14 07 20 14 45 23
     CmdEnd: TSTEnd;
   end;
   PCmdGetMac2ForChargeC2S = ^TCmdGetMac2ForChargeC2S;

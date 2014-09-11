@@ -605,7 +605,7 @@ begin
          '已 投 币 金 额:%-3d元';
   setWaitingTip(Format(tip, [FCashAmount div 100, 0]));
 
-  {$IFDEF test}
+  {$IFDEF demo}
     Sleep(2000);
     FAmountRead := FCashAmount div 100;
     setWaitingTip(Format(tip, [FCashAmount div 100, FAmountRead]));
@@ -792,7 +792,7 @@ constructor TCityCardCharge.Create(CreateSuspended: Boolean; dlg: TfrmWaiting;
 begin
   inherited Create(CreateSuspended, dlg, timeout);
   FreeOnTerminate := False;
-  FChargeAmount := cashAmount * 100;
+  FChargeAmount := cashAmount;
 end;
 
 procedure TCityCardCharge.DoOnTaskTimeout;

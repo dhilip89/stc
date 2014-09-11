@@ -53,5 +53,6 @@ __history/
 dcu/
 bin/log/
 bin/sno.txt
+bin/*.rar
 Win32/
 *.bak
