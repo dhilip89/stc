@@ -287,6 +287,7 @@ type
     btn5: TAdvSmoothButton;
     btn3: TAdvSmoothButton;
     btnLoginStatus: TAdvGlowButton;
+    btnPrevious: TAdvGlowButton;
     procedure FormCreate(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
@@ -376,6 +377,7 @@ type
     procedure btnModifyZHBPassConfirmClick(Sender: TObject);
     procedure btnZHBBalanceQueryClick(Sender: TObject);
     procedure AdvSmoothButton3Click(Sender: TObject);
+    procedure btnPreviousClick(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -404,6 +406,10 @@ type
     queryZHBBalanceFlag: Byte;//查询账户宝余额标识  1:单纯查询余额  2:充值时查询余额
     queryCityCardBalanceFlag: Byte;//查询市民卡余额标识  1:纯查余额信息  2:现金充值时查询余额信息
 
+    pageHistory: array[0..19] of string;
+    currPageIndex: Integer;
+    isPreviousOperation: Boolean;
+
     procedure initMain;
     procedure loadParam;
     procedure connectToGateway;
@@ -420,6 +426,7 @@ type
     procedure addCityCardTransDetailToGrid(transDate, transTime, transTerminalId: ansistring;
                                       transType, transAmount: Integer);
 
+    procedure resetPageHistory;
     procedure setCountdownTimerEnabled(isEnabled: Boolean;
       overTimeSeconds: Integer = 60);
     procedure setPanelInvisible;
@@ -517,7 +524,7 @@ begin
     tempStr := Copy(transDate, 1, 4) + '-' + Copy(transDate, 5, 2) + '-' + Copy(transDate, 7, 2);
     Cells[0, i] := tempStr;
 
-    tempStr := Copy(transTime, 1, 2) + ':' + Copy(transDate, 3, 2) + ':' + Copy(transDate, 5, 2);
+    tempStr := Copy(transTime, 1, 2) + ':' + Copy(transTime, 3, 2) + ':' + Copy(transTime, 5, 2);
     Cells[1, i] := tempStr;
 
     Cells[2, i] := getTransType(transType);
@@ -1045,7 +1052,7 @@ end;
 
 procedure TfrmMain.AdvSmoothButton37Click(Sender: TObject);
 begin
-  Notebook1.ActivePage := 'default';
+  Notebook1.ActivePage := 'Default';
 end;
 
 procedure TfrmMain.AdvSmoothButton38Click(Sender: TObject);
@@ -1067,7 +1074,7 @@ begin
   content := '             充值凭证'#13#10 +
              '----------------------------------'#13#10 +
              ' 龙城通卡号：' + currCityCardNo + #13#10 +
-             ' 充值 金 额：' + FormatFloat('0.00', currCityCardBalance * 1.0/100) + '元'#13#10 +
+             ' 充值 金 额：' + FormatFloat('0.00', amountCharged * 1.0/100) + '元'#13#10 +
              ' 充值后余额：' + FormatFloat('0.00', (amountCharged + currCityCardBalance) * 1.0/100) + '元'#13#10 +
              ' 充值 方 式：' + getChargeType + #13#10;
   if currChargeType = 3 then
@@ -1153,6 +1160,13 @@ begin
   end;
 end;
 
+procedure TfrmMain.btnPreviousClick(Sender: TObject);
+begin
+  isPreviousOperation := True;
+  currPageIndex := currPageIndex - 1;
+  Notebook1.ActivePage := pageHistory[currPageIndex];
+end;
+
 procedure TfrmMain.btn1Click(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageCityCard';
@@ -1235,7 +1249,7 @@ begin
   if not pnlClient.Enabled then
     pnlClient.Enabled := True;
 
-  Notebook1.ActivePage := 'default';
+  Notebook1.ActivePage := 'Default';
 end;
 
 procedure TfrmMain.btnInputPrepaidCardPasswordOkClick(Sender: TObject);
@@ -1452,9 +1466,9 @@ begin
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
-      setCountdownTimerEnabled(True, 15);
+      setCountdownTimerEnabled(True, 30);
       dlg.setWaitingTip(TIP_DO_NOT_MOVE_CITY_CARD);
-      threadCharge := TCityCardCharge.Create(True, dlg, 10, amountCharged);
+      threadCharge := TCityCardCharge.Create(True, dlg, 20, amountCharged);
       try
         threadCharge.Start;
         mr := dlg.ShowModal;
@@ -1667,7 +1681,7 @@ procedure TfrmMain.DoOnGetMac2(ret: Byte; mac2: AnsiString);
 begin
   if threadCharge <> nil then
   begin
-    threadCharge.noticeMac2Got(mac2);
+    threadCharge.noticeMac2Got(ret, mac2);
   end;
 end;
 
@@ -1710,6 +1724,7 @@ begin
   RzPanel1.DoubleBuffered := True;
   firstTime := Now;
   clickCount := 0;
+  resetPageHistory;
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
@@ -1730,8 +1745,8 @@ var
   i: Integer;
 begin
   pnlBottom.SetFocus;
-  for i := Notebook1.Pages.Count - 1 downto 0 do
-    Notebook1.PageIndex := i;
+//  for i := Notebook1.Pages.Count - 1 downto 0 do
+  Notebook1.PageIndex := 0;
   initMain;
   initDev;
 end;
@@ -1787,6 +1802,8 @@ begin
   // *************调整返回首页的按钮及倒计时标签的位置
   btnHome.Left := pnlTop.Width - btnHome.Width - 15;
   btnHome.Top := pnlTop.Height - btnHome.Height - 5;
+  btnPrevious.Left := btnHome.Left - btnPrevious.Width - 15;
+  btnPrevious.Top := btnHome.Top;
   lblCountdown.Left := pnlTop.Width - lblCountdown.Width - 30;
   lblCountdown.Top := btnHome.Top - lblCountdown.Height - 5;
   lblCountdown.Parent.DoubleBuffered := True;
@@ -1919,18 +1936,28 @@ begin
 end;
 
 procedure TfrmMain.Notebook1PageChanged(Sender: TObject);
+var
+  currPageName: string;
 begin
-  if Notebook1.ActivePage = 'Default' then
+  currPageName := Notebook1.ActivePage;
+  if not isPreviousOperation then
+  begin
+    currPageIndex := currPageIndex + 1;
+    pageHistory[currPageIndex] := currPageName;
+  end;
+  isPreviousOperation := False;
+  if currPageName = 'Default' then
   begin
     pnlBottom.Visible := True;
     setCountdownTimerEnabled(False);
     AdvSmoothLabel74.Visible := False;
     isCityCardCharging := False;
     isNewCard := False;
+    resetPageHistory;
   end
-  else if (Notebook1.ActivePage = 'pageMobileTopUpSuccess')
-    or (Notebook1.ActivePage = 'pageModifyZHBPassSucc')
-    or (Notebook1.ActivePage = 'pageCityCardTransDetail') then
+  else if (currPageName = 'pageMobileTopUpSuccess')
+    or (currPageName = 'pageModifyZHBPassSuccess')
+    or (currPageName = 'pageCityCardTransDetail') then
   begin
     setCountdownTimerEnabled(True, 30);
     if Notebook1.ActivePage = 'pageMobileTopUpSuccess' then
@@ -1944,6 +1971,11 @@ begin
     pnlBottom.Visible := False;
   end;
   pnlTimeBar.SetFocus;
+
+  if (currPageName = 'pageMobileTopUpSuccess') or (currPageName = 'pageModifyZHBPassSuccess') then
+  begin
+    resetPageHistory;
+  end;
 end;
 
 procedure TfrmMain.resetMainBtnPos;
@@ -1968,6 +2000,18 @@ begin
   setBtnLeftTop(btn4, btn2.Left, btn3.Top);
   setBtnLeftTop(btn5, btn1.Left, 3 * yDistance + 2 * btnHeight);
   setBtnLeftTop(btn6, btn2.Left, btn5.Top);
+end;
+
+procedure TfrmMain.resetPageHistory;
+var
+  I: Integer;
+begin
+  currPageIndex := 0;
+  pageHistory[0] := 'Default';
+  for I := 1 to Length(pageHistory) - 1 do
+  begin
+    pageHistory[I] := '';
+  end;
 end;
 
 procedure TfrmMain.RzPanel2Resize(Sender: TObject);
@@ -2103,6 +2147,7 @@ procedure TfrmMain.setCountdownTimerEnabled(isEnabled: Boolean;
   overTimeSeconds: Integer);
 begin
   btnHome.Visible := isEnabled;
+  btnPrevious.Visible := isEnabled;
   overTime := overTimeSeconds;
   lblCountdown.Visible := isEnabled;
   if lblCountdown.Visible then
@@ -2110,6 +2155,11 @@ begin
     lblCountdown.Caption.Text := IntToStr(overTime);
   end;
   Timer2.Enabled := isEnabled;
+
+  if Notebook1.ActivePage = 'pageMobileTopUpSuccess' then
+  begin
+    btnPrevious.Visible := False;
+  end;
 end;
 
 procedure TfrmMain.setDlgProgressTransparent(isTransparent: Boolean);

@@ -710,6 +710,7 @@ begin
   begin
     pcmd := PCmdGetMac2ForChargeS2C(@buf[0]);
     mac2 := bytesToHexStr(pcmd^.Mac2);
+    addSysLog('recv mac2 rsp, ret:' + IntToStr(pcmd^.Ret) + ',mac2:' + mac2);
     if Assigned(FOnGetMac2) then
       FOnGetMac2(pcmd^.Ret, mac2);
   end;

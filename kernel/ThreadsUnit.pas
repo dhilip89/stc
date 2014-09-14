@@ -167,6 +167,7 @@ type
   TCityCardCharge = class(TBaseThread)
   private
     FChargeAmount: Integer;
+    FMac2Ret: Byte;
     FMac2: AnsiString;
     FIsMac2Got: Boolean;
     FBalanceAfterCharge: Integer;
@@ -177,7 +178,7 @@ type
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout, cashAmount: Integer);
 
-    procedure noticeMac2Got(mac2: AnsiString);
+    procedure noticeMac2Got(ret: Byte; mac2: AnsiString);
 
     property BalanceAfterCharge: Integer read FBalanceAfterCharge;
   end;
@@ -392,6 +393,7 @@ var
   sTime: TDateTime;
   isTimeout: Boolean;
 begin
+  Sleep(10);
   sTime := Now;
   isTimeout := False;
   while not doTask do
@@ -476,6 +478,7 @@ var
   sTime: TDateTime;
   isTimeout: Boolean;
 begin
+  Sleep(10);
   sTime := Now;
   isTimeout := False;
   taskRet := 0;
@@ -537,7 +540,7 @@ begin
   printInfo := '退款凭证'#13#10
              + '---------------------------'#13#10
              + '卡号:' + cardNo + #13#10
-             + '金额:' + IntToStr(amount) + '元'#13#10
+             + '金额:' + FormatFloat('0.00', amount * 1.0 / 100) + '元'#13#10
              + '时间:' + FormatDateTime('yyyy-MM-dd hh:nn:ss', now) + #13#10
              + '---------------------------'#13#10
              + '注:请带凭证到人工窗口退款';
@@ -602,10 +605,11 @@ var
 begin
   Result := False;
   tip := '需 付 款 金 额:%-3d元'#13#10 +
-         '已 投 币 金 额:%-3d元';
+         '已 投 币 金 额:%-3d元'#13#10#13#10 +
+         '注：只接受50或100纸币，不找零';
   setWaitingTip(Format(tip, [FCashAmount div 100, 0]));
 
-  {$IFDEF demo}
+  {$IFDEF test}
     Sleep(2000);
     FAmountRead := FCashAmount div 100;
     setWaitingTip(Format(tip, [FCashAmount div 100, FAmountRead]));
@@ -769,7 +773,7 @@ begin
     begin
       if FAmountRead > 0 then
       begin//在读钞过程中出现错误
-        amountRefund := FAmountRead;
+        amountRefund := FAmountRead * 100;
       end
       else
       begin//还没有吞过钞票则将状态改为2
@@ -834,6 +838,7 @@ begin
     Exit;
   {$ENDIF}
   Result := False;
+  amountRefund := FChargeAmount;
 //  tip := '正在进行充值处理，请勿移开卡片...';//#13#10 + '卡片读取中...';
 //  setWaitingTip(tip);
   if not resetD8 then
@@ -932,11 +937,19 @@ begin
 //  setWaitingTip(tip);
   chargeTime := hexStrToBytes(FormatDateTime('yyyyMMddhhnnss', Now));
   DataServer.SendCmdGetMac2(cardNo, asn, tsn, OperType, oldBalance, FChargeAmount, chargeTime, fakeRandom, mac1);
-  if not waitForMac2 then
+  if not waitForMac2  then
   begin//超时
     taskRet := 3;
     errInfo := '充值失败，请注意保留凭条';
-    addSysLog('credit for load err, recvBuf:' + recvBuf);
+    addSysLog('等待mac2超时');
+    Exit;
+  end;
+
+  if FMac2Ret = 0 then
+  begin
+    taskRet := 3;
+    errInfo := '充值失败，请注意保留凭条';
+    addSysLog('获取mac2失败');
     Exit;
   end;
 
@@ -988,8 +1001,10 @@ begin
   Result := True;
 end;
 
-procedure TCityCardCharge.noticeMac2Got(mac2: AnsiString);
+procedure TCityCardCharge.noticeMac2Got(ret: Byte; mac2: AnsiString);
 begin
+  addSysLog('notice mac2:' + mac2);
+  FMac2Ret := ret;
   FMac2 := mac2;
   FIsMac2Got := True;
 end;
@@ -1009,6 +1024,7 @@ begin
       Continue;
     end;
     isTimeout := True;
+    addSysLog('wait for mac2 timeout');
     Break;
   end;
   Result := not isTimeout;

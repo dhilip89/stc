@@ -224,7 +224,7 @@ begin
   hexStr := '';
   for I := Low(buf) to High(buf) do
   begin
-    hexStr := hexStr + IntToHex(buf[i], 2);
+    hexStr := hexStr + AnsiString(IntToHex(buf[i], 2));
   end;
   Result := hexStr;
 end;
