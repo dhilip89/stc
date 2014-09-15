@@ -705,7 +705,7 @@ begin
     st := now;
     while (SecondsBetween(st, Now) < Self.timeout) do
     begin
-      if totalAmount - FAmountRead = 50 then
+      if totalAmount div 100 - FAmountRead = 50 then
       begin//ÉèÖÃ½ö¶Á50µÄ
         sspCmd.CommandData[0] := $02;
         sspCmd.CommandData[1] := $90;
