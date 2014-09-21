@@ -6,24 +6,25 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, AdvSmoothPanel, AdvCircularProgress,
   Vcl.ComCtrls, AdvProgr, AdvSmoothProgressBar, W7Classes, W7ProgressBars,
-  AdvSmoothLabel, RzBorder, CurvyControls, Vcl.Imaging.GIFImg, Vcl.ExtCtrls;
+  AdvSmoothLabel, RzBorder, CurvyControls, Vcl.Imaging.GIFImg, Vcl.ExtCtrls,
+  AdvSmoothButton, RzPanel, Vcl.StdCtrls, AdvGlassButton;
 
 type
   TfrmWaiting = class(TForm)
     AdvSmoothPanel1: TAdvSmoothPanel;
     AdvSmoothLabel1: TAdvSmoothLabel;
     AdvCircularProgress1: TAdvCircularProgress;
+    RzPanel1: TRzPanel;
+    AdvGlassButton1: TAdvGlassButton;
     procedure FormCreate(Sender: TObject);
-    procedure FormClose(Sender: TObject; var Action: TCloseAction);
-    procedure FormHide(Sender: TObject);
-    procedure FormDestroy(Sender: TObject);
+    procedure AdvGlassButton1Click(Sender: TObject);
   private
     { Private declarations }
     procedure resetComponentPos();
     procedure hideProgressBar();
   public
     { Public declarations }
-    procedure setWaitingTip(tip: string; isHideProgressBar: Boolean = False);
+    procedure setWaitingTip(tip: string; isShowCancelBtn: Boolean = False; isHideProgressBar: Boolean = False);
     procedure noticeTimeout;
     procedure noticeFail;
     procedure noticeMROK;
@@ -34,34 +35,19 @@ var
   frmWaiting: TfrmWaiting;
 
 implementation
+uses
+  uGloabVar;
 
 {$R *.dfm}
 
-procedure TfrmWaiting.FormClose(Sender: TObject; var Action: TCloseAction);
+procedure TfrmWaiting.AdvGlassButton1Click(Sender: TObject);
 begin
-  Caption := 'form closing';
+  ModalResult := mrCancel;
 end;
 
 procedure TfrmWaiting.FormCreate(Sender: TObject);
-//var
-//  gif: TGIFImage;
 begin
-//  gif := TGIFImage.Create;
-//  gif.LoadFromFile('d:\tempd\loading.gif');
-//  gif.Animate := true;
-//  img1.Picture.Assign(gif);
-//  gif.Free;
   resetComponentPos;
-end;
-
-procedure TfrmWaiting.FormDestroy(Sender: TObject);
-begin
-  Caption := 'destroy';
-end;
-
-procedure TfrmWaiting.FormHide(Sender: TObject);
-begin
-  Caption := 'form hide';
 end;
 
 procedure TfrmWaiting.hideProgressBar;
@@ -93,15 +79,27 @@ end;
 procedure TfrmWaiting.resetComponentPos;
 begin
   AdvCircularProgress1.Visible := True;
+  //RzPanel1.Align := alBottom;
   AdvSmoothLabel1.Align := alBottom;
 
   AdvCircularProgress1.Top := 15;
   AdvCircularProgress1.Left := (AdvSmoothPanel1.Width - AdvCircularProgress1.Width) div 2;
-  AdvSmoothLabel1.Height := AdvSmoothPanel1.Height - (AdvCircularProgress1.Height + AdvCircularProgress1.Top);
+  if RzPanel1.Visible then
+  begin
+    Self.Height := 415;
+    AdvSmoothLabel1.Height := AdvSmoothPanel1.Height - (AdvCircularProgress1.Height + AdvCircularProgress1.Top + RzPanel1.Height);
+  end
+  else
+  begin
+    Self.Height := 415 - 68;
+    AdvSmoothLabel1.Height := AdvSmoothPanel1.Height - (AdvCircularProgress1.Height + AdvCircularProgress1.Top);
+  end;
 end;
 
-procedure TfrmWaiting.setWaitingTip(tip: string;isHideProgressBar: Boolean);
+procedure TfrmWaiting.setWaitingTip(tip: string; isShowCancelBtn: Boolean; isHideProgressBar: Boolean);
 begin
+  RzPanel1.Visible := isShowCancelBtn;
+
   if isHideProgressBar then
   begin
     hideProgressBar;

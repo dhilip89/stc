@@ -11194,15 +11194,13 @@ object frmMain: TfrmMain
         Width = 1234
         Height = 498
         Align = alClient
-        PageIndex = 5
+        PageIndex = 27
         TabOrder = 1
         OnPageChanged = Notebook1PageChanged
         object TPage
           Left = 0
           Top = 0
           Caption = 'Default'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object RzPanel3: TRzPanel
             Left = 0
             Top = 0
@@ -13572,8 +13570,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageSelectPayType'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlSelectPayType: TRzPanel
             Left = 0
             Top = 0
@@ -14025,8 +14021,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pagePayTypeBank'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlBankCardNo: TRzPanel
             Left = 0
             Top = 0
@@ -14151,8 +14145,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageInputBankPassword'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlBankCardPass: TRzPanel
             Left = 0
             Top = 0
@@ -14740,8 +14732,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageBankCardTransfer'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlOtherCardNoAndAmount: TRzPanel
             Left = 0
             Top = 0
@@ -14951,8 +14941,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCreditCardConfirm'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlCreditCardInfoConfirm: TRzPanel
             Left = 0
             Top = 0
@@ -15153,8 +15141,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pagePublicFee'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlWaterElectricGas: TRzPanel
             Left = 0
             Top = 0
@@ -15317,8 +15303,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageInputWaterCardInfo'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlElectricInfo: TRzPanel
             Left = 0
             Top = 0
@@ -15497,8 +15481,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pagePubliGetFee'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlFeePaid: TRzPanel
             Left = 0
             Top = 0
@@ -15716,53 +15698,6 @@ object frmMain: TfrmMain
                 Version = '1.7.1.0'
                 OnClick = btnCityCardChargeClick
               end
-              object AdvSmoothButton26: TAdvSmoothButton
-                Left = 70
-                Top = 194
-                Width = 128
-                Height = 81
-                Margins.Left = 0
-                Margins.Top = 0
-                Margins.Right = 0
-                Margins.Bottom = 0
-                Appearance.PictureAlignment = taCenter
-                Appearance.Font.Charset = GB2312_CHARSET
-                Appearance.Font.Color = clWhite
-                Appearance.Font.Height = -24
-                Appearance.Font.Name = #23435#20307
-                Appearance.Font.Style = [fsBold]
-                Appearance.Layout = blPictureTop
-                Appearance.Spacing = 10
-                Appearance.FocusColor = clTeal
-                Appearance.SimpleLayout = True
-                Status.Caption = '0'
-                Status.Appearance.Fill.Color = clRed
-                Status.Appearance.Fill.ColorMirror = clNone
-                Status.Appearance.Fill.ColorMirrorTo = clNone
-                Status.Appearance.Fill.GradientType = gtSolid
-                Status.Appearance.Fill.GradientMirrorType = gtSolid
-                Status.Appearance.Fill.BorderColor = clGray
-                Status.Appearance.Fill.Rounding = 8
-                Status.Appearance.Fill.ShadowOffset = 0
-                Status.Appearance.Fill.Glow = gmNone
-                Status.Appearance.Font.Charset = DEFAULT_CHARSET
-                Status.Appearance.Font.Color = clWhite
-                Status.Appearance.Font.Height = -11
-                Status.Appearance.Font.Name = 'Tahoma'
-                Status.Appearance.Font.Style = []
-                Bevel = False
-                BevelColor = clLime
-                Caption = #26597#35810#20313#39069
-                Color = 16222720
-                ParentFont = False
-                Shadow = True
-                TabOrder = 1
-                Visible = False
-                HorizontalSpacing = 0
-                VerticalSpacing = 1
-                Version = '1.7.1.0'
-                OnClick = AdvSmoothButton26Click
-              end
               object AdvSmoothButton24: TAdvSmoothButton
                 Left = 558
                 Top = 201
@@ -15803,7 +15738,7 @@ object frmMain: TfrmMain
                 Color = 16222720
                 ParentFont = False
                 Shadow = True
-                TabOrder = 2
+                TabOrder = 1
                 Visible = False
                 HorizontalSpacing = 0
                 VerticalSpacing = 1
@@ -15850,7 +15785,7 @@ object frmMain: TfrmMain
                 Color = 16222720
                 ParentFont = False
                 Shadow = True
-                TabOrder = 3
+                TabOrder = 2
                 HorizontalSpacing = 0
                 VerticalSpacing = 1
                 Version = '1.7.1.0'
@@ -15896,7 +15831,7 @@ object frmMain: TfrmMain
                 Color = 16222720
                 ParentFont = False
                 Shadow = True
-                TabOrder = 4
+                TabOrder = 3
                 HorizontalSpacing = 0
                 VerticalSpacing = 1
                 Version = '1.7.1.0'
@@ -15909,8 +15844,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCityCardCharge'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlGetCityCardBalance: TRzPanel
             Left = 0
             Top = 0
@@ -16129,8 +16062,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCityCardNewCard'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlSelectCityCardType: TRzPanel
             Left = 0
             Top = 0
@@ -16247,8 +16178,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCityCardChooseChargeAmount'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlChooseCityCardChargeAmout: TRzPanel
             Left = 0
             Top = 0
@@ -16481,8 +16410,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCityCardIDCard'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlGetIDCardInfo: TRzPanel
             Left = 0
             Top = 0
@@ -16661,8 +16588,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCityCardAmountForNewCard'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlChooseAmountForNewCard: TRzPanel
             Left = 0
             Top = 0
@@ -17534,8 +17459,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pagePasswordForChargeCardOrQFT'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlPasswordForChargeCard: TRzPanel
             Left = 0
             Top = 0
@@ -17663,8 +17586,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageSelectChargeType'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlSelectChargeType: TRzPanel
             Left = 0
             Top = 0
@@ -17683,8 +17604,8 @@ object frmMain: TfrmMain
               TabOrder = 0
               Transparent = True
               object btnCashCharge: TAdvSmoothButton
-                Left = 70
-                Top = 89
+                Left = 69
+                Top = 88
                 Width = 150
                 Height = 90
                 Margins.Left = 0
@@ -17827,8 +17748,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageInputPrepaidCardPassword'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlInputPrepaidCardPassword: TRzPanel
             Left = 0
             Top = 0
@@ -17964,8 +17883,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageInputZHBPassword'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlInputZHBPassword: TRzPanel
             Left = 0
             Top = 0
@@ -18101,8 +18018,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pagePrepaidCardAmountConfirm'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlPrepaidCardAmountConfirm: TRzPanel
             Left = 0
             Top = 0
@@ -18295,8 +18210,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageZHBBalanceConfirm'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlZHBBalanceConfirm: TRzPanel
             Left = 0
             Top = 0
@@ -18739,8 +18652,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageQueryBiz'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlQueryBiz: TRzPanel
             Left = 0
             Top = 0
@@ -18804,7 +18715,7 @@ object frmMain: TfrmMain
                 HorizontalSpacing = 0
                 VerticalSpacing = 1
                 Version = '1.7.1.0'
-                OnClick = AdvSmoothButton26Click
+                OnClick = btnCityCardBalanceQueryClick
               end
               object btnCityCardDetailQuery: TAdvSmoothButton
                 Left = 229
@@ -18905,8 +18816,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageModifyPasswordBiz'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlModifyZHBPass: TRzPanel
             Left = 0
             Top = 0
@@ -18956,7 +18865,7 @@ object frmMain: TfrmMain
               end
               object RzBorder1: TRzBorder
                 Left = 0
-                Top = 81
+                Top = 85
                 Width = 425
                 Height = 8
                 BorderOuter = fsNone
@@ -18965,7 +18874,7 @@ object frmMain: TfrmMain
               end
               object AdvSmoothLabel14: TAdvSmoothLabel
                 Left = 0
-                Top = 89
+                Top = 93
                 Width = 425
                 Height = 44
                 Fill.ColorMirror = clNone
@@ -18996,7 +18905,7 @@ object frmMain: TfrmMain
               end
               object RzBorder2: TRzBorder
                 Left = 0
-                Top = 170
+                Top = 178
                 Width = 425
                 Height = 8
                 BorderOuter = fsNone
@@ -19005,7 +18914,7 @@ object frmMain: TfrmMain
               end
               object AdvSmoothLabel16: TAdvSmoothLabel
                 Left = 0
-                Top = 178
+                Top = 186
                 Width = 425
                 Height = 44
                 Fill.ColorMirror = clNone
@@ -19038,7 +18947,7 @@ object frmMain: TfrmMain
                 Left = 0
                 Top = 44
                 Width = 425
-                Height = 37
+                Height = 41
                 EditAlign = eaCenter
                 EditType = etPassword
                 EmptyText = #35831#28857#20987#36755#20837'6'#20301#23494#30721
@@ -19067,13 +18976,12 @@ object frmMain: TfrmMain
                 OnKeyPress = edtPasswordForChargeCardKeyPress
                 OnKeyUp = edtOldPassKeyUp
                 Version = '2.9.1.4'
-                ExplicitTop = 47
               end
               object edtNewPass1: TAdvEdit
                 Left = 0
-                Top = 133
+                Top = 137
                 Width = 425
-                Height = 37
+                Height = 41
                 EditAlign = eaCenter
                 EditType = etPassword
                 EmptyText = #35831#28857#20987#36755#20837'6'#20301#23494#30721
@@ -19102,13 +19010,12 @@ object frmMain: TfrmMain
                 OnKeyPress = edtPasswordForChargeCardKeyPress
                 OnKeyUp = edtOldPassKeyUp
                 Version = '2.9.1.4'
-                ExplicitTop = 139
               end
               object edtNewPass2: TAdvEdit
                 Left = 0
-                Top = 222
+                Top = 230
                 Width = 425
-                Height = 37
+                Height = 41
                 EditAlign = eaCenter
                 EditType = etPassword
                 EmptyText = #35831#28857#20987#36755#20837'6'#20301#23494#30721
@@ -19138,7 +19045,6 @@ object frmMain: TfrmMain
                 OnKeyPress = edtPasswordForChargeCardKeyPress
                 OnKeyUp = edtOldPassKeyUp
                 Version = '2.9.1.4'
-                ExplicitTop = 231
               end
               object btnModifyZHBPassConfirm: TAdvSmoothButton
                 Left = 152
@@ -19191,8 +19097,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCityCardTransDetail'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlCityCardTransDetail: TRzPanel
             Left = 0
             Top = 0
@@ -19378,7 +19282,7 @@ object frmMain: TfrmMain
                   95
                   79
                   103
-                  159)
+                  176)
               end
               object AdvSmoothButton5: TAdvSmoothButton
                 Left = 347
@@ -19479,8 +19383,6 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageZHBBalance'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object pnlZHBBalance: TRzPanel
             Left = 0
             Top = 0

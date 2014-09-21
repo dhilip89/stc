@@ -607,7 +607,7 @@ begin
   tip := '需 付 款 金 额:%-3d元'#13#10 +
          '已 投 币 金 额:%-3d元'#13#10#13#10 +
          '注：只接受50或100纸币，不找零';
-  setWaitingTip(Format(tip, [FCashAmount div 100, 0]));
+  setWaitingTip(Format(tip, [FCashAmount div 100, 0]), True);
 
   {$IFDEF test}
     Sleep(2000);

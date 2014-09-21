@@ -4,7 +4,7 @@ object frmWaiting: TfrmWaiting
   BorderIcons = []
   BorderStyle = bsNone
   Caption = 'waiting'
-  ClientHeight = 361
+  ClientHeight = 415
   ClientWidth = 830
   Color = clBlack
   TransparentColor = True
@@ -15,17 +15,14 @@ object frmWaiting: TfrmWaiting
   Font.Style = []
   OldCreateOrder = False
   Position = poScreenCenter
-  OnClose = FormClose
   OnCreate = FormCreate
-  OnDestroy = FormDestroy
-  OnHide = FormHide
   PixelsPerInch = 96
   TextHeight = 13
   object AdvSmoothPanel1: TAdvSmoothPanel
     Left = 0
     Top = 0
     Width = 830
-    Height = 361
+    Height = 415
     Cursor = crDefault
     Caption.HTMLFont.Charset = DEFAULT_CHARSET
     Caption.HTMLFont.Color = clWindowText
@@ -52,13 +49,12 @@ object frmWaiting: TfrmWaiting
     Version = '1.1.0.0'
     Align = alClient
     TabOrder = 0
-    ExplicitWidth = 723
-    ExplicitHeight = 287
+    ExplicitTop = 1
     object AdvSmoothLabel1: TAdvSmoothLabel
       Left = 0
-      Top = 104
+      Top = 106
       Width = 830
-      Height = 257
+      Height = 241
       Fill.ColorMirror = clNone
       Fill.ColorMirrorTo = clNone
       Fill.GradientType = gtVertical
@@ -84,6 +80,7 @@ object frmWaiting: TfrmWaiting
       Version = '1.5.0.1'
       WordWrap = True
       Align = alBottom
+      ExplicitTop = 105
     end
     object AdvCircularProgress1: TAdvCircularProgress
       Left = 375
@@ -98,6 +95,46 @@ object frmWaiting: TfrmWaiting
       Appearance.TransitionSegmentColor = 4259584
       Appearance.ProgressSegmentColor = 4194432
       Interval = 100
+    end
+    object RzPanel1: TRzPanel
+      Left = 0
+      Top = 347
+      Width = 830
+      Height = 68
+      Align = alBottom
+      BorderInner = fsFlat
+      BorderOuter = fsNone
+      BorderSides = [sdTop]
+      TabOrder = 0
+      TabStop = True
+      Transparent = True
+      Visible = False
+      ExplicitLeft = 2
+      object AdvGlassButton1: TAdvGlassButton
+        Left = 362
+        Top = 11
+        Width = 100
+        Height = 42
+        BackColor = 8421440
+        Caption = #21462'  '#28040
+        CornerRadius = 5
+        Font.Charset = DEFAULT_CHARSET
+        Font.Color = clRed
+        Font.Height = -20
+        Font.Name = #21326#25991#20013#23435
+        Font.Style = []
+        ForeColor = 16760205
+        GlowColor = 16760205
+        InnerBorderColor = clWhite
+        Layout = blGlyphBottom
+        OuterBorderColor = clWhite
+        ParentFont = False
+        ShineColor = clWhite
+        TabOrder = 0
+        TabStop = False
+        Version = '1.2.3.1'
+        OnClick = AdvGlassButton1Click
+      end
     end
   end
 end

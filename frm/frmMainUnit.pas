@@ -80,7 +80,6 @@ type
     Image38: TImage;
     RzPanel73: TRzPanel;
     btnCityCardCharge: TAdvSmoothButton;
-    AdvSmoothButton26: TAdvSmoothButton;
     AdvSmoothButton24: TAdvSmoothButton;
     RzPanel74: TRzPanel;
     RzPanel75: TRzPanel;
@@ -319,7 +318,6 @@ type
     procedure AdvSmoothButton23Click(Sender: TObject);
     procedure btn1Click(Sender: TObject);
     procedure btnCityCardChargeClick(Sender: TObject);
-    procedure AdvSmoothButton26Click(Sender: TObject);
     procedure AdvSmoothButton24Click(Sender: TObject);
     procedure AdvSmoothButton27Click(Sender: TObject);
     procedure AdvSmoothButton29Click(Sender: TObject);
@@ -378,6 +376,7 @@ type
     procedure btnZHBBalanceQueryClick(Sender: TObject);
     procedure AdvSmoothButton3Click(Sender: TObject);
     procedure btnPreviousClick(Sender: TObject);
+    procedure btnCityCardBalanceQueryClick(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -419,6 +418,7 @@ type
     function getPrinterStatus: Byte;
     procedure initPnlPassword4ChargeCard(flag: Byte; maxLength: Integer);//flag 0:充值卡 1:账户宝
     procedure backToMainFrame;//回到主界面
+    procedure clearDefaultTip;
     procedure doCityCardCharge(dlg: TfrmWaiting);
     procedure DoOnPayCash();
     procedure setBtnZHBBalanceChargeEnabled;
@@ -698,13 +698,13 @@ begin
   cityCardBizType := 0;
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
     threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15);
     queryCityCardBalanceFlag := 2;
     threadQueryCityCard.OnGetCardBalance := DoOnGetCityCardBalance;
     threadQueryCityCard.Start;
     mr := dlg.ShowModal;
-    if mr = mrAbort then
+    if (mr = mrAbort) or (mr = mrCancel) then
     begin
       backToMainFrame;
     end;
@@ -765,13 +765,7 @@ begin
   Notebook1.ActivePage := 'pageCityCardNewCard';
 end;
 
-procedure TfrmMain.btnCityCardChargeClick(Sender: TObject);
-begin
-  Notebook1.ActivePage := 'pageSelectChargeType';
-  Exit;
-end;
-
-procedure TfrmMain.AdvSmoothButton26Click(Sender: TObject);
+procedure TfrmMain.btnCityCardBalanceQueryClick(Sender: TObject);
 var
   dlg: Tfrmwaiting;
   mr: TModalResult;
@@ -781,20 +775,26 @@ begin
   cityCardBizType := 1;
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
     threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15);
     queryCityCardBalanceFlag := 1;
     threadQueryCityCard.OnGetCityCardInfo := DoOnGetCityCardInfo;
     threadQueryCityCard.OnGetCardBalance := DoOnGetCityCardBalance;
     threadQueryCityCard.Start;
     mr := dlg.ShowModal;
-    if mr = mrAbort then
+    if (mr = mrAbort) or (mr = mrCancel) then
     begin
       backToMainFrame;
     end;
   finally
     dlg.Free;
   end;
+end;
+
+procedure TfrmMain.btnCityCardChargeClick(Sender: TObject);
+begin
+  Notebook1.ActivePage := 'pageSelectChargeType';
+  Exit;
 end;
 
 procedure TfrmMain.AdvSmoothButton27Click(Sender: TObject);
@@ -901,7 +901,7 @@ var
 begin
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
     TQueryCityCardBalance.Create(False, dlg, 15);
     mr := dlg.ShowModal;
     if mr = mrOk then
@@ -911,6 +911,10 @@ begin
       edtNewPass2.Text := '';
       btnModifyZHBPassConfirm.Enabled := False;
       Notebook1.ActivePage := 'pageModifyPasswordBiz';
+    end
+    else if mr = mrCancel then
+    begin
+      backToMainFrame;
     end;
   finally
     dlg.Free;
@@ -1144,7 +1148,7 @@ var
 begin
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
     TQueryCityCardBalance.Create(False, dlg, 15);
     mr := dlg.ShowModal;
     if mr = mrOk then
@@ -1154,6 +1158,10 @@ begin
       edtPrepaidCardPassword.Text := '';
       Notebook1.ActivePage := 'pageInputPrepaidCardPassword';
       edtPrepaidCardPassword.SetFocus;
+    end
+    else if mr = mrCancel then
+    begin
+      backToMainFrame;
     end;
   finally
     dlg.Free;
@@ -1199,6 +1207,7 @@ end;
 
 procedure TfrmMain.backToMainFrame;
 begin
+  clearDefaultTip;
   initGlobalVar;
   queryZHBBalanceFlag := 0;
   btnHome.Click;
@@ -1225,12 +1234,12 @@ begin
   Notebook1.ActivePage := 'pageCityCardTransDetail';
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
     queryCityCardDetail := TQueryCityCardTransDetail.Create(True, dlg, 30);
     queryCityCardDetail.OnQueryCityCardDetail := addCityCardTransDetailToGrid;
     queryCityCardDetail.Start;
     mr := dlg.ShowModal;
-    if mr = mrAbort then
+    if (mr = mrAbort) or (mr = mrCancel) then
     begin
       backToMainFrame;
     end;
@@ -1365,7 +1374,7 @@ var
 begin
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
     TQueryCityCardBalance.Create(False, dlg, 15);
     mr := dlg.ShowModal;
     if mr = mrOk then
@@ -1375,6 +1384,10 @@ begin
       edtZHBPassword.Text := '';
       Notebook1.ActivePage := 'pageInputZHBPassword';
       edtZHBPassword.SetFocus;
+    end
+    else if mr = mrCancel then
+    begin
+      backToMainFrame;
     end;
   finally
     dlg.Free;
@@ -1434,7 +1447,7 @@ var
 begin
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
     TQueryCityCardBalance.Create(False, dlg, 15);
     mr := dlg.ShowModal;
     if mr = mrOk then
@@ -1445,6 +1458,10 @@ begin
       edtZHBPassword.Text := '';
       Notebook1.ActivePage := 'pageInputZHBPassword';
       edtZHBPassword.SetFocus;
+    end
+    else if mr = mrCancel then
+    begin
+      backToMainFrame;
     end;
   finally
     dlg.Free;
@@ -1461,7 +1478,7 @@ begin
   Notebook1.ActivePage := 'pageCash';
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip(TIP_PUT_CITY_CARD);
+    dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
     TGetCashAmount.Create(False, dlg, 55, amountCharged);
     mr := dlg.ShowModal;
     if mr = mrOk then
@@ -1489,7 +1506,7 @@ begin
         threadCharge := nil;
       end;
     end
-    else if mr = mrAbort then
+    else if (mr = mrAbort) or (mr = mrCancel) then
     begin
       backToMainFrame;
     end
@@ -1585,6 +1602,13 @@ begin
     end;
     gridCityCardTransDetail.Rows[1].Clear;
   end;
+end;
+
+procedure TfrmMain.clearDefaultTip;
+begin
+  lblCityCardBalanceOnPanelCashCharge.Caption.Text := '';
+  lblCityCardNo.Caption.Text := '';
+  lblCityCardBalance.Caption.Text := '';
 end;
 
 procedure TfrmMain.connectToGateway;
@@ -1749,6 +1773,7 @@ begin
   Notebook1.PageIndex := 0;
   initMain;
   initDev;
+  clearDefaultTip;
 end;
 
 function TfrmMain.getBillAcceptorStatus: Byte;
