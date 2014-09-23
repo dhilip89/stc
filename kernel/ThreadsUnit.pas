@@ -285,7 +285,7 @@ var
 begin
   {$IFDEF test}
     Sleep(1000);
-    currCityCardNo := '1234567890123456';
+    currCityCardNo := '9150020686240037';
     currCityCardBalance := 12345;
 
     if Assigned(FOnGetCityCardInfo) then
