@@ -11194,13 +11194,15 @@ object frmMain: TfrmMain
         Width = 1234
         Height = 498
         Align = alClient
-        PageIndex = 27
+        PageIndex = 12
         TabOrder = 1
         OnPageChanged = Notebook1PageChanged
         object TPage
           Left = 0
           Top = 0
           Caption = 'Default'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object RzPanel3: TRzPanel
             Left = 0
             Top = 0
@@ -13570,6 +13572,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageSelectPayType'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlSelectPayType: TRzPanel
             Left = 0
             Top = 0
@@ -14021,6 +14025,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pagePayTypeBank'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlBankCardNo: TRzPanel
             Left = 0
             Top = 0
@@ -14145,6 +14151,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageInputBankPassword'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlBankCardPass: TRzPanel
             Left = 0
             Top = 0
@@ -14274,6 +14282,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageMobileTopUpSuccess'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlSuccess: TRzPanel
             Left = 0
             Top = 0
@@ -14732,6 +14742,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageBankCardTransfer'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlOtherCardNoAndAmount: TRzPanel
             Left = 0
             Top = 0
@@ -14941,6 +14953,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCreditCardConfirm'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlCreditCardInfoConfirm: TRzPanel
             Left = 0
             Top = 0
@@ -15141,6 +15155,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pagePublicFee'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlWaterElectricGas: TRzPanel
             Left = 0
             Top = 0
@@ -15303,6 +15319,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageInputWaterCardInfo'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlElectricInfo: TRzPanel
             Left = 0
             Top = 0
@@ -15481,6 +15499,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pagePubliGetFee'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlFeePaid: TRzPanel
             Left = 0
             Top = 0
@@ -15635,6 +15655,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCityCard'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlCityCardBizSelection: TRzPanel
             Left = 0
             Top = 0
@@ -15843,7 +15865,7 @@ object frmMain: TfrmMain
         object TPage
           Left = 0
           Top = 0
-          Caption = 'pageCityCardCharge'
+          Caption = 'pageGetCityCardBalance'
           object pnlGetCityCardBalance: TRzPanel
             Left = 0
             Top = 0
@@ -16062,6 +16084,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCityCardNewCard'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlSelectCityCardType: TRzPanel
             Left = 0
             Top = 0
@@ -16178,6 +16202,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCityCardChooseChargeAmount'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlChooseCityCardChargeAmout: TRzPanel
             Left = 0
             Top = 0
@@ -16410,6 +16436,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCityCardIDCard'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlGetIDCardInfo: TRzPanel
             Left = 0
             Top = 0
@@ -16588,6 +16616,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCityCardAmountForNewCard'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlChooseAmountForNewCard: TRzPanel
             Left = 0
             Top = 0
@@ -17459,6 +17489,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pagePasswordForChargeCardOrQFT'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlPasswordForChargeCard: TRzPanel
             Left = 0
             Top = 0
@@ -17586,6 +17618,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageSelectChargeType'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlSelectChargeType: TRzPanel
             Left = 0
             Top = 0
@@ -17748,6 +17782,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageInputPrepaidCardPassword'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlInputPrepaidCardPassword: TRzPanel
             Left = 0
             Top = 0
@@ -17883,6 +17919,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageInputZHBPassword'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlInputZHBPassword: TRzPanel
             Left = 0
             Top = 0
@@ -18018,6 +18056,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pagePrepaidCardAmountConfirm'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlPrepaidCardAmountConfirm: TRzPanel
             Left = 0
             Top = 0
@@ -18661,6 +18701,7 @@ object frmMain: TfrmMain
             BorderOuter = fsNone
             TabOrder = 0
             Transparent = True
+            ExplicitLeft = 1
             object RzPanel13: TRzPanel
               Left = 408
               Top = 63
@@ -18816,6 +18857,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageModifyPasswordBiz'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlModifyZHBPass: TRzPanel
             Left = 0
             Top = 0
@@ -19097,6 +19140,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageCityCardTransDetail'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlCityCardTransDetail: TRzPanel
             Left = 0
             Top = 0
@@ -19383,6 +19428,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageZHBBalance'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlZHBBalance: TRzPanel
             Left = 0
             Top = 0
@@ -19532,6 +19579,8 @@ object frmMain: TfrmMain
           Left = 0
           Top = 0
           Caption = 'pageModifyZHBPassSuccess'
+          ExplicitWidth = 0
+          ExplicitHeight = 0
           object pnlModifyZHBPassSucc: TRzPanel
             Left = 0
             Top = 0

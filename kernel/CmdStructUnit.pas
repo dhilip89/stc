@@ -124,6 +124,7 @@ type
     CmdHead: TSTHead;
     OperType: Byte;
     CardNo: array[0..7] of Byte;
+    Password: array[0..18] of Byte;
     TerminalId: array[0..5] of Byte;
     ASN: array[0..9] of Byte;
     FakeRandom: array[0..3] of Byte;//Î±Ëæ»úÊý

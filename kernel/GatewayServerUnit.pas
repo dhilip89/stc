@@ -130,7 +130,7 @@ type
     destructor Destroy; override;
     procedure ResendData(var buf; ABufSize: Integer; tip: string);
     procedure SendHeartbeat;
-    procedure SendCmdGetMac2(cardNo, asn, CardTradeNo: array of Byte;
+    procedure SendCmdGetMac2(cardNo, password, asn, CardTradeNo: array of Byte;
                             OperType: Byte; OldBalance, chargeAmount: Integer;
                             chargeTime, fakeRandom, mac1: array of Byte);
     procedure SendCmdUploadModuleStatus(moduleStatus: array of Byte);
@@ -455,7 +455,7 @@ begin
   DirectSend(cmd, SizeOf(TCmdChargeDetailC2S));
 end;
 
-procedure TGateWayServerCom.SendCmdGetMac2(cardNo, asn, CardTradeNo: array of Byte;
+procedure TGateWayServerCom.SendCmdGetMac2(cardNo, password, asn, CardTradeNo: array of Byte;
   OperType: Byte; OldBalance, chargeAmount: Integer;
   chargeTime, fakeRandom, mac1: array of Byte);
 var
@@ -465,6 +465,7 @@ begin
   initCmd(cmd.CmdHead, C2S_GET_MAC2, cmd.CmdEnd, SizeOf(TCmdGetMac2ForChargeC2S));
   cmd.OperType := OperType;
   CopyMemory(@cmd.cardNo[0], @cardNo[0], Min(Length(cmd.cardNo), Length(cardNo)));
+  CopyMemory(@cmd.Password[0], @Password[0], Min(Length(cmd.Password), Length(Password)));
   terminalIdBuf := hexStrToByteBuf(getFixedLenStr(GlobalParam.TerminalId, 12, '0'), False);
   CopyMemory(@(cmd.TerminalId[0]), @terminalIdBuf[0], SizeOf(cmd.TerminalId));
   CopyMemory(@cmd.asn[0], @asn[0], Min(Length(cmd.asn), Length(asn)));

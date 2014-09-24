@@ -771,12 +771,12 @@ var
   mr: TModalResult;
   threadQueryCityCard: TQueryCityCardBalance;
 begin
-  Notebook1.ActivePage := 'pageCityCardCharge';
+  Notebook1.ActivePage := 'pageGetCityCardBalance';
   cityCardBizType := 1;
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
-    threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15);
+    threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 30);
     queryCityCardBalanceFlag := 1;
     threadQueryCityCard.OnGetCityCardInfo := DoOnGetCityCardInfo;
     threadQueryCityCard.OnGetCardBalance := DoOnGetCityCardBalance;
@@ -1309,7 +1309,7 @@ begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_GETTING_ZHB_BALANCE);
-    threadQueryQFTBalance := TQueryZHBBalance.Create(True, dlg, 10, currCityCardNo, password);
+    threadQueryQFTBalance := TQueryZHBBalance.Create(True, dlg, 20, currCityCardNo, password);
     try
       threadQueryQFTBalance.start;
       mr := dlg.ShowModal;

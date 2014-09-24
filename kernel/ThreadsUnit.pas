@@ -374,11 +374,12 @@ begin
     addSysLog('read card balance err, recvBuf:' + recvBuf);
     Exit;
   end;
+  addSysLog('balance:' + recvBuf);
   offset := 0;
   SetLength(tempStr, 4 * 2);
 
   CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-  tempInt := bytesToInt(hexStrToByteBuf(tempstr, False), 0, false);
+  tempInt := bytesToInt(hexStrToByteBuf(tempstr, True), 0, false);
   //Memo1.Lines.Add('卡片余额:' + FormatFloat('0.##', tempInt / 100.0) + '元');
   balance := tempInt;
   currCityCardBalance := balance;
@@ -393,7 +394,7 @@ var
   sTime: TDateTime;
   isTimeout: Boolean;
 begin
-  Sleep(10);
+  Sleep(500);
   sTime := Now;
   isTimeout := False;
   while not doTask do
@@ -406,6 +407,7 @@ begin
     isTimeout := True;
     Break;
   end;
+  addSysLog('query city card while loop end');
   if not isTimeout then
   begin
     frmWaiting.noticeMROK;
@@ -549,7 +551,7 @@ end;
 
 procedure TBaseThread.setWaitingTip(tip: string; isHideProgressBar: Boolean);
 begin
-  frmWaiting.setWaitingTip(tip, isHideProgressBar);
+  frmWaiting.setWaitingTip(tip, False, isHideProgressBar);
 end;
 
 function TBaseThread.waitForCmdRet: Boolean;
@@ -809,7 +811,7 @@ end;
 function TCityCardCharge.doTask: Boolean;
 var
   tip: string;
-  cardNo, asn, tsn: TByteDynArray;
+  cardNo, password, asn, tsn: TByteDynArray;
   OperType: Byte; //操作类型 00现金充值，01银行卡充值，02充值卡充值，03账户宝充值/专有账户充值
   oldBalance: Integer;//充值前余额
   chargeTime, fakeRandom, mac1: TByteDynArray;
@@ -936,7 +938,14 @@ begin
 //  tip := '正在进行充值处理，请勿移开卡片'#13#10 + '卡片联机校验中...';
 //  setWaitingTip(tip);
   chargeTime := hexStrToBytes(FormatDateTime('yyyyMMddhhnnss', Now));
-  DataServer.SendCmdGetMac2(cardNo, asn, tsn, OperType, oldBalance, FChargeAmount, chargeTime, fakeRandom, mac1);
+  OperType := currChargeType;
+  if (currChargeType <> 0) then
+  begin
+    SetLength(password, 19);
+    initBytes(password, $00);
+    CopyMemory(@password[0], @BytesOf(bankCardNoOrPassword)[0], Min(Length(password), Length(bankCardNoOrPassword)));
+  end;
+  DataServer.SendCmdGetMac2(cardNo, password, asn, tsn, OperType, oldBalance, FChargeAmount, chargeTime, fakeRandom, mac1);
   if not waitForMac2  then
   begin//超时
     taskRet := 3;
