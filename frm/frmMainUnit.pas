@@ -27,17 +27,17 @@ uses
   dxSkinXmas2008Blue, cxRadioGroup, Data.Bind.EngExt, Vcl.Bind.DBEngExt,
   Data.Bind.Components, ThreadsUnit, FrmWaitingUnit, AsgListb, cxGraphics,
   cxControls, cxLookAndFeels, cxLookAndFeelPainters, Vcl.ComCtrls, cxTreeView,
-  cxContainer, cxEdit, cxListBox, RzListVw;
+  cxContainer, cxEdit, cxListBox, RzListVw, RzBmpBtn;
 
 type
   TfrmMain = class(TForm)
-    W7Image1: TW7Image;
+    backgroudSub: TW7Image;
     RzPanel1: TRzPanel;
     pnlClient: TRzPanel;
     pnlBottom: TRzPanel;
     pnlTop: TRzPanel;
     pnlTimeBar: TRzPanel;
-    btnTime: TAdvSmoothButton;
+    xbtnTime: TAdvSmoothButton;
     Timer1: TTimer;
     Notebook1: TNotebook;
     RzPanel2: TRzPanel;
@@ -77,16 +77,15 @@ type
     RzPanel69: TRzPanel;
     RzPanel70: TRzPanel;
     pnlSuccess: TRzPanel;
-    Image38: TImage;
     RzPanel73: TRzPanel;
-    btnCityCardCharge: TAdvSmoothButton;
+    xbtnCityCardCharge: TAdvSmoothButton;
     AdvSmoothButton24: TAdvSmoothButton;
     RzPanel74: TRzPanel;
     RzPanel75: TRzPanel;
     RzPanel76: TRzPanel;
-    btnCashCharge200: TAdvSmoothButton;
-    btnCashCharge100: TAdvSmoothButton;
-    btnCashCharge50: TAdvSmoothButton;
+    xbtnCashCharge200: TAdvSmoothButton;
+    xbtnCashCharge100: TAdvSmoothButton;
+    xbtnCashCharge50: TAdvSmoothButton;
     AdvSmoothLabel54: TAdvSmoothLabel;
     RzPanel77: TRzPanel;
     RzPanel78: TRzPanel;
@@ -174,8 +173,6 @@ type
     RzPanel94: TRzPanel;
     AdvSmoothButton12: TAdvSmoothButton;
     AdvSmoothButton8: TAdvSmoothButton;
-    AdvSmoothLabel73: TAdvSmoothLabel;
-    AdvSmoothButton45: TAdvSmoothButton;
     AdvSmoothLabel74: TAdvSmoothLabel;
     RzPanel95: TRzPanel;
     AdvSmoothLabel39: TAdvSmoothLabel;
@@ -199,8 +196,8 @@ type
     edtPasswordForChargeCard: TAdvEdit;
     btnPasswordOK: TAdvSmoothButton;
     RzPanel7: TRzPanel;
-    btnCityCardQuery: TAdvSmoothButton;
-    btnModifyZHBPassword: TAdvSmoothButton;
+    xbtnCityCardQuery: TAdvSmoothButton;
+    xbtnModifyZHBPassword: TAdvSmoothButton;
     pnlSelectChargeType: TRzPanel;
     RzPanel8: TRzPanel;
     btnCashCharge: TAdvSmoothButton;
@@ -279,16 +276,57 @@ type
     AdvSmoothButton34: TAdvSmoothButton;
     RzPanel18: TRzPanel;
     pnlMainBtn: TRzPanel;
-    btn2: TAdvSmoothButton;
-    btn4: TAdvSmoothButton;
-    btn6: TAdvSmoothButton;
-    btn1: TAdvSmoothButton;
-    btn5: TAdvSmoothButton;
-    btn3: TAdvSmoothButton;
+    xbtn2: TAdvSmoothButton;
+    xbtn4: TAdvSmoothButton;
+    xbtn6: TAdvSmoothButton;
+    xbtn1: TAdvSmoothButton;
+    xbtn5: TAdvSmoothButton;
+    xbtn3: TAdvSmoothButton;
     btnLoginStatus: TAdvGlowButton;
     btnPrevious: TAdvGlowButton;
+    btn5: TImage;
+    btn3: TImage;
+    btn1: TImage;
+    btn4: TImage;
+    btn2: TImage;
+    btn6: TImage;
+    btnTime: TAdvSmoothLabel;
+    btnCityCardCharge: TImage;
+    btnModifyZHBPassword: TImage;
+    btnCityCardQuery: TImage;
+    backgroudMain: TW7Image;
+    btnCashCharge50: TImage;
+    btnCashCharge100: TImage;
+    btnCashCharge200: TImage;
+    Image2: TImage;
+    Image3: TImage;
+    Image4: TImage;
+    Image5: TImage;
+    Image6: TImage;
+    Image7: TImage;
+    Image8: TImage;
+    Image9: TImage;
+    Image10: TImage;
+    Image11: TImage;
+    Image13: TImage;
+    Image14: TImage;
+    Image15: TImage;
+    Image16: TImage;
+    Image17: TImage;
+    Image18: TImage;
+    Image19: TImage;
+    Image20: TImage;
+    Image21: TImage;
+    Image22: TImage;
+    Image23: TImage;
+    Image24: TImage;
+    Image25: TImage;
+    Image12: TImage;
+    Image26: TImage;
+    Image27: TImage;
+    Image28: TImage;
+    Image29: TImage;
     procedure FormCreate(Sender: TObject);
-    procedure FormResize(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
     procedure btnNormalClick(Sender: TObject);
@@ -301,7 +339,7 @@ type
     procedure btnRegisterOkClick(Sender: TObject);
     procedure btnPrepaidCardChargeClick(Sender: TObject);
     procedure btnPayInPageQueryFeeUnpaidClick(Sender: TObject);
-    procedure btn4Click(Sender: TObject);
+    procedure xbtn4Click(Sender: TObject);
     procedure AdvSmoothButton13Click(Sender: TObject);
     procedure AdvSmoothButton14Click(Sender: TObject);
     procedure AdvSmoothButton15Click(Sender: TObject);
@@ -310,14 +348,14 @@ type
     procedure AdvSmoothButton17Click(Sender: TObject);
     procedure AdvSmoothButton18Click(Sender: TObject);
     procedure AdvSmoothButton8Click(Sender: TObject);
-    procedure btn2Click(Sender: TObject);
+    procedure xbtn2Click(Sender: TObject);
     procedure AdvSmoothButton20Click(Sender: TObject);
     procedure AdvSmoothButton19Click(Sender: TObject);
     procedure AdvSmoothButton21Click(Sender: TObject);
     procedure AdvSmoothButton22Click(Sender: TObject);
     procedure AdvSmoothButton23Click(Sender: TObject);
-    procedure btn1Click(Sender: TObject);
-    procedure btnCityCardChargeClick(Sender: TObject);
+    procedure xbtn1Click(Sender: TObject);
+    procedure xbtnCityCardChargeClick(Sender: TObject);
     procedure AdvSmoothButton24Click(Sender: TObject);
     procedure AdvSmoothButton27Click(Sender: TObject);
     procedure AdvSmoothButton29Click(Sender: TObject);
@@ -328,9 +366,9 @@ type
     procedure AdvSmoothButton38Click(Sender: TObject);
     procedure AdvSmoothButton37Click(Sender: TObject);
     procedure RzPanel2Resize(Sender: TObject);
-    procedure btnCashCharge50Click(Sender: TObject);
-    procedure btnCashCharge100Click(Sender: TObject);
-    procedure btnCashCharge200Click(Sender: TObject);
+    procedure xbtnCashCharge50Click(Sender: TObject);
+    procedure xbtnCashCharge100Click(Sender: TObject);
+    procedure xbtnCashCharge200Click(Sender: TObject);
     procedure btnPayBankCardClick(Sender: TObject);
     procedure AdvSmoothButton28Click(Sender: TObject);
     procedure AdvSmoothButton30Click(Sender: TObject);
@@ -338,7 +376,7 @@ type
     procedure AdvSmoothButton40Click(Sender: TObject);
     procedure AdvSmoothButton41Click(Sender: TObject);
     procedure AdvSmoothButton42Click(Sender: TObject);
-    procedure btn3Click(Sender: TObject);
+    procedure xbtn3Click(Sender: TObject);
     procedure Timer3Timer(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnQFTCardClick(Sender: TObject);
@@ -347,7 +385,7 @@ type
     procedure edtPasswordForChargeCardKeyPress(Sender: TObject; var Key: Char);
     procedure edtPasswordForChargeCardKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
-    procedure btn6Click(Sender: TObject);
+    procedure xbtn6Click(Sender: TObject);
     procedure RzPanel7Click(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure RzPanel7DblClick(Sender: TObject);
@@ -367,9 +405,9 @@ type
     procedure btnZHBCharge50Click(Sender: TObject);
     procedure AdvSmoothButton39Click(Sender: TObject);
     procedure AdvSmoothButton4Click(Sender: TObject);
-    procedure btnCityCardQueryClick(Sender: TObject);
+    procedure xbtnCityCardQueryClick(Sender: TObject);
     procedure btnCityCardDetailQueryClick(Sender: TObject);
-    procedure btnModifyZHBPasswordClick(Sender: TObject);
+    procedure xbtnModifyZHBPasswordClick(Sender: TObject);
     procedure edtOldPassKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
     procedure btnModifyZHBPassConfirmClick(Sender: TObject);
@@ -377,12 +415,14 @@ type
     procedure AdvSmoothButton3Click(Sender: TObject);
     procedure btnPreviousClick(Sender: TObject);
     procedure btnCityCardBalanceQueryClick(Sender: TObject);
+    procedure FormResize(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
 
     overTime: Integer; // 设定的超时时长，单位：秒
     FIsPosSet: Boolean; // 界面上需要相对调整位置的是否已调整过
+    FIsPnlPosSet: Boolean;//各个子界面的按钮是否调整了
 
     bankTransferType: Byte; // 银行转账类型  0:信用卡  1:借记卡
     publicFeeType: Byte; // 公共缴费类型 0:水 1:电 2:煤
@@ -438,6 +478,8 @@ type
     procedure setTimeInfo();
     procedure setPanelInitPos;
     procedure resetMainBtnPos;//初始化主界面上的按钮位置
+    procedure resetCityCardBizBtnPos;//初始化市民卡业务上的按钮位置
+    procedure resetBackgroudImg;//重设背景图
     procedure setCompentInParentCenter(comp: TWinControl);
     procedure setBtnPayTypeVisible(btnCityCardVisible,btnBankCardVisible,
       btnCashVisible, btnChargeCardVisible, btnQFTCardVisible: Boolean);
@@ -493,6 +535,17 @@ begin
   end;
 end;
 
+  procedure setBtnLeftTop(btn: TAdvSmoothButton; x, y: Integer);overload;
+  begin
+    btn.Left := x;
+    btn.Top := y;
+  end;
+  procedure setBtnLeftTop(btn: TImage; x, y: Integer);overload;
+  begin
+    btn.Left := x;
+    btn.Top := y;
+  end;
+
 procedure TfrmMain.addCityCardTransDetailToGrid(transDate, transTime,
   transTerminalId: ansistring; transType, transAmount: Integer);
   function getTransType(transType: Integer): string;
@@ -534,12 +587,12 @@ begin
   gridCityCardTransDetail.SelectRows(i, 1);;
 end;
 
-procedure TfrmMain.btn2Click(Sender: TObject);
+procedure TfrmMain.xbtn2Click(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pagePublicFee';
 end;
 
-procedure TfrmMain.btn4Click(Sender: TObject);
+procedure TfrmMain.xbtn4Click(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageMobileTopUp';
   edtPhoneNo.Text := '1';
@@ -629,7 +682,7 @@ begin
   AdvEdit8.Text := '';
 end;
 
-procedure TfrmMain.btnCityCardQueryClick(Sender: TObject);
+procedure TfrmMain.xbtnCityCardQueryClick(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageQueryBiz';
 end;
@@ -791,7 +844,7 @@ begin
   end;
 end;
 
-procedure TfrmMain.btnCityCardChargeClick(Sender: TObject);
+procedure TfrmMain.xbtnCityCardChargeClick(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageSelectChargeType';
   Exit;
@@ -894,7 +947,7 @@ begin
   end;
 end;
 
-procedure TfrmMain.btnModifyZHBPasswordClick(Sender: TObject);
+procedure TfrmMain.xbtnModifyZHBPasswordClick(Sender: TObject);
 var
   dlg: Tfrmwaiting;
   mr: TModalResult;
@@ -963,19 +1016,19 @@ begin
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
-procedure TfrmMain.btnCashCharge50Click(Sender: TObject);
+procedure TfrmMain.xbtnCashCharge50Click(Sender: TObject);
 begin
   amountCharged := AMOUNT_50_YUAN;
   DoOnPayCash;
 end;
 
-procedure TfrmMain.btnCashCharge100Click(Sender: TObject);
+procedure TfrmMain.xbtnCashCharge100Click(Sender: TObject);
 begin
   amountCharged := AMOUNT_100_YUAN;
   DoOnPayCash;
 end;
 
-procedure TfrmMain.btnCashCharge200Click(Sender: TObject);
+procedure TfrmMain.xbtnCashCharge200Click(Sender: TObject);
 begin
   amountCharged := AMOUNT_200_YUAN;
   DoOnPayCash;
@@ -1123,7 +1176,7 @@ begin
   Notebook1.ActivePage := 'pageSelectPayType';
 end;
 
-procedure TfrmMain.btn3Click(Sender: TObject);
+procedure TfrmMain.xbtn3Click(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageBankBiz';
 end;
@@ -1175,7 +1228,7 @@ begin
   Notebook1.ActivePage := pageHistory[currPageIndex];
 end;
 
-procedure TfrmMain.btn1Click(Sender: TObject);
+procedure TfrmMain.xbtn1Click(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageCityCard';
 end;
@@ -1191,7 +1244,7 @@ begin
   Notebook1.ActivePage := 'pageBankCardTransfer';
 end;
 
-procedure TfrmMain.btn6Click(Sender: TObject);
+procedure TfrmMain.xbtn6Click(Sender: TObject);
 var
   printInfo: ansistring;
 begin
@@ -1749,6 +1802,8 @@ begin
   firstTime := Now;
   clickCount := 0;
   resetPageHistory;
+  FIsPnlPosSet := False;
+  FIsPosSet := False;
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
@@ -1771,6 +1826,8 @@ begin
   pnlBottom.SetFocus;
 //  for i := Notebook1.Pages.Count - 1 downto 0 do
   Notebook1.PageIndex := 0;
+  FIsPnlPosSet := False;
+  FIsPosSet := False;
   initMain;
   initDev;
   clearDefaultTip;
@@ -1839,9 +1896,8 @@ begin
   btnTime.Top := (pnlTimeBar.Height - btnTime.Height) div 2;
   // lblCompany.Left := pnlBottom.Width - lblCompany.Width - 30;
   // *************调整时间的位置使其居中，在右下角显示公司信息
-
   resetMainBtnPos;
-  setPanelInitPos;
+  resetCityCardBizBtnPos;
 end;
 
 function TfrmMain.initBillAcceptor: Boolean;
@@ -2001,14 +2057,43 @@ begin
   begin
     resetPageHistory;
   end;
+
+  resetBackgroudImg;
+  setPanelInitPos;
+end;
+
+procedure TfrmMain.resetBackgroudImg;
+var
+  isShowMain: Boolean;
+begin
+  isShowMain := False;
+
+  if (Notebook1.ActivePage = 'Default') or (Notebook1.ActivePage = 'pageCityCard') then
+  begin
+    isShowMain := True;
+  end;
+
+  backgroudMain.Visible := isShowMain;
+  backgroudSub.Visible := not isShowMain;
+end;
+
+procedure TfrmMain.resetCityCardBizBtnPos;
+var
+  xDistance, yDistance: Integer;
+  btnWidth, btnHeight: Integer;
+begin
+  btnWidth := btnCityCardCharge.Width;
+  btnHeight := btnCityCardCharge.Height;
+  xDistance := (RzPanel73.Width - btnWidth) div 2;
+  yDistance := (RzPanel73.Height - 3 * btnHeight) div 4;
+
+
+  setBtnLeftTop(btnCityCardCharge, xDistance, yDistance);
+  setBtnLeftTop(btnCityCardQuery, xDistance, 2 * yDistance + btnHeight);
+  setBtnLeftTop(btnModifyZHBPassword, xDistance, 3 * yDistance + 2 * btnHeight);
 end;
 
 procedure TfrmMain.resetMainBtnPos;
-  procedure setBtnLeftTop(btn: TAdvSmoothButton; x, y: Integer);
-  begin
-    btn.Left := x;
-    btn.Top := y;
-  end;
 var
   xDistance, yDistance: Integer;
   btnWidth, btnHeight: Integer;
@@ -2090,10 +2175,10 @@ begin
   d := FormatDateTime('yyyy年MM月dd日', dt);
   t := FormatDateTime('hh时mm分', dt);
   weekDay := getWeekDay(DayOfTheWeek(dt));
-  cap := Format('您好，今天是%s %s %s', [d, weekDay, t]);
-  if btnTime.Caption <> cap then
+  cap := Format('%s %s %s', [d, weekDay, t]);
+  if btnTime.Caption.Text <> cap then
   begin
-    btnTime.Caption := cap;
+    btnTime.Caption.Text := cap;
   end;
 end;
 
@@ -2165,7 +2250,7 @@ end;
 procedure TfrmMain.setCompentInParentCenter(comp: TWinControl);
 begin
   comp.Left := (comp.Parent.Width - comp.Width) div 2;
-  comp.Top := (comp.Parent.Height - comp.Height) div 2;
+  comp.Top := (comp.Parent.Height - comp.Height - 100) div 2;
 end;
 
 procedure TfrmMain.setCountdownTimerEnabled(isEnabled: Boolean;
@@ -2206,6 +2291,11 @@ end;
 
 procedure TfrmMain.setPanelInitPos;
 begin
+//  if FIsPnlPosSet then
+//    Exit;
+//
+//  FIsPnlPosSet := True;
+
   setCompentInParentCenter(RzPanel6);
   setCompentInParentCenter(RzPanel8);
   setCompentInParentCenter(RzPanel9);
@@ -2217,7 +2307,7 @@ begin
   setCompentInParentCenter(RzPanel15);
   setCompentInParentCenter(RzPanel16);
   setCompentInParentCenter(RzPanel17);
-  setCompentInParentCenter(RzPanel73);
+  //setCompentInParentCenter(RzPanel73);
   setCompentInParentCenter(RzPanel74);
   setCompentInParentCenter(RzPanel75);
   setCompentInParentCenter(RzPanel76);

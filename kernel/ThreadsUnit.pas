@@ -101,7 +101,7 @@ type
     errInfo: string;//如果返回失败，填写错误提示
     FIsCmdRet: Boolean;
     procedure Execute; override;
-    procedure setWaitingTip(tip: string;isHideProgressBar: Boolean = False);
+    procedure setWaitingTip(tip: string;isHideProgressBar: Boolean = False; isShowCancelBtn: Boolean = False);
     function doTask: Boolean; virtual; abstract;
     procedure DoOnTaskOK; virtual; //执行顺利
     procedure DoOnTaskTimeout; virtual;//执行超时
@@ -549,9 +549,9 @@ begin
   printContent(printInfo);
 end;
 
-procedure TBaseThread.setWaitingTip(tip: string; isHideProgressBar: Boolean);
+procedure TBaseThread.setWaitingTip(tip: string; isHideProgressBar: Boolean; isShowCancelBtn: Boolean);
 begin
-  frmWaiting.setWaitingTip(tip, False, isHideProgressBar);
+  frmWaiting.setWaitingTip(tip, isShowCancelBtn, isHideProgressBar);
 end;
 
 function TBaseThread.waitForCmdRet: Boolean;
@@ -609,7 +609,7 @@ begin
   tip := '需 付 款 金 额:%-3d元'#13#10 +
          '已 投 币 金 额:%-3d元'#13#10#13#10 +
          '注：只接受50或100纸币，不找零';
-  setWaitingTip(Format(tip, [FCashAmount div 100, 0]), True);
+  setWaitingTip(Format(tip, [FCashAmount div 100, 0]), True, True);
 
   {$IFDEF test}
     Sleep(2000);
@@ -1107,6 +1107,13 @@ end;
 
 function TQueryZHBBalance.doTask: Boolean;
 begin
+  {$IFDEF test}
+    Sleep(2000);
+    Result := True;
+    taskRet := 0;
+    FAmount := 45023;
+    Exit;
+  {$ENDIF}
   addSysLog('query zhb balance');
   Result := False;
 

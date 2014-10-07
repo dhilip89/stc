@@ -7,7 +7,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, AdvSmoothPanel, AdvCircularProgress,
   Vcl.ComCtrls, AdvProgr, AdvSmoothProgressBar, W7Classes, W7ProgressBars,
   AdvSmoothLabel, RzBorder, CurvyControls, Vcl.Imaging.GIFImg, Vcl.ExtCtrls,
-  AdvSmoothButton, RzPanel, Vcl.StdCtrls, AdvGlassButton;
+  AdvSmoothButton, RzPanel, Vcl.StdCtrls, AdvGlassButton, dxGDIPlusClasses;
 
 type
   TfrmWaiting = class(TForm)
@@ -16,6 +16,7 @@ type
     AdvCircularProgress1: TAdvCircularProgress;
     RzPanel1: TRzPanel;
     AdvGlassButton1: TAdvGlassButton;
+    Image1: TImage;
     procedure FormCreate(Sender: TObject);
     procedure AdvGlassButton1Click(Sender: TObject);
   private

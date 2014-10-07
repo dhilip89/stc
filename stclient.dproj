@@ -46,6 +46,7 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
+			<DCC_Define>test;$(DCC_Define)</DCC_Define>
 			<ImageDebugInfo>true</ImageDebugInfo>
 			<DCC_RemoteDebug>true</DCC_RemoteDebug>
 			<DCC_DebugInfoInExe>true</DCC_DebugInfoInExe>
