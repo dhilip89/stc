@@ -456,6 +456,7 @@ type
     function getD8Status: Byte;
     function getBillAcceptorStatus: Byte;
     function getPrinterStatus: Byte;
+    function getKeyboardStatus: Byte;
     procedure initPnlPassword4ChargeCard(flag: Byte; maxLength: Integer);//flag 0:充值卡 1:账户宝
     procedure backToMainFrame;//回到主界面
     procedure clearDefaultTip;
@@ -475,6 +476,7 @@ type
     function initD8: Boolean;
     function initBillAcceptor: Boolean;
     function initPrinter: Boolean;
+    function initKeyBoard: Boolean;
     procedure setTimeInfo();
     procedure setPanelInitPos;
     procedure resetMainBtnPos;//初始化主界面上的按钮位置
@@ -511,7 +513,7 @@ implementation
 
 uses
   System.DateUtils, uGloabVar, drv_unit, GatewayServerUnit,
-  CmdStructUnit, itlssp, ConstDefineUnit;
+  CmdStructUnit, itlssp, ConstDefineUnit, keyboard;
 
 {$R *.dfm}
 
@@ -1866,6 +1868,14 @@ begin
     Result := MODULE_STATUS_FAULT;
 end;
 
+function TfrmMain.getKeyboardStatus: Byte;
+begin
+  if isKeyBoardComOpen then
+    Result := MODULE_STATUS_OK
+  else
+    Result := MODULE_STATUS_FAULT;
+end;
+
 function TfrmMain.getPrinterStatus: Byte;
 begin
   if isPrinterComOpen then
@@ -1963,6 +1973,16 @@ begin
   initD8;
   initBillAcceptor;
   initPrinter;
+  initKeyBoard;
+end;
+
+function TfrmMain.initKeyBoard: Boolean;
+var
+  i: Integer;
+begin
+  i := kb_openCom(GlobalParam.KeyBoardComPort, 9600);
+  isKeyBoardComOpen := i >= 0;
+  Result := isKeyBoardComOpen;
 end;
 
 procedure TfrmMain.initPnlPassword4ChargeCard(flag: Byte; maxLength: Integer);

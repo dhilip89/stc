@@ -29,6 +29,7 @@ type
     FPrinterComPort: Integer;
     FPosId: string;
     FSAMID: string;
+    FKeyBoardComPort: Integer;
 
     procedure SetGateway(const Value: TAddrssParam);
     procedure SetGatewayBak(const Value: TAddrssParam);
@@ -77,6 +78,10 @@ type
     //---打印机参数---
     property  PrinterComPort: Integer read FPrinterComPort write FPrinterComPort;
     //---打印机参数---
+
+    //---密码键盘参数---
+    property KeyBoardComPort: Integer read FKeyBoardComPort write FKeyBoardComPort;
+    //---密码键盘参数---
 
   end;
 implementation
@@ -182,6 +187,13 @@ begin
       begin
         FPrinterComPort := StrToInt(Trim(n2.text));
       end;
+
+      n2 := n1.selectSingleNode('KeyBoardComPort');
+      if (n2 <> nil) then
+      begin
+        FKeyBoardComPort := StrToInt(Trim(n2.text));
+      end;
+
     end;
   except
     on E: Exception do

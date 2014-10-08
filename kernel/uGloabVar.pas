@@ -19,6 +19,7 @@ var
 
   printerCom: TComm;
   isPrinterComOpen: Boolean;
+  isKeyBoardComOpen: Boolean;
 
   amountCharged: Integer;//市民卡充值金额 '单位:分'
 

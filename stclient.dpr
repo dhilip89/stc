@@ -22,7 +22,8 @@ uses
   ThreadsUnit in 'kernel\ThreadsUnit.pas',
   FrmTipUnit in 'frm\FrmTipUnit.pas' {FrmTip},
   itlssp in 'kernel\itlssp.pas',
-  SPCOMM in 'kernel\SPCOMM.PAS';
+  SPCOMM in 'kernel\SPCOMM.PAS',
+  keyboard in 'kernel\keyboard.pas';
 
 {$R *.res}
 
