@@ -326,6 +326,7 @@ type
     Image27: TImage;
     Image28: TImage;
     Image29: TImage;
+    kbReadTimer: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -416,6 +417,19 @@ type
     procedure btnPreviousClick(Sender: TObject);
     procedure btnCityCardBalanceQueryClick(Sender: TObject);
     procedure FormResize(Sender: TObject);
+    procedure kbReadTimerTimer(Sender: TObject);
+    procedure edtZHBPasswordClick(Sender: TObject);
+    procedure edtZHBPasswordExit(Sender: TObject);
+    procedure edtOldPassExit(Sender: TObject);
+    procedure edtOldPassClick(Sender: TObject);
+    procedure edtNewPass1Click(Sender: TObject);
+    procedure edtNewPass1Exit(Sender: TObject);
+    procedure edtNewPass2Exit(Sender: TObject);
+    procedure edtNewPass2Click(Sender: TObject);
+    procedure edtPhoneNoClick(Sender: TObject);
+    procedure edtPhoneNoExit(Sender: TObject);
+    procedure edtPrepaidCardPasswordClick(Sender: TObject);
+    procedure edtPrepaidCardPasswordExit(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -449,6 +463,8 @@ type
     currPageIndex: Integer;
     isPreviousOperation: Boolean;
 
+    currInputEdit: TAdvEdit;
+
     procedure initMain;
     procedure loadParam;
     procedure connectToGateway;
@@ -466,7 +482,7 @@ type
     procedure clearCityCardTransDetailGrid;
     procedure addCityCardTransDetailToGrid(transDate, transTime, transTerminalId: ansistring;
                                       transType, transAmount: Integer);
-
+    procedure setKBReaderOutput(advEdit: TAdvEdit);
     procedure resetPageHistory;
     procedure setCountdownTimerEnabled(isEnabled: Boolean;
       overTimeSeconds: Integer = 60);
@@ -1576,10 +1592,24 @@ var
   pb: PByte;
   status: Byte;
 begin
+  addSysLog('recv printer comm data, len:' + IntToStr(BufferLength));
   if BufferLength = 1 then
   begin
     pb := PByte(Buffer);
     status := pb^;
+    addSysLog('recv printer data:' + IntToHex(status,2));
+    if ((status shr 4) and $01) = $01 then
+    begin
+      printerStatus := MODULE_PRINTER_PAPER_OUT;
+    end
+    else if ((status shr 2) and $01) = $01 then
+    begin
+      printerStatus := MODULE_PRINTER_PAPER_LESS;
+    end
+    else
+    begin
+      printerStatus := MODULE_STATUS_OK;
+    end;
   end;
 end;
 
@@ -1589,6 +1619,36 @@ begin
   begin
     threadQueryQFTBalance.noticeCmdRet(ret, balance);
   end;
+end;
+
+procedure TfrmMain.edtNewPass1Click(Sender: TObject);
+begin
+  setKBReaderOutput(edtNewPass1);
+end;
+
+procedure TfrmMain.edtNewPass1Exit(Sender: TObject);
+begin
+  setKBReaderOutput(nil);
+end;
+
+procedure TfrmMain.edtNewPass2Click(Sender: TObject);
+begin
+  setKBReaderOutput(edtNewPass2);
+end;
+
+procedure TfrmMain.edtNewPass2Exit(Sender: TObject);
+begin
+  setKBReaderOutput(nil);
+end;
+
+procedure TfrmMain.edtOldPassClick(Sender: TObject);
+begin
+  setKBReaderOutput(edtOldPass);
+end;
+
+procedure TfrmMain.edtOldPassExit(Sender: TObject);
+begin
+  setKBReaderOutput(nil);
 end;
 
 procedure TfrmMain.edtOldPassKeyUp(Sender: TObject; var Key: Word;
@@ -1629,6 +1689,26 @@ begin
   end;
 end;
 
+procedure TfrmMain.edtPhoneNoClick(Sender: TObject);
+begin
+  setKBReaderOutput(edtPhoneNo);
+end;
+
+procedure TfrmMain.edtPhoneNoExit(Sender: TObject);
+begin
+  setKBReaderOutput(nil);
+end;
+
+procedure TfrmMain.edtPrepaidCardPasswordClick(Sender: TObject);
+begin
+  setKBReaderOutput(edtPrepaidCardPassword);
+end;
+
+procedure TfrmMain.edtPrepaidCardPasswordExit(Sender: TObject);
+begin
+  setKBReaderOutput(nil);
+end;
+
 procedure TfrmMain.edtPrepaidCardPasswordKeyUp(Sender: TObject; var Key: Word;
   Shift: TShiftState);
 begin
@@ -1636,6 +1716,16 @@ begin
     btnInputPrepaidCardPasswordOk.Enabled := True
   else
     btnInputPrepaidCardPasswordOk.Enabled := False;
+end;
+
+procedure TfrmMain.edtZHBPasswordClick(Sender: TObject);
+begin
+  setKBReaderOutput(edtZHBPassword);
+end;
+
+procedure TfrmMain.edtZHBPasswordExit(Sender: TObject);
+begin
+  setKBReaderOutput(nil);
 end;
 
 procedure TfrmMain.edtZHBPasswordKeyUp(Sender: TObject; var Key: Word;
@@ -1806,6 +1896,7 @@ begin
   resetPageHistory;
   FIsPnlPosSet := False;
   FIsPosSet := False;
+  setKBReaderOutput(nil);
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
@@ -1878,10 +1969,9 @@ end;
 
 function TfrmMain.getPrinterStatus: Byte;
 begin
-  if isPrinterComOpen then
-    Result := MODULE_STATUS_OK
-  else
-    Result := MODULE_STATUS_FAULT;
+  Result := printerStatus;
+  addSysLog('getPrinterStatus');
+  getPrinterNewStatus;
 end;
 
 procedure TfrmMain.iniForm;
@@ -2309,6 +2399,20 @@ begin
   end;
 end;
 
+procedure TfrmMain.setKBReaderOutput(advEdit: TAdvEdit);
+begin
+  currInputEdit := advEdit;
+  kbReadTimer.Enabled := (currInputEdit <> nil);
+  if (advEdit <> nil) then
+  begin
+    addSysLog('kb reader is working, output:' + advEdit.Name);
+  end
+  else
+  begin
+    addSysLog('kb reader is stopped');
+  end;
+end;
+
 procedure TfrmMain.setPanelInitPos;
 begin
 //  if FIsPnlPosSet then
@@ -2414,7 +2518,63 @@ begin
     moduleStatus[3] := getBillAcceptorStatus;
     moduleStatus[4] := $04;
     moduleStatus[5] := getPrinterStatus;
+    moduleStatus[6] := $06;
+    moduleStatus[7] := getKeyboardStatus;
     DataServer.SendCmdUploadModuleStatus(moduleStatus);
+  end;
+end;
+
+procedure TfrmMain.kbReadTimerTimer(Sender: TObject);
+var
+  recvData: array[0..9] of AnsiChar;
+  i: Integer;
+  hexVal: Integer;
+  currEdtText: string;
+  currEdtTextLen: Integer;
+begin
+  if (currInputEdit = nil) then
+    Exit;
+
+  i := kb_readOneChar(recvData);
+  if i >= 0 then
+  begin
+    currEdtText := Trim(currInputEdit.Text);
+    currEdtTextLen := Length(currEdtText);
+    hexVal := Ord(recvData[0]);
+    case hexVal of
+      $08://*或退格
+        begin
+          if currEdtTextLen > 0 then
+          begin
+            currEdtText := Copy(currEdtText, 1, currEdtTextLen - 1);
+            currInputEdit.Text := currEdtText;
+          end;
+        end;
+      $0D://确定
+        begin
+          PostMessage(Handle, WM_KEYDOWN, VK_TAB, 0);
+        end;
+      $1B://退出
+        begin
+        end;
+      $21://上翻
+        begin
+        end;
+      $22://下翻
+        begin
+        end;
+      $2E://.(小数点)
+        begin
+        end;
+      $30,$31,$32,$33,$34,$35,$36,$37,$38,$39://0-9数字
+        begin
+          if (currInputEdit.MaxLength > 0) and (currEdtTextLen >= currInputEdit.MaxLength) then
+          begin//已达到最大允许输入长度，则不再接受输入
+            Exit;
+          end;
+          currInputEdit.Text := currInputEdit.Text + recvData[0];
+        end;
+    end;
   end;
 end;
 

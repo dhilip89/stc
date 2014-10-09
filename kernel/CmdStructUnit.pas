@@ -44,9 +44,11 @@ const
   CMD_SPEC_FLAG_7E = $7E;
   CMD_SPEC_FLAG_7D = $7D;
 
-  MODULE_STATUS_UNKNOWN = $00;//未知
-  MODULE_STATUS_OK      = $01;//正常
-  MODULE_STATUS_FAULT   = $02;//故障
+  MODULE_STATUS_UNKNOWN     = $00;//未知
+  MODULE_STATUS_OK          = $01;//正常
+  MODULE_STATUS_FAULT       = $02;//故障
+  MODULE_PRINTER_PAPER_LESS = $03;//纸将近
+  MODULE_PRINTER_PAPER_OUT  = $04;//缺纸
 {*********************************公共常量*********************************}
 type
   {

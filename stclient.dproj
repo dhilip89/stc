@@ -46,7 +46,6 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
-			<DCC_Define>test;$(DCC_Define)</DCC_Define>
 			<ImageDebugInfo>true</ImageDebugInfo>
 			<DCC_RemoteDebug>true</DCC_RemoteDebug>
 			<DCC_DebugInfoInExe>true</DCC_DebugInfoInExe>
@@ -194,8 +193,7 @@
 						<Source Name="MainSource">stclient.dpr</Source>
 					</Source>
 					<Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dcloffice2k160.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
-						<Excluded_Packages Name="$(BDSBIN)\dclofficexp160.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
+						<Excluded_Packages Name="D:\My Documents\DevExpress VCL\Library\Delphi16\dclcxPivotGridOLAPD16.bpl">ExpressPivotGrid 2 OLAP by Developer Express Inc.</Excluded_Packages>
 					</Excluded_Packages>
 				</Delphi.Personality>
 				<Deployment>

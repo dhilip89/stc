@@ -17,6 +17,7 @@ var
   ExePath: string;
   FSysLog: TSystemLog;//该日志对象为立即写入，专门用来记录关键日志，防止异常后未能及时记录日志
 
+  printerStatus: Byte;
   printerCom: TComm;
   isPrinterComOpen: Boolean;
   isKeyBoardComOpen: Boolean;
@@ -54,6 +55,7 @@ function LongWordToBytes(lw: LongWord): TByteDynArray;
 function initPrinterCom(): Boolean;
 function freePrinterCom(): Boolean;
 function printContent(content: AnsiString): Boolean;
+function getPrinterNewStatus: Boolean;
 function checkPrinterStatus(): Boolean;
 function getNextTSN():Integer;
 function getInitTSNFromFile: Integer;
@@ -379,8 +381,10 @@ begin
     try
       printerCom.StartComm;
       isPrinterComOpen := True;
+      addSysLog('start printer comm ok');
     except
       isPrinterComOpen := False;
+      addSysLog('start printer comm fail');
     end;
   end;
   Result := True;
@@ -392,6 +396,18 @@ begin
   begin
     printerCom.StopComm;
     printerCom.Free;
+  end;
+end;
+
+function getPrinterNewStatus: Boolean;
+var
+  buf: TByteDynArray;
+begin
+  if isPrinterComOpen then
+  begin
+    buf := hexStrToBytes('1C76');
+    printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
+    addSysLog('writer 1C76 to printer comm');
   end;
 end;
 
