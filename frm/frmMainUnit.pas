@@ -418,18 +418,19 @@ type
     procedure btnCityCardBalanceQueryClick(Sender: TObject);
     procedure FormResize(Sender: TObject);
     procedure kbReadTimerTimer(Sender: TObject);
-    procedure edtZHBPasswordClick(Sender: TObject);
     procedure edtZHBPasswordExit(Sender: TObject);
     procedure edtOldPassExit(Sender: TObject);
-    procedure edtOldPassClick(Sender: TObject);
-    procedure edtNewPass1Click(Sender: TObject);
     procedure edtNewPass1Exit(Sender: TObject);
     procedure edtNewPass2Exit(Sender: TObject);
-    procedure edtNewPass2Click(Sender: TObject);
     procedure edtPhoneNoClick(Sender: TObject);
     procedure edtPhoneNoExit(Sender: TObject);
-    procedure edtPrepaidCardPasswordClick(Sender: TObject);
     procedure edtPrepaidCardPasswordExit(Sender: TObject);
+    procedure edtPasswordForChargeCardEnter(Sender: TObject);
+    procedure edtPrepaidCardPasswordEnter(Sender: TObject);
+    procedure edtZHBPasswordEnter(Sender: TObject);
+    procedure edtOldPassEnter(Sender: TObject);
+    procedure edtNewPass2Enter(Sender: TObject);
+    procedure edtNewPass1Enter(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -982,6 +983,7 @@ begin
       edtNewPass2.Text := '';
       btnModifyZHBPassConfirm.Enabled := False;
       Notebook1.ActivePage := 'pageModifyPasswordBiz';
+      edtOldPass.SetFocus;
     end
     else if mr = mrCancel then
     begin
@@ -1345,7 +1347,7 @@ begin
   //获取面额
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip(TIP_GETTING_PREPAID_CARD_AMOUNT);
+    dlg.setWaitingTip(TIP_GETTING_PREPAID_CARD_AMOUNT, True);
     threadChargeCardCheck := TChargeCardCheck.Create(True, dlg, 10, currCityCardNo, password);
     threadChargeCardCheck.start;
     try
@@ -1356,6 +1358,10 @@ begin
         lblCityCardBalanceOnPnlPrepaidCard.Caption.Text := FormatFloat('0.00', currCityCardBalance * 1.0 / 100) + '元';
         lblPrepaidCardAmount.Caption.Text := FormatFloat('0.00', currPrepaidCardAmount * 1.0 / 100) + '元';
         Notebook1.ActivePage := 'pagePrepaidCardAmountConfirm';
+      end
+      else
+      begin
+        backToMainFrame;
       end;
     finally
       threadChargeCardCheck.Free;
@@ -1379,7 +1385,7 @@ begin
   //获取余额
   dlg := TfrmWaiting.Create(nil);
   try
-    dlg.setWaitingTip(TIP_GETTING_ZHB_BALANCE);
+    dlg.setWaitingTip(TIP_GETTING_ZHB_BALANCE, True);
     threadQueryQFTBalance := TQueryZHBBalance.Create(True, dlg, 20, currCityCardNo, password);
     try
       threadQueryQFTBalance.start;
@@ -1621,7 +1627,7 @@ begin
   end;
 end;
 
-procedure TfrmMain.edtNewPass1Click(Sender: TObject);
+procedure TfrmMain.edtNewPass1Enter(Sender: TObject);
 begin
   setKBReaderOutput(edtNewPass1);
 end;
@@ -1631,7 +1637,7 @@ begin
   setKBReaderOutput(nil);
 end;
 
-procedure TfrmMain.edtNewPass2Click(Sender: TObject);
+procedure TfrmMain.edtNewPass2Enter(Sender: TObject);
 begin
   setKBReaderOutput(edtNewPass2);
 end;
@@ -1641,7 +1647,7 @@ begin
   setKBReaderOutput(nil);
 end;
 
-procedure TfrmMain.edtOldPassClick(Sender: TObject);
+procedure TfrmMain.edtOldPassEnter(Sender: TObject);
 begin
   setKBReaderOutput(edtOldPass);
 end;
@@ -1662,6 +1668,11 @@ begin
     btnModifyZHBPassConfirm.Enabled := True;
   end;
 
+end;
+
+procedure TfrmMain.edtPasswordForChargeCardEnter(Sender: TObject);
+begin
+  setKBReaderOutput(edtPasswordForChargeCard);
 end;
 
 procedure TfrmMain.edtPasswordForChargeCardKeyPress(Sender: TObject;
@@ -1699,7 +1710,7 @@ begin
   setKBReaderOutput(nil);
 end;
 
-procedure TfrmMain.edtPrepaidCardPasswordClick(Sender: TObject);
+procedure TfrmMain.edtPrepaidCardPasswordEnter(Sender: TObject);
 begin
   setKBReaderOutput(edtPrepaidCardPassword);
 end;
@@ -1718,7 +1729,7 @@ begin
     btnInputPrepaidCardPasswordOk.Enabled := False;
 end;
 
-procedure TfrmMain.edtZHBPasswordClick(Sender: TObject);
+procedure TfrmMain.edtZHBPasswordEnter(Sender: TObject);
 begin
   setKBReaderOutput(edtZHBPassword);
 end;
@@ -1970,7 +1981,6 @@ end;
 function TfrmMain.getPrinterStatus: Byte;
 begin
   Result := printerStatus;
-  addSysLog('getPrinterStatus');
   getPrinterNewStatus;
 end;
 
@@ -2403,14 +2413,6 @@ procedure TfrmMain.setKBReaderOutput(advEdit: TAdvEdit);
 begin
   currInputEdit := advEdit;
   kbReadTimer.Enabled := (currInputEdit <> nil);
-  if (advEdit <> nil) then
-  begin
-    addSysLog('kb reader is working, output:' + advEdit.Name);
-  end
-  else
-  begin
-    addSysLog('kb reader is stopped');
-  end;
 end;
 
 procedure TfrmMain.setPanelInitPos;
@@ -2548,6 +2550,7 @@ begin
           begin
             currEdtText := Copy(currEdtText, 1, currEdtTextLen - 1);
             currInputEdit.Text := currEdtText;
+            currInputEdit.SelStart := Length(currInputEdit.Text);
           end;
         end;
       $0D://确定
@@ -2573,6 +2576,7 @@ begin
             Exit;
           end;
           currInputEdit.Text := currInputEdit.Text + recvData[0];
+          currInputEdit.SelStart := Length(currInputEdit.Text);
         end;
     end;
   end;

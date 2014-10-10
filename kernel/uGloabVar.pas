@@ -407,7 +407,6 @@ begin
   begin
     buf := hexStrToBytes('1C76');
     printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
-    addSysLog('writer 1C76 to printer comm');
   end;
 end;
 

@@ -6346,7 +6346,7 @@ object frmMain: TfrmMain
         Width = 1236
         Height = 490
         Align = alClient
-        PageIndex = 16
+        PageIndex = 29
         TabOrder = 1
         OnPageChanged = Notebook1PageChanged
         object TPage
@@ -13882,6 +13882,7 @@ object frmMain: TfrmMain
                 PasswordChar = '*'
                 TabOrder = 0
                 Visible = True
+                OnEnter = edtPasswordForChargeCardEnter
                 OnKeyPress = edtPasswordForChargeCardKeyPress
                 OnKeyUp = edtPasswordForChargeCardKeyUp
                 Version = '2.9.1.4'
@@ -14884,7 +14885,6 @@ object frmMain: TfrmMain
                 Width = 401
                 Height = 41
                 EditAlign = eaCenter
-                EditType = etPassword
                 EmptyText = #35831#36755#20837'16'#20301#23494#30721
                 FocusColor = clBtnFace
                 LabelFont.Charset = DEFAULT_CHARSET
@@ -14905,10 +14905,9 @@ object frmMain: TfrmMain
                 Font.Style = []
                 MaxLength = 16
                 ParentFont = False
-                PasswordChar = #183
                 TabOrder = 0
                 Visible = True
-                OnClick = edtPrepaidCardPasswordClick
+                OnEnter = edtPrepaidCardPasswordEnter
                 OnExit = edtPrepaidCardPasswordExit
                 OnKeyPress = edtPasswordForChargeCardKeyPress
                 OnKeyUp = edtPrepaidCardPasswordKeyUp
@@ -15146,10 +15145,10 @@ object frmMain: TfrmMain
                 Font.Style = []
                 MaxLength = 6
                 ParentFont = False
-                PasswordChar = #183
+                PasswordChar = '*'
                 TabOrder = 0
                 Visible = True
-                OnClick = edtZHBPasswordClick
+                OnEnter = edtZHBPasswordEnter
                 OnExit = edtZHBPasswordExit
                 OnKeyPress = edtPasswordForChargeCardKeyPress
                 OnKeyUp = edtZHBPasswordKeyUp
@@ -17493,7 +17492,7 @@ object frmMain: TfrmMain
                   55C20FF806F915D84AC7AE297CC7EF855C09D9C22BC04482840EA80F37C470A3
                   123EC027F00D7C2488E18A3D8414A2F92F008E02AD528C6EEF0000000049454E
                   44AE426082}
-                OnClick = btnZHBPasswordOkClick
+                OnClick = btnModifyZHBPassConfirmClick
               end
               object edtOldPass: TAdvEdit
                 Left = 0
@@ -17522,10 +17521,10 @@ object frmMain: TfrmMain
                 Font.Style = []
                 MaxLength = 6
                 ParentFont = False
-                PasswordChar = #183
+                PasswordChar = '*'
                 TabOrder = 0
                 Visible = True
-                OnClick = edtOldPassClick
+                OnEnter = edtOldPassEnter
                 OnExit = edtOldPassExit
                 OnKeyPress = edtPasswordForChargeCardKeyPress
                 OnKeyUp = edtOldPassKeyUp
@@ -17558,10 +17557,10 @@ object frmMain: TfrmMain
                 Font.Style = []
                 MaxLength = 6
                 ParentFont = False
-                PasswordChar = #183
+                PasswordChar = '*'
                 TabOrder = 1
                 Visible = True
-                OnClick = edtNewPass1Click
+                OnEnter = edtNewPass1Enter
                 OnExit = edtNewPass1Exit
                 OnKeyPress = edtPasswordForChargeCardKeyPress
                 OnKeyUp = edtOldPassKeyUp
@@ -17595,10 +17594,10 @@ object frmMain: TfrmMain
                 Font.Style = []
                 MaxLength = 6
                 ParentFont = False
-                PasswordChar = #183
+                PasswordChar = '*'
                 TabOrder = 2
                 Visible = True
-                OnClick = edtNewPass2Click
+                OnEnter = edtNewPass2Enter
                 OnExit = edtNewPass2Exit
                 OnKeyPress = edtPasswordForChargeCardKeyPress
                 OnKeyUp = edtOldPassKeyUp
