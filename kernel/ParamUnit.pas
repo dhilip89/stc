@@ -30,6 +30,7 @@ type
     FPosId: string;
     FSAMID: string;
     FKeyBoardComPort: Integer;
+    FPasswordForQuit: string;
 
     procedure SetGateway(const Value: TAddrssParam);
     procedure SetGatewayBak(const Value: TAddrssParam);
@@ -83,10 +84,13 @@ type
     property KeyBoardComPort: Integer read FKeyBoardComPort write FKeyBoardComPort;
     //---密码键盘参数---
 
+    //系统退出时的密码
+    property PasswordForQuit: string read FPasswordForQuit write FPasswordForQuit;
+
   end;
 implementation
 
-uses SysUtils;
+uses SysUtils, ConstDefineUnit;
 { TSystemParam }
 
 constructor TSystemParam.Create;
@@ -192,6 +196,16 @@ begin
       if (n2 <> nil) then
       begin
         FKeyBoardComPort := StrToInt(Trim(n2.text));
+      end;
+
+      n2 := n1.selectSingleNode('PasswordForQuit');
+      if n2 <> nil then
+      begin
+        FPasswordForQuit := Trim(n2.text);
+      end
+      else
+      begin
+        FPasswordForQuit := DEFAULT_PASSWORD_FOR_QUIT;
       end;
 
     end;

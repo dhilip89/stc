@@ -530,7 +530,7 @@ implementation
 
 uses
   System.DateUtils, uGloabVar, drv_unit, GatewayServerUnit,
-  CmdStructUnit, itlssp, ConstDefineUnit, keyboard;
+  CmdStructUnit, itlssp, ConstDefineUnit, keyboard, FrmCloseConfirmUnit;
 
 {$R *.dfm}
 
@@ -1881,16 +1881,23 @@ begin
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
+var
+  dlg: TfrmCloseConfirm;
 begin
-  if MessageBox(Handle, '您确认关闭自助服务系统吗？', '确认', MB_YESNO + MB_ICONQUESTION) = ID_NO then
-  begin
-    CanClose := False;
-  end
-  else
-  begin
-    CanClose := True;
+  dlg := TfrmCloseConfirm.Create(nil);
+  try
+    CanClose := dlg.ShowModal = mrOk;
+  finally
+    dlg.Free;
   end;
-
+//  if MessageBox(Handle, '您确认关闭自助服务系统吗？', '确认', MB_YESNO + MB_ICONQUESTION) = ID_NO then
+//  begin
+//    CanClose := False;
+//  end
+//  else
+//  begin
+//    CanClose := True;
+//  end;
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);

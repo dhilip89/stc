@@ -23,7 +23,8 @@ uses
   FrmTipUnit in 'frm\FrmTipUnit.pas' {FrmTip},
   itlssp in 'kernel\itlssp.pas',
   SPCOMM in 'kernel\SPCOMM.PAS',
-  keyboard in 'kernel\keyboard.pas';
+  keyboard in 'kernel\keyboard.pas',
+  FrmCloseConfirmUnit in 'frm\FrmCloseConfirmUnit.pas' {frmCloseConfirm};
 
 {$R *.res}
 
@@ -31,5 +32,6 @@ begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TfrmMain, frmMain);
+  Application.CreateForm(TfrmCloseConfirm, frmCloseConfirm);
   Application.Run;
 end.

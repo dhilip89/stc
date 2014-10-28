@@ -11,7 +11,11 @@ unit ConstDefineUnit;
 interface
 uses Messages;
 const
-//====================================================================
+
+  //系统退出时的默认密码
+  DEFAULT_PASSWORD_FOR_QUIT = '213000';
+
+  //====================================================================
   AMOUNT_30_YUAN = 30 * 100;
   AMOUNT_50_YUAN = 50 * 100;
   AMOUNT_100_YUAN = 100 * 100;
@@ -33,9 +37,6 @@ const
   LOGIN_STATUS_TER_DISABLED            = 3;//终端被停用
   LOGIN_STATUS_SERVER_DISCONNECTED     = 99;//未发送登录命令
   LOGIN_STATUS_NO_RSP                  = 100;//登录命令发送未应答
-
-
-
 
 implementation
 
