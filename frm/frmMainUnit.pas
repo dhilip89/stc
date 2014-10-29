@@ -483,7 +483,7 @@ type
     procedure clearCityCardTransDetailGrid;
     procedure addCityCardTransDetailToGrid(transDate, transTime, transTerminalId: ansistring;
                                       transType, transAmount: Integer);
-    procedure setKBReaderOutput(advEdit: TAdvEdit);
+
     procedure resetPageHistory;
     procedure setCountdownTimerEnabled(isEnabled: Boolean;
       overTimeSeconds: Integer = 60);
@@ -520,6 +520,7 @@ type
   protected
     procedure CreateParams(var Params: TCreateParams); override;
   public
+    procedure setKBReaderOutput(advEdit: TAdvEdit);
     { Public declarations }
   end;
 

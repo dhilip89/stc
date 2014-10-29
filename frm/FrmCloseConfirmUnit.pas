@@ -11,12 +11,14 @@ uses
 type
   TfrmCloseConfirm = class(TForm)
     AdvSmoothPanel1: TAdvSmoothPanel;
+    AdvSmoothLabel1: TAdvSmoothLabel;
     AdvSmoothButton1: TAdvSmoothButton;
     AdvSmoothButton2: TAdvSmoothButton;
     AdvEdit1: TAdvEdit;
-    AdvSmoothLabel1: TAdvSmoothLabel;
     procedure FormShow(Sender: TObject);
     procedure AdvSmoothButton1Click(Sender: TObject);
+    procedure AdvEdit1Enter(Sender: TObject);
+    procedure AdvEdit1Exit(Sender: TObject);
   private
     { Private declarations }
     function isPasswordOK(): Boolean;
@@ -29,9 +31,19 @@ var
 
 implementation
 uses
-  uGloabVar;
+  uGloabVar, frmMainUnit;
 
 {$R *.dfm}
+
+procedure TfrmCloseConfirm.AdvEdit1Enter(Sender: TObject);
+begin
+  frmMain.setKBReaderOutput(AdvEdit1);
+end;
+
+procedure TfrmCloseConfirm.AdvEdit1Exit(Sender: TObject);
+begin
+  frmMain.setKBReaderOutput(nil);
+end;
 
 procedure TfrmCloseConfirm.AdvSmoothButton1Click(Sender: TObject);
 begin
@@ -44,6 +56,7 @@ end;
 procedure TfrmCloseConfirm.FormShow(Sender: TObject);
 begin
   DoubleBuffered := True;
+  AdvEdit1.Text := '';
   AdvEdit1.SetFocus;
 end;
 

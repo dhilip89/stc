@@ -6,8 +6,8 @@ object frmCloseConfirm: TfrmCloseConfirm
   Caption = 'frmCloseConfirm'
   ClientHeight = 267
   ClientWidth = 432
-  Color = clBlack
-  TransparentColor = True
+  Color = clWhite
+  TransparentColorValue = clWhite
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -11
@@ -54,10 +54,7 @@ object frmCloseConfirm: TfrmCloseConfirm
     Version = '1.1.0.0'
     Align = alClient
     TabOrder = 0
-    ExplicitLeft = -366
-    ExplicitTop = -82
-    ExplicitWidth = 830
-    ExplicitHeight = 415
+    ExplicitLeft = -1
     object AdvSmoothLabel1: TAdvSmoothLabel
       Left = 76
       Top = 71
@@ -88,15 +85,15 @@ object frmCloseConfirm: TfrmCloseConfirm
       Version = '1.5.0.1'
     end
     object AdvSmoothButton1: TAdvSmoothButton
-      Left = 253
-      Top = 184
-      Width = 103
-      Height = 46
+      Left = 263
+      Top = 190
+      Width = 92
+      Height = 45
       Appearance.Font.Charset = GB2312_CHARSET
-      Appearance.Font.Color = 15658734
+      Appearance.Font.Color = clWhite
       Appearance.Font.Height = -21
-      Appearance.Font.Name = #21326#25991#23435#20307
-      Appearance.Font.Style = [fsBold]
+      Appearance.Font.Name = #21326#25991#20013#23435
+      Appearance.Font.Style = []
       Appearance.SimpleLayout = True
       Status.Caption = '0'
       Status.Appearance.Fill.Color = clRed
@@ -121,15 +118,15 @@ object frmCloseConfirm: TfrmCloseConfirm
       OnClick = AdvSmoothButton1Click
     end
     object AdvSmoothButton2: TAdvSmoothButton
-      Left = 75
-      Top = 184
-      Width = 103
-      Height = 46
+      Left = 73
+      Top = 190
+      Width = 92
+      Height = 45
       Appearance.Font.Charset = GB2312_CHARSET
-      Appearance.Font.Color = 15658734
+      Appearance.Font.Color = clWhite
       Appearance.Font.Height = -21
-      Appearance.Font.Name = #21326#25991#23435#20307
-      Appearance.Font.Style = [fsBold]
+      Appearance.Font.Name = #21326#25991#20013#23435
+      Appearance.Font.Style = []
       Appearance.SimpleLayout = True
       Status.Caption = '0'
       Status.Appearance.Fill.Color = clRed
@@ -151,38 +148,35 @@ object frmCloseConfirm: TfrmCloseConfirm
       ParentFont = False
       TabOrder = 1
       Version = '1.7.1.0'
-      ModalResult = 2
     end
     object AdvEdit1: TAdvEdit
-      Left = 75
-      Top = 125
+      Left = 73
+      Top = 124
       Width = 281
       Height = 33
-      BorderColor = clHighlight
       EditAlign = eaCenter
       EditType = etPassword
-      FocusColor = clBlack
       LabelFont.Charset = DEFAULT_CHARSET
       LabelFont.Color = clWindowText
       LabelFont.Height = -11
       LabelFont.Name = 'Tahoma'
       LabelFont.Style = []
       Lookup.Separator = ';'
-      BevelInner = bvNone
-      BevelOuter = bvNone
       AutoSize = False
       CanUndo = False
       Color = clWindow
       Font.Charset = DEFAULT_CHARSET
       Font.Color = clWindowText
-      Font.Height = -13
+      Font.Height = -16
       Font.Name = 'Tahoma'
       Font.Style = [fsBold]
       ParentFont = False
-      PasswordChar = '#'
+      PasswordChar = '*'
       TabOrder = 2
-      Transparent = True
+      Text = 'AdvEdit1'
       Visible = True
+      OnEnter = AdvEdit1Enter
+      OnExit = AdvEdit1Exit
       Version = '2.9.1.4'
     end
   end
