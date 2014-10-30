@@ -1882,23 +1882,23 @@ begin
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
-var
-  dlg: TfrmCloseConfirm;
+//var
+//  dlg: TfrmCloseConfirm;
 begin
-  dlg := TfrmCloseConfirm.Create(nil);
-  try
-    CanClose := dlg.ShowModal = mrOk;
-  finally
-    dlg.Free;
-  end;
-//  if MessageBox(Handle, '您确认关闭自助服务系统吗？', '确认', MB_YESNO + MB_ICONQUESTION) = ID_NO then
-//  begin
-//    CanClose := False;
-//  end
-//  else
-//  begin
-//    CanClose := True;
+//  dlg := TfrmCloseConfirm.Create(nil);
+//  try
+//    CanClose := dlg.ShowModal = mrOk;
+//  finally
+//    dlg.Free;
 //  end;
+  if MessageBox(Handle, '您确认关闭自助服务系统吗？', '确认', MB_YESNO + MB_ICONQUESTION) = ID_NO then
+  begin
+    CanClose := False;
+  end
+  else
+  begin
+    CanClose := True;
+  end;
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
@@ -2368,11 +2368,16 @@ end;
 
 procedure TfrmMain.setBtnZHBBalanceChargeEnabled;
 begin
-  btnZHBCharge30.Visible := currZHBBalance >= AMOUNT_30_YUAN;
-  btnZHBCharge50.Visible := currZHBBalance >= AMOUNT_50_YUAN;
-  btnZHBCharge100.Visible := currZHBBalance >= AMOUNT_100_YUAN;
-  btnZHBCharge200.Visible := currZHBBalance >= AMOUNT_200_YUAN;
-  btnZHBChargeAllBalance.Visible := currZHBBalance > 0;
+//  btnZHBCharge30.Visible := currZHBBalance >= AMOUNT_30_YUAN;
+//  btnZHBCharge50.Visible := currZHBBalance >= AMOUNT_50_YUAN;
+//  btnZHBCharge100.Visible := currZHBBalance >= AMOUNT_100_YUAN;
+//  btnZHBCharge200.Visible := currZHBBalance >= AMOUNT_200_YUAN;
+//  btnZHBChargeAllBalance.Visible := currZHBBalance > 0;
+  Image13.Visible := currZHBBalance >= AMOUNT_30_YUAN;
+  Image14.Visible := currZHBBalance >= AMOUNT_50_YUAN;
+  Image15.Visible := currZHBBalance >= AMOUNT_100_YUAN;
+  Image16.Visible := currZHBBalance >= AMOUNT_200_YUAN;
+  Image20.Visible := currZHBBalance > 0;
 end;
 
 procedure TfrmMain.setCompentInParentCenter(comp: TWinControl);

@@ -939,10 +939,10 @@ begin
 //  setWaitingTip(tip);
   chargeTime := hexStrToBytes(FormatDateTime('yyyyMMddhhnnss', Now));
   OperType := currChargeType;
+  SetLength(password, 19);
+  initBytes(password, $00);
   if (currChargeType <> 0) then
   begin
-    SetLength(password, 19);
-    initBytes(password, $00);
     CopyMemory(@password[0], @BytesOf(bankCardNoOrPassword)[0], Min(Length(password), Length(bankCardNoOrPassword)));
   end;
   DataServer.SendCmdGetMac2(cardNo, password, asn, tsn, OperType, oldBalance, FChargeAmount, chargeTime, fakeRandom, mac1);
