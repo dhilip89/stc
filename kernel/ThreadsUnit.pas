@@ -363,13 +363,26 @@ begin
 //    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
 //    Memo1.Lines.Add('联系电话:' + bytesToStr(hexStrToByteBuf(tempStr, false)));
 
+  //verify pin
+  sendHexStr := '0020000003951246';
+  CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+
+  sendLen := Length(sendHexStr) div 2;
+  recvLen := 0;
+  ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+  if (ret <> 0) or (checkRecvBufEndWith9000(recvBuf, recvLen) <> '9000') then
+  begin
+    addSysLog('verify pin err,recvBuf:' + recvBuf);
+    Exit;
+  end;
+
   //卡片余额
   sendHexStr := '805C000204';
   CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
   sendLen := Length(sendHexStr) div 2;
   recvLen := 0;
   ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
-  if ret <> 0 then
+  if (ret <> 0) or (checkRecvBufEndWith9000(recvBuf, recvLen) <> BILL_OK) then
   begin
     addSysLog('read card balance err, recvBuf:' + recvBuf);
     Exit;
@@ -847,6 +860,19 @@ begin
   begin
     taskRet := 1;
     addSysLog('citycard charge reset d8 fail');
+    Exit;
+  end;
+
+  //verify pin
+  sendHexStr := '0020000003951246';
+  CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+
+  sendLen := Length(sendHexStr) div 2;
+  recvLen := 0;
+  ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+  if (ret <> 0) or (checkRecvBufEndWith9000(recvBuf, recvLen) <> '9000') then
+  begin
+    addSysLog('verify pin err,recvBuf:' + recvBuf);
     Exit;
   end;
 

@@ -175,7 +175,7 @@ begin
     Exit;
   end;
 
-  ret := dc_card(icdev, 0, lw);
+  ret := dc_card(icdev, 1, lw);
   if ret <> 0 then
   begin
     FSysLog.AddLog('no card, ' + IntToStr(ret));
@@ -239,6 +239,7 @@ var
   isBreaked: Boolean;
   i: Integer;
 begin
+  addSysLog('hexStrToByteBuf:' + hexStr);
   strBuf := hexStr;
   if Length(strBuf) mod 2 = 1 then
   begin
