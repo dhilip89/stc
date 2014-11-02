@@ -6,19 +6,20 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, AdvSmoothButton, Vcl.StdCtrls, AdvEdit,
   AdvSmoothPanel, CurvyControls, Vcl.ExtCtrls, RzPanel, RzBorder, AdvSmoothLabel,
-  Vcl.Mask, RzEdit;
+  Vcl.Mask, RzEdit, dxGDIPlusClasses;
 
 type
   TfrmCloseConfirm = class(TForm)
     AdvSmoothPanel1: TAdvSmoothPanel;
     AdvSmoothLabel1: TAdvSmoothLabel;
-    AdvSmoothButton1: TAdvSmoothButton;
-    AdvSmoothButton2: TAdvSmoothButton;
     AdvEdit1: TAdvEdit;
+    Image1: TImage;
+    Image2: TImage;
     procedure FormShow(Sender: TObject);
-    procedure AdvSmoothButton1Click(Sender: TObject);
     procedure AdvEdit1Enter(Sender: TObject);
     procedure AdvEdit1Exit(Sender: TObject);
+    procedure Image2Click(Sender: TObject);
+    procedure Image1Click(Sender: TObject);
   private
     { Private declarations }
     function isPasswordOK(): Boolean;
@@ -37,7 +38,7 @@ uses
 
 procedure TfrmCloseConfirm.AdvEdit1Enter(Sender: TObject);
 begin
-  frmMain.setKBReaderOutput(AdvEdit1);
+  frmMain.setKBReaderOutput(AdvEdit1, Image1);
 end;
 
 procedure TfrmCloseConfirm.AdvEdit1Exit(Sender: TObject);
@@ -45,7 +46,14 @@ begin
   frmMain.setKBReaderOutput(nil);
 end;
 
-procedure TfrmCloseConfirm.AdvSmoothButton1Click(Sender: TObject);
+procedure TfrmCloseConfirm.FormShow(Sender: TObject);
+begin
+  DoubleBuffered := True;
+  AdvEdit1.Text := '';
+  AdvEdit1.SetFocus;
+end;
+
+procedure TfrmCloseConfirm.Image1Click(Sender: TObject);
 begin
   if isPasswordOK then
   begin
@@ -53,11 +61,9 @@ begin
   end;
 end;
 
-procedure TfrmCloseConfirm.FormShow(Sender: TObject);
+procedure TfrmCloseConfirm.Image2Click(Sender: TObject);
 begin
-  DoubleBuffered := True;
-  AdvEdit1.Text := '';
-  AdvEdit1.SetFocus;
+  ModalResult := mrCancel;
 end;
 
 function TfrmCloseConfirm.isPasswordOK: Boolean;

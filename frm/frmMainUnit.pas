@@ -246,8 +246,6 @@ type
     cxStyle3: TcxStyle;
     gridCityCardTransDetail: TAdvStringGrid;
     AdvSmoothLabel9: TAdvSmoothLabel;
-    AdvSmoothButton5: TAdvSmoothButton;
-    AdvSmoothButton6: TAdvSmoothButton;
     RzPanel14: TRzPanel;
     AdvSmoothLabel13: TAdvSmoothLabel;
     edtOldPass: TAdvEdit;
@@ -272,8 +270,6 @@ type
     lblCityCardBalanceOnPanelCashCharge: TAdvSmoothLabel;
     lblCityCardBalance: TAdvSmoothLabel;
     lblCityCardNo: TAdvSmoothLabel;
-    AdvSmoothButton27: TAdvSmoothButton;
-    AdvSmoothButton34: TAdvSmoothButton;
     RzPanel18: TRzPanel;
     pnlMainBtn: TRzPanel;
     xbtn2: TAdvSmoothButton;
@@ -327,6 +323,9 @@ type
     Image28: TImage;
     Image29: TImage;
     kbReadTimer: TTimer;
+    Image30: TImage;
+    Image31: TImage;
+    Image32: TImage;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -465,6 +464,7 @@ type
     isPreviousOperation: Boolean;
 
     currInputEdit: TAdvEdit;
+    componentOK: TControl;
 
     procedure initMain;
     procedure loadParam;
@@ -520,7 +520,7 @@ type
   protected
     procedure CreateParams(var Params: TCreateParams); override;
   public
-    procedure setKBReaderOutput(advEdit: TAdvEdit);
+    procedure setKBReaderOutput(advEdit: TAdvEdit; compOK: TControl = nil);
     { Public declarations }
   end;
 
@@ -872,27 +872,27 @@ end;
 
 procedure TfrmMain.AdvSmoothButton27Click(Sender: TObject);
 begin
-  if AdvSmoothButton27.Caption = '读卡' then
-  begin
-//    AdvEdit11.Text := '记名卡(王小明 2837277273730230)';
-//    AdvEdit10.Text := '10.5';
-    if cityCardBizType = 0 then
-    begin
-      AdvSmoothButton27.Caption := '下一步';
-    end
-    else if cityCardBizType = 1 then
-    begin
-      AdvSmoothButton27.Caption := '返回首页';
-    end;
-  end
-  else if AdvSmoothButton27.Caption = '下一步' then
-  begin
-    Notebook1.ActivePage := 'pageCityCardChooseChargeAmount';
-  end
-  else if AdvSmoothButton27.Caption = '返回首页' then
-  begin
-    Notebook1.ActivePage := 'Default';
-  end;
+//  if AdvSmoothButton27.Caption = '读卡' then
+//  begin
+////    AdvEdit11.Text := '记名卡(王小明 2837277273730230)';
+////    AdvEdit10.Text := '10.5';
+//    if cityCardBizType = 0 then
+//    begin
+//      AdvSmoothButton27.Caption := '下一步';
+//    end
+//    else if cityCardBizType = 1 then
+//    begin
+//      AdvSmoothButton27.Caption := '返回首页';
+//    end;
+//  end
+//  else if AdvSmoothButton27.Caption = '下一步' then
+//  begin
+//    Notebook1.ActivePage := 'pageCityCardChooseChargeAmount';
+//  end
+//  else if AdvSmoothButton27.Caption = '返回首页' then
+//  begin
+//    Notebook1.ActivePage := 'Default';
+//  end;
 end;
 
 procedure TfrmMain.AdvSmoothButton28Click(Sender: TObject);
@@ -921,18 +921,21 @@ var
 begin
   if Length(edtOldPass.Text) < edtOldPass.MaxLength then
   begin
+    ShowTips('账户宝密码长度为' + IntToStr(edtOldPass.MaxLength) + '位，请确认输入', edtOldPass);
     edtOldPass.SetFocus;
     Exit;
   end;
 
   if Length(edtNewPass1.Text) < edtNewPass1.MaxLength then
   begin
+    ShowTips('账户宝密码长度为' + IntToStr(edtOldPass.MaxLength) + '位，请确认输入', edtNewPass1);
     edtNewPass1.SetFocus;
     Exit;
   end;
 
   if Length(edtNewPass2.Text) < edtNewPass2.MaxLength then
   begin
+    ShowTips('账户宝密码长度为' + IntToStr(edtOldPass.MaxLength) + '位，请确认输入', edtNewPass2);
     edtNewPass2.SetFocus;
     Exit;
   end;
@@ -1148,6 +1151,7 @@ var
   content: AnsiString;
 begin
   AdvSmoothButton3.Enabled := False;
+  Image17.Enabled := False;
 
   content := '             充值凭证'#13#10 +
              '----------------------------------'#13#10 +
@@ -1342,8 +1346,12 @@ var
   mr: TModalResult;
 begin
   password := AnsiString(Trim(edtPrepaidCardPassword.Text));
-  if (password = '') or (Length(password) <> 16) then
+  if (password = '') or (Length(password) <> edtPrepaidCardPassword.MaxLength) then
+  begin
+    ShowTips('充值卡密码为' + IntToStr(edtPrepaidCardPassword.MaxLength) + '位，请确认输入', edtPrepaidCardPassword);
+    edtPrepaidCardPassword.SetFocus;
     Exit;
+  end;
 
   //获取面额
   dlg := TfrmWaiting.Create(nil);
@@ -1381,7 +1389,11 @@ var
 begin
   password := AnsiString(Trim(edtZHBPassword.Text));
   if (password = '') or (Length(password) <> edtZHBPassword.MaxLength) then
+  begin
+    ShowTips('账户宝密码为' + IntToStr(edtZHBPassword.MaxLength) + '位，请确认输入', edtZHBPassword);
+    edtZHBPassword.SetFocus;
     Exit;
+  end;
 
   //获取余额
   dlg := TfrmWaiting.Create(nil);
@@ -1630,7 +1642,7 @@ end;
 
 procedure TfrmMain.edtNewPass1Enter(Sender: TObject);
 begin
-  setKBReaderOutput(edtNewPass1);
+  setKBReaderOutput(edtNewPass1, Image27);
 end;
 
 procedure TfrmMain.edtNewPass1Exit(Sender: TObject);
@@ -1640,7 +1652,7 @@ end;
 
 procedure TfrmMain.edtNewPass2Enter(Sender: TObject);
 begin
-  setKBReaderOutput(edtNewPass2);
+  setKBReaderOutput(edtNewPass2, Image27);
 end;
 
 procedure TfrmMain.edtNewPass2Exit(Sender: TObject);
@@ -1650,7 +1662,7 @@ end;
 
 procedure TfrmMain.edtOldPassEnter(Sender: TObject);
 begin
-  setKBReaderOutput(edtOldPass);
+  setKBReaderOutput(edtOldPass, Image27);
 end;
 
 procedure TfrmMain.edtOldPassExit(Sender: TObject);
@@ -1713,7 +1725,7 @@ end;
 
 procedure TfrmMain.edtPrepaidCardPasswordEnter(Sender: TObject);
 begin
-  setKBReaderOutput(edtPrepaidCardPassword);
+  setKBReaderOutput(edtPrepaidCardPassword, Image12);
 end;
 
 procedure TfrmMain.edtPrepaidCardPasswordExit(Sender: TObject);
@@ -1732,7 +1744,7 @@ end;
 
 procedure TfrmMain.edtZHBPasswordEnter(Sender: TObject);
 begin
-  setKBReaderOutput(edtZHBPassword);
+  setKBReaderOutput(edtZHBPassword, Image26);
 end;
 
 procedure TfrmMain.edtZHBPasswordExit(Sender: TObject);
@@ -1937,7 +1949,8 @@ var
 begin
   pnlBottom.SetFocus;
 //  for i := Notebook1.Pages.Count - 1 downto 0 do
-  Notebook1.PageIndex := 0;
+  //Notebook1.PageIndex := 0;
+  Notebook1.ActivePage := 'Default';
   FIsPnlPosSet := False;
   FIsPosSet := False;
   initMain;
@@ -2422,9 +2435,10 @@ begin
   end;
 end;
 
-procedure TfrmMain.setKBReaderOutput(advEdit: TAdvEdit);
+procedure TfrmMain.setKBReaderOutput(advEdit: TAdvEdit; compOK: TControl);
 begin
   currInputEdit := advEdit;
+  componentOK := compOK;
   kbReadTimer.Enabled := (currInputEdit <> nil);
 end;
 
@@ -2546,6 +2560,7 @@ var
   hexVal: Integer;
   currEdtText: string;
   currEdtTextLen: Integer;
+  okImg: TImage;
 begin
   if (currInputEdit = nil) then
     Exit;
@@ -2568,7 +2583,19 @@ begin
         end;
       $0D://确定
         begin
-          PostMessage(Handle, WM_KEYDOWN, VK_TAB, 0);
+          if componentOK <> nil then
+          begin
+            //现在界面上的确定按钮都是Image图片
+            if componentOK is TImage then
+            begin
+              okImg := TImage(componentOK);
+              if Assigned(okImg.OnClick) then
+              begin
+                okImg.OnClick(nil);
+              end;
+            end;
+          end;
+          //PostMessage(Handle, WM_KEYDOWN, VK_TAB, 0);
         end;
       $1B://退出
         begin
