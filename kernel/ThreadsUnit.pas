@@ -178,7 +178,7 @@ type
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout, cashAmount: Integer);
 
-    procedure noticeMac2Got(ret: Byte; mac2: AnsiString);
+    procedure noticeMac2Got(ret: Byte; mac2, tranSNo: AnsiString);
 
     property BalanceAfterCharge: Integer read FBalanceAfterCharge;
   end;
@@ -1036,11 +1036,12 @@ begin
   Result := True;
 end;
 
-procedure TCityCardCharge.noticeMac2Got(ret: Byte; mac2: AnsiString);
+procedure TCityCardCharge.noticeMac2Got(ret: Byte; mac2, tranSNo: AnsiString);
 begin
-  addSysLog('notice mac2:' + mac2);
+  addSysLog('notice mac2:' + mac2 + ',tranSNo:' + tranSNo);
   FMac2Ret := ret;
   FMac2 := mac2;
+  currTranSNoFromServer := tranSNo;
   FIsMac2Got := True;
 end;
 

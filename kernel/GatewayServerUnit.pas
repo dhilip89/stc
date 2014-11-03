@@ -11,7 +11,7 @@ const
 
 type
 
-  TOnGetMac2 = procedure (ret: Byte; mac2: ansistring) of object;
+  TOnGetMac2 = procedure (ret: Byte; mac2, tranSNo: ansistring) of object;
   TOnChargeDetailRsp = procedure(ret: Byte; recordId: Int64) of object;
   TOnRefundRsp = procedure(ret: Byte; recordId: LongWord) of object;
   TOnChargeCardCheckRsp = procedure(ret: Byte; amount:Integer) of object;
@@ -705,15 +705,16 @@ end;
 procedure TGateWayServerCom.dealCmdGetMac2Rsp(buf: array of Byte);
 var
   pcmd: PCmdGetMac2ForChargeS2C;
-  mac2: ansistring;
+  mac2, tranSNo: ansistring;
 begin
   if Length(buf) >= SizeOf(TCmdGetMac2ForChargeS2C) then
   begin
     pcmd := PCmdGetMac2ForChargeS2C(@buf[0]);
     mac2 := bytesToHexStr(pcmd^.Mac2);
+    tranSNo := bytesToHexStr(pcmd^.TranSNo);
     addSysLog('recv mac2 rsp, ret:' + IntToStr(pcmd^.Ret) + ',mac2:' + mac2);
     if Assigned(FOnGetMac2) then
-      FOnGetMac2(pcmd^.Ret, mac2);
+      FOnGetMac2(pcmd^.Ret, mac2, tranSNo);
   end;
 end;
 

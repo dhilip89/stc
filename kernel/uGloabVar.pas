@@ -30,6 +30,7 @@ var
   currZHBBalance: Integer;       //当前账户宝余额  单位:分
   currentTSN: LongWord = 0;
   currChargeType: Byte;//当前充值类型  0:现金 1:银联卡  2：充值卡  03企福通充值/专有账户充值
+  currTranSNoFromServer: AnsiString;//从服务端获取的交易流水号
   bankCardNoOrPassword: ansistring;//充值时使用的银行卡号或者充值卡卡号
 
   FGlobalTip: TMyHintWindow;
@@ -368,6 +369,8 @@ begin
 end;
 
 function initPrinterCom(): Boolean;
+var
+  buf: TByteDynArray;
 begin
   if printerCom = nil then
   begin
@@ -383,6 +386,10 @@ begin
       printerCom.StartComm;
       isPrinterComOpen := True;
       addSysLog('start printer comm ok');
+
+      //设置打印灰度
+      buf := hexStrToBytes('1B6D0A');
+      printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
     except
       isPrinterComOpen := False;
       addSysLog('start printer comm fail');

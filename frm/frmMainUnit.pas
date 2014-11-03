@@ -511,7 +511,7 @@ type
     procedure DoOnGetCityCardBalance(balance: Integer);
 
     procedure DoOnLoginStatusChanged(loginStatus: Byte);
-    procedure DoOnGetMac2(ret: Byte; mac2: AnsiString);
+    procedure DoOnGetMac2(ret: Byte; mac2, tranSNo: AnsiString);
     procedure DoOnChargeCardCheckRsp(ret: Byte; amount: Integer);
     procedure DoOnQueryQFTBalanceRsp(ret: Byte; balance: Integer);
     procedure DoOnModifyZHBPassRsp(ret: Byte);
@@ -1166,6 +1166,7 @@ begin
   end;
 
   content := content +
+             ' 充值流水号：YDKQ' + currTranSNoFromServer +
              ' 充值 时 间：' + FormatDateTime('yyyy-MM-dd HH:nn:ss', Now);
 
   printContent(content);
@@ -1870,11 +1871,11 @@ begin
   end;
 end;
 
-procedure TfrmMain.DoOnGetMac2(ret: Byte; mac2: AnsiString);
+procedure TfrmMain.DoOnGetMac2(ret: Byte; mac2, tranSNo: AnsiString);
 begin
   if threadCharge <> nil then
   begin
-    threadCharge.noticeMac2Got(ret, mac2);
+    threadCharge.noticeMac2Got(ret, mac2, tranSNo);
   end;
 end;
 

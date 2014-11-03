@@ -233,6 +233,7 @@ type
     CmdHead: TSTHead;
     Ret: Byte;//获取结果  1:成功  其他:无效
     Mac2: array[0..3] of Byte;
+    TranSNo: array[0..5] of Byte;
     CmdEnd: TSTEnd;
   end;
   PCmdGetMac2ForChargeS2C = ^TCmdGetMac2ForChargeS2C;
