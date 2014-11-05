@@ -1153,23 +1153,22 @@ begin
   AdvSmoothButton3.Enabled := False;
   Image17.Enabled := False;
 
-  content := '             充值凭证'#13#10 +
-             '----------------------------------'#13#10 +
-             ' 龙城通卡号：' + currCityCardNo + #13#10 +
-             ' 充值 金 额：' + FormatFloat('0.00', amountCharged * 1.0/100) + '元'#13#10 +
-             ' 充值后余额：' + FormatFloat('0.00', (amountCharged + currCityCardBalance) * 1.0/100) + '元'#13#10 +
-             ' 充值 方 式：' + getChargeType + #13#10;
-  if currChargeType = 3 then
-  begin
-    content := content +
-             ' 账户宝余额：' + FormatFloat('0.00', (currZHBBalance - amountCharged) * 1.0/100) + '元'#13#10;
-  end;
+  content := ' 卡    号：' + currCityCardNo + #13#10 +
+             ' 交易类型：' + getChargeType + '充值'#13#10 +
+             ' 交易时间：' + FormatDateTime('HH:nn:ss', Now) + #13#10 +
+             ' 交易金额：' + FormatFloat('0.#', amountCharged * 1.0/100) + '元'#13#10 +
+             ' 卡 余 额：' + FormatFloat('0.0#', (amountCharged + currCityCardBalance) * 1.0/100) + '元'#13#10;
+//  if currChargeType = 3 then
+//  begin
+//    content := content +
+//             ' 账户宝余额：' + FormatFloat('0.0#', (currZHBBalance - amountCharged) * 1.0/100) + '元'#13#10;
+//  end;
 
   content := content +
-             ' 充值流水号：YDKQ' + currTranSNoFromServer +
-             ' 充值 时 间：' + FormatDateTime('yyyy-MM-dd HH:nn:ss', Now);
+             ' 自助编号：' + GlobalParam.TerminalId + #13#10 +
+             ' 流 水 号：ZZZD' + currTranSNoFromServer + #13#10;
 
-  printContent(content);
+  printContent('自助业务回单', content);
 end;
 
 procedure TfrmMain.AdvSmoothButton40Click(Sender: TObject);
@@ -1274,14 +1273,12 @@ procedure TfrmMain.xbtn6Click(Sender: TObject);
 var
   printInfo: ansistring;
 begin
-  printInfo := '退款凭证'#13#10
-             + '---------------------------'#13#10
-             + '卡号:9512345678001122' + #13#10
+  printInfo := '卡号:9512345678001122' + #13#10
              + '金额:' + IntToStr(100) + '元'#13#10
              + '时间:' + FormatDateTime('yyyy-MM-dd hh:nn:ss', now) + #13#10
              + '---------------------------'#13#10
              + '注:请带凭证到人工窗口退款';
-  printContent(printInfo);
+  printContent('退款凭证', printInfo);
 end;
 
 procedure TfrmMain.backToMainFrame;
@@ -2186,6 +2183,7 @@ begin
     if Notebook1.ActivePage = 'pageMobileTopUpSuccess' then
     begin
       AdvSmoothButton3.Enabled := True;
+      Image17.Enabled := True;
     end;
   end
   else

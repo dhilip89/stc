@@ -55,7 +55,7 @@ function wordToBytes(wVal: Word): TByteDynArray;
 function LongWordToBytes(lw: LongWord): TByteDynArray;
 function initPrinterCom(): Boolean;
 function freePrinterCom(): Boolean;
-function printContent(content: AnsiString): Boolean;
+function printContent(title, content: AnsiString): Boolean;
 function getPrinterNewStatus: Boolean;
 function checkPrinterStatus(): Boolean;
 function getNextTSN():Integer;
@@ -388,7 +388,11 @@ begin
       addSysLog('start printer comm ok');
 
       //设置打印灰度
-      buf := hexStrToBytes('1B6D0A');
+      buf := hexStrToBytes('1B6D0C');
+      printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
+
+      //设置行间距
+      buf := hexStrToBytes('1B3302');
       printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
     except
       isPrinterComOpen := False;
@@ -418,15 +422,47 @@ begin
   end;
 end;
 
-function printContent(content: AnsiString): Boolean;
+function printContent(title, content: AnsiString): Boolean;
 var
   buf: TByteDynArray;
+  temp: AnsiString;
 begin
   addSysLog('printContent'#13#10 + content);
   if isPrinterComOpen and (content <> '') then
   begin
+    //打印logo
+    buf := hexStrToBytes('1D7630000E006C00' + LOGO_BIT_DATA);
+    printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
+
     //初始化、并设置汉字模式
     buf := hexStrToBytes('1B401C26');
+    printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
+
+    //打印标题
+    //字体加大
+    buf := hexStrToBytes('1D2111');
+    printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
+
+    //居中
+    buf := hexStrToBytes('1B6101');
+    printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
+
+    temp := title + #13#10;
+    SetLength(buf, Length(temp));
+    CopyMemory(@buf[0], @temp[1], Length(buf));
+    printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
+
+    //字体恢复
+    buf := hexStrToBytes('1D2100');
+    printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
+
+    temp := FormatDateTime('yyyy年MM月dd日', Now) + #13#10;
+    SetLength(buf, Length(temp));
+    CopyMemory(@buf[0], @temp[1], Length(buf));
+    printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
+
+    //恢复左对齐
+    buf := hexStrToBytes('1B6100');
     printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
 
     //发送内容
@@ -447,7 +483,6 @@ var
 begin
   if isPrinterComOpen then
   begin
-    //初始化、并设置汉字模式
     buf := hexStrToBytes('1C76');
     printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
   end;

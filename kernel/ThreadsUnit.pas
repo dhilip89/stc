@@ -552,14 +552,12 @@ begin
   CopyMemory(@cmd.Time[0], @buf[0], Length(buf));
   DataServer.SendCmdRefund(cmd);
 
-  printInfo := '退款凭证'#13#10
-             + '---------------------------'#13#10
-             + '卡号:' + cardNo + #13#10
+  printInfo := '卡号:' + cardNo + #13#10
              + '金额:' + FormatFloat('0.00', amount * 1.0 / 100) + '元'#13#10
              + '时间:' + FormatDateTime('yyyy-MM-dd hh:nn:ss', now) + #13#10
              + '---------------------------'#13#10
              + '注:请带凭证到人工窗口退款';
-  printContent(printInfo);
+  printContent('自助退款凭证', printInfo);
 end;
 
 procedure TBaseThread.setWaitingTip(tip: string; isHideProgressBar: Boolean; isShowCancelBtn: Boolean);
@@ -841,7 +839,7 @@ var
   strTerminalId: string;
   cardType: Byte;
   tac: TByteDynArray;
-  transSNo: LongWord;
+  transSNo: TByteDynArray;
   cmd: TCmdChargeDetailC2S;
   billStatus: AnsiString;
 begin
@@ -1010,7 +1008,7 @@ begin
   CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
   tac := hexStrToBytes(tempStr);//随机数
 
-  transSNo := getNextTSN;//获取交易流水号
+  transSNo := hexStrToBytes(currTranSNoFromServer);// getNextTSN;//获取交易流水号
 
   //充值成功后，上传交易记录到服务端
   CopyMemory(@cmd.ASN, @asn[0], Length(asn));
@@ -1022,7 +1020,8 @@ begin
   cmd.TransAmount := ByteOderConvert_LongWord(FChargeAmount);
   cmd.BalanceBeforeTrans := ByteOderConvert_LongWord(oldBalance);
   CopyMemory(@cmd.TAC, @tac[0], Length(tac));
-  cmd.TransSNo := ByteOderConvert_LongWord(transSNo);
+  CopyMemory(@cmd.TransSNo, @transSNo[0], Length(transSNo));
+  //cmd.TransSNo := ByteOderConvert_LongWord(transSNo);
   //充值类型
   cmd.ChargeType := currChargeType;
   if (currChargeType <> 0) then

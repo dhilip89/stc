@@ -151,7 +151,7 @@ type
     TransAmount: Integer;//交易金额
     BalanceBeforeTrans: Integer;//交易前余额
     TAC: array[0..3] of Byte;//TAC认证码
-    TransSNo: Integer;//交易流水号
+    TransSNo: array[0..5] of Byte;//交易流水号   取服务端传回的流水号
     ChargeType: Byte;//充值类型
     CityCardNo: array[0..7] of Byte;//市民卡卡号
     CmdEnd: TSTEnd;
