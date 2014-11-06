@@ -517,6 +517,8 @@ type
     procedure DoOnModifyZHBPassRsp(ret: Byte);
 
     procedure DoOnPrinterComRecvData(Sender:TObject;Buffer:Pointer;BufferLength:Word);
+
+    function isTotalAmountOverMax(currBalance, chargeAmount: Integer): Boolean;
   protected
     procedure CreateParams(var Params: TCreateParams); override;
   public
@@ -1042,6 +1044,11 @@ end;
 
 procedure TfrmMain.xbtnCashCharge50Click(Sender: TObject);
 begin
+  if isTotalAmountOverMax(currCityCardBalance, AMOUNT_50_YUAN) then
+  begin
+
+    Exit;
+  end;
   amountCharged := AMOUNT_50_YUAN;
   DoOnPayCash;
 end;
@@ -1804,8 +1811,8 @@ begin
     dlg := TfrmWaiting.Create(nil);
   end;
 
-  setCountdownTimerEnabled(True, 15);
-  threadCharge := TCityCardCharge.Create(True, dlg, 10, amountCharged);
+  setCountdownTimerEnabled(True, 35);
+  threadCharge := TCityCardCharge.Create(True, dlg, 30, amountCharged);
   try
     threadCharge.Start;
     dlg.setWaitingTip(TIP_DO_NOT_MOVE_CITY_CARD);
@@ -2148,6 +2155,19 @@ end;
 function TfrmMain.isCheckModuleStatusOk: Boolean;
 begin
   Result := not isCityCardCharging;
+end;
+
+function TfrmMain.isTotalAmountOverMax(currBalance,
+  chargeAmount: Integer): Boolean;
+var
+  dlg: TfrmWaiting;
+begin
+  Result := (currBalance + chargeAmount) > MAX_AMOUNT;
+  if Result then
+  begin
+    dlg := TfrmWaiting.Create(nil);
+    dlg.setWaitingTip('卡余额加充值金额不能超过5000元');
+  end;
 end;
 
 procedure TfrmMain.loadParam;
