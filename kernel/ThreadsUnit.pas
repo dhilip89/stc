@@ -169,6 +169,7 @@ type
     FChargeAmount: Integer;
     FMac2Ret: Byte;
     FMac2: AnsiString;
+    FErrTip: AnsiString;
     FIsMac2Got: Boolean;
     FBalanceAfterCharge: Integer;
     FStatus: Byte;//充值过程中的状态  0:未圈存初始化  1:已圈存初始化
@@ -179,7 +180,7 @@ type
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout, cashAmount: Integer);
 
-    procedure noticeMac2Got(ret: Byte; mac2, tranSNo: AnsiString);
+    procedure noticeMac2Got(ret: Byte; mac2, tranSNo, errTip: AnsiString);
 
     property BalanceAfterCharge: Integer read FBalanceAfterCharge;
   end;
@@ -1014,6 +1015,10 @@ begin
     begin
       taskRet := 3;
       errInfo := '充值失败，请注意保留凭条';
+      if FErrTip <> '' then
+      begin
+        errInfo := errInfo + #13#10 + '提示:' + FErrTip;
+      end;
       addSysLog('获取mac2失败');
       Exit;
     end;
@@ -1069,11 +1074,12 @@ begin
   Result := True;
 end;
 
-procedure TCityCardCharge.noticeMac2Got(ret: Byte; mac2, tranSNo: AnsiString);
+procedure TCityCardCharge.noticeMac2Got(ret: Byte; mac2, tranSNo, errTip: AnsiString);
 begin
-  addSysLog('notice mac2:' + mac2 + ',tranSNo:' + tranSNo);
+  addSysLog('notice mac2:' + mac2 + ',tranSNo:' + tranSNo + ',errTip:' + errTip);
   FMac2Ret := ret;
   FMac2 := mac2;
+  FErrTip := errTip;
   currTranSNoFromServer := tranSNo;
   FIsMac2Got := True;
 end;

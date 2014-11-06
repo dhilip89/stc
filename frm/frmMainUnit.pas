@@ -511,7 +511,7 @@ type
     procedure DoOnGetCityCardBalance(balance: Integer);
 
     procedure DoOnLoginStatusChanged(loginStatus: Byte);
-    procedure DoOnGetMac2(ret: Byte; mac2, tranSNo: AnsiString);
+    procedure DoOnGetMac2(ret: Byte; mac2, tranSNo, errTip: AnsiString);
     procedure DoOnChargeCardCheckRsp(ret: Byte; amount: Integer);
     procedure DoOnQueryQFTBalanceRsp(ret: Byte; balance: Integer);
     procedure DoOnModifyZHBPassRsp(ret: Byte);
@@ -1875,11 +1875,11 @@ begin
   end;
 end;
 
-procedure TfrmMain.DoOnGetMac2(ret: Byte; mac2, tranSNo: AnsiString);
+procedure TfrmMain.DoOnGetMac2(ret: Byte; mac2, tranSNo, errTip: AnsiString);
 begin
   if threadCharge <> nil then
   begin
-    threadCharge.noticeMac2Got(ret, mac2, tranSNo);
+    threadCharge.noticeMac2Got(ret, mac2, tranSNo, errTip);
   end;
 end;
 

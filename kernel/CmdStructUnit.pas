@@ -234,9 +234,18 @@ type
     Ret: Byte;//获取结果  1:成功  其他:无效
     Mac2: array[0..3] of Byte;
     TranSNo: array[0..5] of Byte;
-    CmdEnd: TSTEnd;
+    ErrTipLen: Byte;
+    //ErrTip
+    //CmdEnd: TSTEnd;
   end;
   PCmdGetMac2ForChargeS2C = ^TCmdGetMac2ForChargeS2C;
+
+  TCmdTest = packed record
+    Ret1: Byte;
+    Ret2: Byte;
+    //
+  end;
+  PCmdTest = ^TCmdTest;
 
   //充值明细应答，根据应答的RecordId打印凭条
   TCmdChargeDetailRspS2C = packed record
