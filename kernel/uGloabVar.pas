@@ -24,6 +24,7 @@ var
 
   amountCharged: Integer;//市民卡充值金额 '单位:分'
 
+  currCityCardType: Byte;//当前市民卡类型  0：未知  1：记名  2：不记名
   currCityCardNo: ansistring;    //当前市民卡卡号
   currCityCardBalance: Integer;  //当前市民卡余额  单位:分
   currPrepaidCardAmount: Integer;//当前充值卡面额 单位:分

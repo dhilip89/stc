@@ -17,8 +17,10 @@ type
     RzPanel1: TRzPanel;
     AdvGlassButton1: TAdvGlassButton;
     Image1: TImage;
+    tmr1: TTimer;
     procedure FormCreate(Sender: TObject);
     procedure AdvGlassButton1Click(Sender: TObject);
+    procedure tmr1Timer(Sender: TObject);
   private
     { Private declarations }
     procedure resetComponentPos();
@@ -30,6 +32,7 @@ type
     procedure noticeFail;
     procedure noticeMROK;
     procedure noticeRetry;
+    procedure startTimer(delaySeconds: Integer);
   end;
 
 var
@@ -49,6 +52,7 @@ end;
 procedure TfrmWaiting.FormCreate(Sender: TObject);
 begin
   resetComponentPos;
+  tmr1.Enabled := False;
 end;
 
 procedure TfrmWaiting.hideProgressBar;
@@ -110,6 +114,22 @@ begin
     resetComponentPos;
   end;
   AdvSmoothLabel1.Caption.Text := tip;
+end;
+
+procedure TfrmWaiting.startTimer(delaySeconds: Integer);
+begin
+  if delaySeconds < 1 then
+  begin
+    delaySeconds := 1;
+  end;
+  tmr1.Interval := delaySeconds * 1000;
+  tmr1.Enabled := True;
+end;
+
+procedure TfrmWaiting.tmr1Timer(Sender: TObject);
+begin
+  tmr1.Enabled := False;
+  ModalResult := mrOk;
 end;
 
 end.

@@ -118,10 +118,9 @@ type
   end;
 
   //获取市民卡余额
-  TQueryCityCardBalance = class(TThread)
+  TQueryCityCardBalance = class(TBaseThread)
   private
-    frmWaiting: TfrmWaiting;
-    timeout: Integer;
+    FIsCheckCityCardType: Boolean;
     FOnGetCityCardInfo: TOnGetCityCardInfo;
     FOnGetCardBalance: TOnGetCardBalance;
 //    FEdtCardInfo: TCustomEdit;
@@ -130,7 +129,8 @@ type
   protected
     procedure Execute; override;
   public
-    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer);//; edtCardInfo, edtCardBalance: TCustomEdit);
+    constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer;
+                        isCheckCityCardType: Boolean = False);//; edtCardInfo, edtCardBalance: TCustomEdit);
     destructor Destroy; override;
 
     property OnGetCityCardInfo: TOnGetCityCardInfo read FOnGetCityCardInfo write FOnGetCityCardInfo;
@@ -147,7 +147,7 @@ type
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer);
     destructor Destroy; override;
-
+    procedure noticeCmdRet(ret: Byte);
     property OnQueryCityCardDetail: TOnQueryCityCardDetail read FOnQueryCityCardDetail write SetOnQueryCityCardDetail;
   end;
 
@@ -258,13 +258,10 @@ begin
 end;
 
 constructor TQueryCityCardBalance.Create(CreateSuspended:Boolean; dlg: TfrmWaiting;
-  timeout: Integer);//; edtCardInfo, edtCardBalance: TCustomEdit);
+  timeout: Integer; isCheckCityCardType: Boolean);//; edtCardInfo, edtCardBalance: TCustomEdit);
 begin
-  inherited Create(CreateSuspended);
-  Self.frmWaiting := dlg;
-  Self.timeout := timeout;
-//  FEdtCardInfo := edtCardInfo;
-//  FEdtCardBalance := edtCardBalance;
+  inherited Create(CreateSuspended, dlg, timeout);
+  FIsCheckCityCardType := isCheckCityCardType;
   FreeOnTerminate := True;
 end;
 
@@ -300,7 +297,7 @@ begin
     Result := True;
     Exit;
   {$ENDIF}
-
+  currCityCardType := CITY_CARD_TYPE_UNKNOWN;
   Result := False;
   if not resetD8 then
   begin
@@ -325,6 +322,12 @@ begin
   CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
   cardInfo := tempStr;//'卡号:'
   currCityCardNo := tempStr;
+
+  if FIsCheckCityCardType then
+  begin
+    DataServer.SendCmdCheckCityCardType(currCityCardNo);
+  end;
+
   addSysLog('get city card info ok ' + cardInfo);
 //    Inc(offset, 20 * 2);
 //    SetLength(tempStr, 4 * 2);
@@ -402,6 +405,11 @@ begin
   if Assigned(FOnGetCardBalance) then
     FOnGetCardBalance(balance);
 
+  if not waitForCmdRet then
+  begin
+    Exit;
+  end;
+
   Result := True;
 end;
 
@@ -443,6 +451,7 @@ begin
   Self.frmWaiting := dlg;
   Self.timeout := timeout;
   FRefundReason := '';
+  FIsCmdRet := False;
   FreeOnTerminate := True;
 end;
 
@@ -1349,6 +1358,11 @@ begin
   end;
   taskRet := 0;
   Result := True;
+end;
+
+procedure TQueryCityCardTransDetail.noticeCmdRet(ret: Byte);
+begin
+  FIsCmdRet := True;
 end;
 
 procedure TQueryCityCardTransDetail.SetOnQueryCityCardDetail(

@@ -1043,23 +1043,30 @@ end;
 
 procedure TfrmMain.xbtnCashCharge50Click(Sender: TObject);
 begin
-//  if isTotalAmountOverMax(currCityCardBalance, AMOUNT_50_YUAN) then
-//  begin
-//
-//    Exit;
-//  end;
+  if isTotalAmountOverMax(currCityCardBalance, AMOUNT_50_YUAN) then
+  begin
+    Exit;
+  end;
   amountCharged := AMOUNT_50_YUAN;
   DoOnPayCash;
 end;
 
 procedure TfrmMain.xbtnCashCharge100Click(Sender: TObject);
 begin
+  if isTotalAmountOverMax(currCityCardBalance, AMOUNT_100_YUAN) then
+  begin
+    Exit;
+  end;
   amountCharged := AMOUNT_100_YUAN;
   DoOnPayCash;
 end;
 
 procedure TfrmMain.xbtnCashCharge200Click(Sender: TObject);
 begin
+  if isTotalAmountOverMax(currCityCardBalance, AMOUNT_200_YUAN) then
+  begin
+    Exit;
+  end;
   amountCharged := AMOUNT_200_YUAN;
   DoOnPayCash;
 end;
@@ -2149,11 +2156,36 @@ function TfrmMain.isTotalAmountOverMax(currBalance,
 var
   dlg: TfrmWaiting;
 begin
-  Result := (currBalance + chargeAmount) > MAX_AMOUNT;
-  if Result then
+  Result := False;
+  if currCityCardType = CITY_CARD_TYPE_NAMED then
   begin
-    dlg := TfrmWaiting.Create(nil);
-    dlg.setWaitingTip('卡余额加充值金额不能超过5000元');
+    Result := (currBalance + chargeAmount) > MAX_AMOUNT_NAMED;
+    if Result then
+    begin
+      dlg := TfrmWaiting.Create(nil);
+      try
+        dlg.setWaitingTip('记名卡余额加充值金额不能超过5000元');
+        dlg.startTimer(4);
+        dlg.ShowModal;
+      finally
+        dlg.Free;
+      end;
+    end;
+  end
+  else if currCityCardType = CITY_CARD_TYPE_UNNAMED then
+  begin
+    Result := (currBalance + chargeAmount) > MAX_AMOUNT_UNNAMED;
+    if Result then
+    begin
+      dlg := TfrmWaiting.Create(nil);
+      try
+        dlg.setWaitingTip('记名卡余额加充值金额不能超过1000元');
+        dlg.startTimer(4);
+        dlg.ShowModal;
+      finally
+        dlg.Free;
+      end;
+    end;
   end;
 end;
 

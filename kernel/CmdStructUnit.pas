@@ -14,27 +14,29 @@ const
   VER = $0100;
 
 {******************************终端发起命令字******************************}
-  C2S_TYRET                  = $0001;//终端通用应答
-  C2S_HEARTBEAT              = $0002;//终端心跳
-  C2S_LOGIN                  = $0003;//终端注册
-  C2S_TERMINAL_MODULE_STATUS = $0004;//终端模块状态汇报
-  C2S_GET_MAC2               = $0005;//获取MAC2
-  C2S_CHARGE_DETAIL          = $0006;//上传充值记录
-  C2S_REFUND                 = $0007;//退款记录登记
-  C2S_CHARGE_CARD_CHECK      = $0008;//充值卡校验
-  C2S_QUERY_QFT_BALANCE      = $0009;//企福通余额查询
-  C2S_MODIFY_PASS            = $000A;//账户宝密码修改
+  C2S_TYRET                    = $0001;//终端通用应答
+  C2S_HEARTBEAT                = $0002;//终端心跳
+  C2S_LOGIN                    = $0003;//终端注册
+  C2S_TERMINAL_MODULE_STATUS   = $0004;//终端模块状态汇报
+  C2S_GET_MAC2                 = $0005;//获取MAC2
+  C2S_CHARGE_DETAIL            = $0006;//上传充值记录
+  C2S_REFUND                   = $0007;//退款记录登记
+  C2S_CHARGE_CARD_CHECK        = $0008;//充值卡校验
+  C2S_QUERY_QFT_BALANCE        = $0009;//企福通余额查询
+  C2S_MODIFY_PASS              = $000A;//账户宝密码修改
+  C2S_CHECK_CITY_CARD_TYPE     = $000B;//检测用户卡类型
 {******************************终端发起命令字******************************}
 
 {*****************************服务端发起命令字*****************************}
-  S2C_TYRET                  = $7001;//平台通用应答
-  S2C_LOGIN_RSP              = $7003;//终端注册应答
-  S2C_GET_MAC2_RSP           = $7005;//获取mac2应答
-  S2C_CHARGE_DETAIL_RSP      = $7006;//上传充值记录应答
-  S2C_REFUND_RSP             = $7007;//退款记录应答
-  S2C_PRE_CARD_CHECK_RSP     = $7008;//充值卡校验应答
-  S2C_QUERY_QFT_BALANCE      = $7009;//企福通余额查询应答
-  S2C_MODIFY_PASS_RSP        = $700A;//账户宝密码修改应答
+  S2C_TYRET                    = $7001;//平台通用应答
+  S2C_LOGIN_RSP                = $7003;//终端注册应答
+  S2C_GET_MAC2_RSP             = $7005;//获取mac2应答
+  S2C_CHARGE_DETAIL_RSP        = $7006;//上传充值记录应答
+  S2C_REFUND_RSP               = $7007;//退款记录应答
+  S2C_PRE_CARD_CHECK_RSP       = $7008;//充值卡校验应答
+  S2C_QUERY_QFT_BALANCE        = $7009;//企福通余额查询应答
+  S2C_MODIFY_PASS_RSP          = $700A;//账户宝密码修改应答
+  S2C_CHECK_CITY_CARD_TYPE_RSP = $700B;//检测用户卡类型
 {*****************************服务端发起命令字*****************************}
 
 {*********************************公共常量*********************************}
@@ -205,6 +207,14 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdModifyZHBPassC2S = ^TCmdModifyZHBPassC2S;
+
+  //检测市民卡是否记名
+  TCmdCheckCityCardTypeC2S = packed record
+    CmdHead: TSTHead;
+    CityCardNo: array[0..7] of Byte;//市民卡卡号
+    CmdEnd: TSTEnd;
+  end;
+  PCmdCheckCityCardTypeC2S = ^TCmdCheckCityCardTypeC2S;
 {******************************终端发起命令******************************}
 
 
@@ -290,6 +300,14 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdModifyZHBPassRsp = ^TCmdModifyZHBPassRsp;
+
+  //检测市民卡是否记名
+  TCmdCheckCityCardTypeS2C = packed record
+    CmdHead: TSTHead;
+    Ret: Byte;//0：未知  1：记名  2：不记名
+    CmdEnd: TSTEnd;
+  end;
+  PCmdCheckCityCardTypeS2C = ^TCmdCheckCityCardTypeS2C;
 {*****************************服务端发起命令*****************************}
 
 function PtrAdd(p: pointer; offset: integer): pointer;

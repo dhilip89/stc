@@ -18,6 +18,7 @@ type
   TOnQueryQFTBalanceRsp = procedure(ret: Byte; amount:Integer) of object;
   TOnModifyZHBPassRsp = procedure(ret:Byte) of object;
   TOnLoginStatusChanged = procedure(loginStatus: Byte) of object;
+  TOnGetCityCardType = procedure(ret: Byte) of object;
 
   TCmdInfo = record //命令信息
     Id: integer; //命令ID
@@ -99,6 +100,7 @@ type
     FOnModifyZHBPassRsp: TOnModifyZHBPassRsp;
     FLoginStatus: Byte;
     FOnLoginStatusChanged: TOnLoginStatusChanged;
+    FOnGetCityCardType: TOnGetCityCardType;
     procedure FSocketSocketEvent(Sender: TObject; Socket: TCustomWinSocket; SocketEvent: TSocketEvent);
     procedure FSockerWriteBufferOverflow(Sender: TObject);
 
@@ -110,6 +112,7 @@ type
     procedure dealCmdChargeCardCheckRsp(buf: array of Byte);
     procedure dealCmdQueryQFTBalanceRsp(buf: array of Byte);
     procedure dealCmdModifyZHBPassRsp(buf: array of Byte);
+    procedure dealCmdCheckCityCardType(buf: array of Byte);
 
     procedure initCmd(var cmdHead: TSTHead; cmdId: Word; var cmdEnd: TSTEnd; cmdMinSize: Integer);
 
@@ -121,6 +124,7 @@ type
     procedure SetOnQueryQFTBalanceRsp(const Value: TOnQueryQFTBalanceRsp);
     procedure SetOnModifyZHBPassRsp(const Value: TOnModifyZHBPassRsp);
     procedure SetOnLoginStatusChanged(const Value: TOnLoginStatusChanged);
+    procedure SetOnGetCityCardType(const Value: TOnGetCityCardType);
   protected
     function DirectSend(var buf; ABufSize: Integer): Boolean; //调用内部的发送函数直接发送数据
     function GetMaxCmdSNo: Word;
@@ -141,6 +145,7 @@ type
     procedure SendCmdModifyZHBPass(oldPass, newPass: AnsiString;
                 cardNo, asn, CardTradeNo: array of Byte; OldBalance: Integer;
                 chargeTime, fakeRandom, mac1: array of Byte);
+    procedure SendCmdCheckCityCardType(cityCardNo: AnsiString);
 
     procedure SetFTimerEnabled(enabled: Boolean);
 
@@ -162,6 +167,7 @@ type
     property OnQueryQFTBalanceRsp: TOnQueryQFTBalanceRsp read FOnQueryQFTBalanceRsp write SetOnQueryQFTBalanceRsp;
     property OnModifyZHBPassRsp: TOnModifyZHBPassRsp read FOnModifyZHBPassRsp write SetOnModifyZHBPassRsp;
     property OnLoginStatusChanged: TOnLoginStatusChanged read FOnLoginStatusChanged write SetOnLoginStatusChanged;
+    property OnGetCityCardType: TOnGetCityCardType read FOnGetCityCardType write SetOnGetCityCardType;
   end;
 
 
@@ -455,6 +461,19 @@ begin
   DirectSend(cmd, SizeOf(TCmdChargeDetailC2S));
 end;
 
+procedure TGateWayServerCom.SendCmdCheckCityCardType(cityCardNo: AnsiString);
+var
+  buf: TByteDynArray;
+  cmd: TCmdChargeCardCheckC2S;
+begin
+  initCmd(cmd.CmdHead, C2S_CHARGE_CARD_CHECK, cmd.CmdEnd, SizeOf(TCmdChargeCardCheckC2S));
+
+  buf := hexStrToBytes(cityCardNo);
+  CopyMemory(@cmd.CityCardNo[0], @buf[0], Min(Length(buf), Length(cmd.CityCardNo)));
+
+  DirectSend(cmd, SizeOf(TCmdChargeCardCheckC2S));
+end;
+
 procedure TGateWayServerCom.SendCmdGetMac2(cardNo, password, asn, CardTradeNo: array of Byte;
   OperType: Byte; OldBalance, chargeAmount: Integer;
   chargeTime, fakeRandom, mac1: array of Byte);
@@ -638,6 +657,12 @@ begin
   FOnChargeDetailRsp := Value;
 end;
 
+procedure TGateWayServerCom.SetOnGetCityCardType(
+  const Value: TOnGetCityCardType);
+begin
+  FOnGetCityCardType := Value;
+end;
+
 procedure TGateWayServerCom.SetOnGetMac2(const Value: TOnGetMac2);
 begin
   FOnGetMac2 := Value;
@@ -699,6 +724,20 @@ begin
     pcmd := PCmdChargeDetailRspS2C(@buf[0]);
     if Assigned(FOnChargeDetailRsp) then
       FOnChargeDetailRsp(pcmd^.Ret, pcmd^.RecordId);
+  end;
+end;
+
+procedure TGateWayServerCom.dealCmdCheckCityCardType(buf: array of Byte);
+var
+  pcmd: PCmdCheckCityCardTypeS2C;
+begin
+  if Length(buf) >= SizeOf(TCmdCheckCityCardTypeS2C) then
+  begin
+    pcmd := PCmdCheckCityCardTypeS2C(@buf[0]);
+    if Assigned(FOnGetCityCardType) then
+    begin
+      FOnGetCityCardType(pcmd^.Ret);
+    end;
   end;
 end;
 
