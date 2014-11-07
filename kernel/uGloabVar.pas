@@ -240,7 +240,6 @@ var
   isBreaked: Boolean;
   i: Integer;
 begin
-  addSysLog('hexStrToByteBuf:' + hexStr);
   strBuf := hexStr;
   if Length(strBuf) mod 2 = 1 then
   begin

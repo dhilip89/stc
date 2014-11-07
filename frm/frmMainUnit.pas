@@ -385,7 +385,6 @@ type
     procedure edtPasswordForChargeCardKeyPress(Sender: TObject; var Key: Char);
     procedure edtPasswordForChargeCardKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
-    procedure xbtn6Click(Sender: TObject);
     procedure RzPanel7Click(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
     procedure RzPanel7DblClick(Sender: TObject);
@@ -1044,11 +1043,11 @@ end;
 
 procedure TfrmMain.xbtnCashCharge50Click(Sender: TObject);
 begin
-  if isTotalAmountOverMax(currCityCardBalance, AMOUNT_50_YUAN) then
-  begin
-
-    Exit;
-  end;
+//  if isTotalAmountOverMax(currCityCardBalance, AMOUNT_50_YUAN) then
+//  begin
+//
+//    Exit;
+//  end;
   amountCharged := AMOUNT_50_YUAN;
   DoOnPayCash;
 end;
@@ -1274,18 +1273,6 @@ begin
   AdvSmoothLabel42.Caption.Text := '请输入对方借记卡号:';
   AdvSmoothLabel43.Caption.Text := '请输入转账金额:';
   Notebook1.ActivePage := 'pageBankCardTransfer';
-end;
-
-procedure TfrmMain.xbtn6Click(Sender: TObject);
-var
-  printInfo: ansistring;
-begin
-  printInfo := '卡号:9512345678001122' + #13#10
-             + '金额:' + IntToStr(100) + '元'#13#10
-             + '时间:' + FormatDateTime('yyyy-MM-dd hh:nn:ss', now) + #13#10
-             + '---------------------------'#13#10
-             + '注:请带凭证到人工窗口退款';
-  printContent('退款凭证', printInfo);
 end;
 
 procedure TfrmMain.backToMainFrame;

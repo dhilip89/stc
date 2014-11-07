@@ -99,6 +99,7 @@ type
     taskRet: Byte;
     amountRefund: Integer;//退款金额
     errInfo: string;//如果返回失败，填写错误提示
+    FRefundReason: ansistring;
     FIsCmdRet: Boolean;
     procedure Execute; override;
     procedure setWaitingTip(tip: string;isHideProgressBar: Boolean = False; isShowCancelBtn: Boolean = False);
@@ -441,6 +442,7 @@ begin
   inherited Create(CreateSuspended);
   Self.frmWaiting := dlg;
   Self.timeout := timeout;
+  FRefundReason := '';
   FreeOnTerminate := True;
 end;
 
@@ -549,16 +551,18 @@ var
 begin
   buf := hexStrToBytes(cardNo);
   CopyMemory(@cmd.CityCardNo[0], @buf[0], Length(buf));
-  cmd.Amount := ByteOderConvert_LongWord(amount * 100);
+  cmd.Amount := ByteOderConvert_LongWord(amount);
   buf := hexStrToBytes(FormatDateTime('yyyyMMddHHnnss', Now));
   CopyMemory(@cmd.Time[0], @buf[0], Length(buf));
   DataServer.SendCmdRefund(cmd);
 
-  printInfo := '卡号:' + cardNo + #13#10
-             + '金额:' + FormatFloat('0.00', amount * 1.0 / 100) + '元'#13#10
-             + '时间:' + FormatDateTime('yyyy-MM-dd hh:nn:ss', now) + #13#10
-             + '---------------------------'#13#10
-             + '注:请带凭证到人工窗口退款';
+  printInfo := ' 卡    号：' + cardNo + #13#10
+             + ' 交易类型：' + getChargeType + '充值'#13#10
+             + ' 交易时间：' + FormatDateTime('HH:nn:ss', Now) + #13#10
+             + ' 交易金额：' + FormatFloat('0.#', amount * 1.0 / 100) + '元'#13#10
+             + ' 退款原因：' + FRefundReason + #13#10
+             + ' ---------------------------'#13#10
+             + ' 注:请带凭证到人工窗口退款';
   printContent('自助退款凭证', printInfo);
 end;
 
@@ -730,6 +734,7 @@ begin
         begin
           taskRet := 3;
           errInfo := '纸币器无法正常工作';
+          FRefundReason := '纸币机无法正常工作';
           //ShowMessage('设置50元通道失败');
           Exit;
         end;
@@ -741,6 +746,7 @@ begin
       begin
         taskRet := 3;
         errInfo := '纸币器无法正常工作';
+        FRefundReason := errInfo;
         //ShowMessage('poll 失败');
         Exit;
       end;
@@ -1007,6 +1013,7 @@ begin
     begin//超时
       taskRet := 3;
       errInfo := '充值失败，请注意保留凭条';
+      FRefundReason := '等待mac2超时';
       addSysLog('等待mac2超时');
       Exit;
     end;
@@ -1019,6 +1026,7 @@ begin
       begin
         errInfo := errInfo + #13#10 + '提示:' + FErrTip;
       end;
+      FRefundReason := FErrTip;
       addSysLog('获取mac2失败');
       Exit;
     end;
@@ -1039,6 +1047,7 @@ begin
     taskRet := 3;
     errInfo := '充值失败，请注意保留凭条';
     addSysLog('credit for load err, recvBuf:' + recvBuf);
+    FRefundReason := '写卡失败';
     Exit;
   end;
   //圈存成功，获取tac值

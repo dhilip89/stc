@@ -714,16 +714,15 @@ begin
     mac2 := bytesToHexStr(pcmd^.Mac2);
     tranSNo := bytesToHexStr(pcmd^.TranSNo);
     errTipLen := pcmd^.ErrTipLen;
-    if errTipLen = 0 then
+    errTip := '';
+    if errTipLen > 0 then
     begin
-      errTip := '';
-    end
-    else
-    begin
+      errTipLen := math.Min(Length(buf) - SizeOf(TCmdGetMac2ForChargeS2C) - SizeOf(TSTEnd), errTipLen);
+      addSysLog('pcmd^.ErrTipLen:' + IntToStr(pcmd^.ErrTipLen) + ',errTipLen:' + IntToStr(errTipLen));
       SetLength(errTip, errTipLen);
       CopyMemory(@errTip[1], PtrAdd(pcmd, SizeOf(TCmdGetMac2ForChargeS2C)), errTipLen);
     end;
-    addSysLog('recv mac2 rsp, ret:' + IntToStr(pcmd^.Ret) + ',mac2:' + mac2);
+    addSysLog('recv mac2 rsp, ret:' + IntToStr(pcmd^.Ret) + ',mac2:' + mac2 + ',tranSNo:' + tranSNo + ',errTip:[' + errTip + ']');
     if Assigned(FOnGetMac2) then
       FOnGetMac2(pcmd^.Ret, mac2, tranSNo, errTip);
   end;
