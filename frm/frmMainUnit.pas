@@ -446,7 +446,7 @@ type
     isCityCardCharging: Boolean;
     isNewCard: Boolean; // ÊÇ·ñ°ì¿¨
 
-
+    threadQueryCityCardBalance: TQueryCityCardBalance;
     threadCharge: TCityCardCharge;
     threadChargeCardCheck: TChargeCardCheck;
     threadQueryQFTBalance: TQueryZHBBalance;
@@ -506,6 +506,8 @@ type
 //    procedure setProgressTopPos(iTop: Integer);
     procedure setDlgProgressTransparent(isTransparent: Boolean);
 
+    procedure initThreads;
+
     procedure DoOnGetCityCardInfo(cardInfo: string);
     procedure DoOnGetCityCardBalance(balance: Integer);
 
@@ -514,6 +516,7 @@ type
     procedure DoOnChargeCardCheckRsp(ret: Byte; amount: Integer);
     procedure DoOnQueryQFTBalanceRsp(ret: Byte; balance: Integer);
     procedure DoOnModifyZHBPassRsp(ret: Byte);
+    procedure DoOnGetCityCardType(ret: Byte);
 
     procedure DoOnPrinterComRecvData(Sender:TObject;Buffer:Pointer;BufferLength:Word);
 
@@ -764,7 +767,6 @@ procedure TfrmMain.btnCashChargeClick(Sender: TObject);
 var
   dlg: Tfrmwaiting;
   mr: TModalResult;
-  threadQueryCityCard: TQueryCityCardBalance;
 begin
   currChargeType := 0;
   isCityCardCharging := True;
@@ -773,10 +775,11 @@ begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
-    threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15);
+    threadQueryCityCardBalance := TQueryCityCardBalance.Create(True, dlg, 15, True);
+    threadQueryCityCardBalance.FreeOnTerminate := False;
     queryCityCardBalanceFlag := 2;
-    threadQueryCityCard.OnGetCardBalance := DoOnGetCityCardBalance;
-    threadQueryCityCard.Start;
+    threadQueryCityCardBalance.OnGetCardBalance := DoOnGetCityCardBalance;
+    threadQueryCityCardBalance.Start;
     mr := dlg.ShowModal;
     if (mr = mrAbort) or (mr = mrCancel) then
     begin
@@ -784,6 +787,11 @@ begin
     end;
   finally
     dlg.Free;
+    if threadQueryCityCardBalance <> nil then
+    begin
+      threadQueryCityCardBalance.Free;
+      threadQueryCityCardBalance := nil;
+    end;
   end;
 end;
 
@@ -1841,6 +1849,15 @@ begin
   end;
 end;
 
+procedure TfrmMain.DoOnGetCityCardType(ret: Byte);
+begin
+  currCityCardType := ret;
+  if threadQueryCityCardBalance <> nil then
+  begin
+    threadQueryCityCardBalance.noticeCmdRet(ret);
+  end;
+end;
+
 procedure TfrmMain.DoOnGetCityCardBalance(balance: Integer);
 begin
   addSysLog('DoOnGetCityCardInfo ' + IntToStr(balance));
@@ -2130,6 +2147,7 @@ begin
   DataServer.OnQueryQFTBalanceRsp := DoOnQueryQFTBalanceRsp;
   DataServer.OnModifyZHBPassRsp := DoOnModifyZHBPassRsp;
   DataServer.OnLoginStatusChanged := DoOnLoginStatusChanged;
+  DataServer.OnGetCityCardType := DoOnGetCityCardType;
   connectToGateway;
 end;
 
@@ -2144,6 +2162,15 @@ begin
   begin
     Result := False;
   end;
+end;
+
+procedure TfrmMain.initThreads;
+begin
+  threadQueryCityCardBalance := nil;
+  threadCharge := nil;
+  threadChargeCardCheck := nil;
+  threadQueryQFTBalance := nil;
+  threadModifyZHBPass := nil;
 end;
 
 function TfrmMain.isCheckModuleStatusOk: Boolean;

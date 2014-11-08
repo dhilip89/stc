@@ -723,17 +723,25 @@ begin
   begin
     pcmd := PCmdChargeDetailRspS2C(@buf[0]);
     if Assigned(FOnChargeDetailRsp) then
+    begin
       FOnChargeDetailRsp(pcmd^.Ret, pcmd^.RecordId);
+    end;
   end;
 end;
 
 procedure TGateWayServerCom.dealCmdCheckCityCardType(buf: array of Byte);
 var
   pcmd: PCmdCheckCityCardTypeS2C;
+  cityCardNo: AnsiString;
 begin
   if Length(buf) >= SizeOf(TCmdCheckCityCardTypeS2C) then
   begin
     pcmd := PCmdCheckCityCardTypeS2C(@buf[0]);
+    cityCardNo := bytesToHexStr(pcmd^.CityCardNo);
+    if cityCardNo <> currCityCardNo then
+    begin//如果服务端返回卡号与当前检测到的卡号不一致，则可能是之前的命令返回，此处直接不处理了
+      Exit;
+    end;
     if Assigned(FOnGetCityCardType) then
     begin
       FOnGetCityCardType(pcmd^.Ret);

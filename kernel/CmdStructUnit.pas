@@ -304,6 +304,7 @@ type
   //检测市民卡是否记名
   TCmdCheckCityCardTypeS2C = packed record
     CmdHead: TSTHead;
+    CityCardNo: array[0..7] of Byte;//市民卡卡号 此处返回市民卡号是为了核对当前卡号是否相同
     Ret: Byte;//0：未知  1：记名  2：不记名
     CmdEnd: TSTEnd;
   end;

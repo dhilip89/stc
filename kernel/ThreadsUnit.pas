@@ -132,6 +132,7 @@ type
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer;
                         isCheckCityCardType: Boolean = False);//; edtCardInfo, edtCardBalance: TCustomEdit);
     destructor Destroy; override;
+    procedure noticeCmdRet(ret: Byte);
 
     property OnGetCityCardInfo: TOnGetCityCardInfo read FOnGetCityCardInfo write FOnGetCityCardInfo;
     property OnGetCardBalance: TOnGetCardBalance read FOnGetCardBalance write FOnGetCardBalance;
@@ -440,6 +441,11 @@ begin
   begin
     frmWaiting.noticeTimeout;
   end;
+end;
+
+procedure TQueryCityCardBalance.noticeCmdRet(ret: Byte);
+begin
+  FIsCmdRet := True;
 end;
 
 { TBaseThread }
