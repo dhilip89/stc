@@ -217,6 +217,8 @@ const
   CITY_CARD_TYPE_UNKNOWN = 0;//未知
   CITY_CARD_TYPE_NAMED   = 1;//记名卡
   CITY_CARD_TYPE_UNNAMED = 2;//不记名卡
+  CITY_CARD_TYPE_INVALID = 3;//无效卡
+
 
   TIP_PUT_CITY_CARD = '请将龙城通卡放置在读卡区...';
   TIP_CAN_NOT_DETECT_CITY_CARD = '未检测到龙城通卡，请将卡放置在读卡区...';

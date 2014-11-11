@@ -101,6 +101,7 @@ type
     errInfo: string;//如果返回失败，填写错误提示
     FRefundReason: ansistring;
     FIsCmdRet: Boolean;
+    FIsInterrupted: Boolean;
     procedure Execute; override;
     procedure setWaitingTip(tip: string;isHideProgressBar: Boolean = False; isShowCancelBtn: Boolean = False);
     function doTask: Boolean; virtual; abstract;
@@ -132,6 +133,7 @@ type
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer;
                         isCheckCityCardType: Boolean = False);//; edtCardInfo, edtCardBalance: TCustomEdit);
     destructor Destroy; override;
+    procedure stop;
     procedure noticeCmdRet(ret: Byte);
 
     property OnGetCityCardInfo: TOnGetCityCardInfo read FOnGetCityCardInfo write FOnGetCityCardInfo;
@@ -298,6 +300,7 @@ begin
     Result := True;
     Exit;
   {$ENDIF}
+  addSysLog('QueryCityCardBalance doTask');
   currCityCardType := CITY_CARD_TYPE_UNKNOWN;
   Result := False;
   if not resetD8 then
@@ -406,7 +409,7 @@ begin
   if Assigned(FOnGetCardBalance) then
     FOnGetCardBalance(balance);
 
-  if not waitForCmdRet then
+  if FIsCheckCityCardType and not waitForCmdRet then
   begin
     Exit;
   end;
@@ -419,6 +422,7 @@ var
   sTime: TDateTime;
   isTimeout: Boolean;
 begin
+  addSysLog('QueryCityCardBalance Execute');
   Sleep(500);
   sTime := Now;
   isTimeout := False;
@@ -433,7 +437,7 @@ begin
     Break;
   end;
   addSysLog('query city card while loop end');
-  if not isTimeout then
+  if not FIsInterrupted and not isTimeout then
   begin
     frmWaiting.noticeMROK;
   end
@@ -448,6 +452,11 @@ begin
   FIsCmdRet := True;
 end;
 
+procedure TQueryCityCardBalance.stop;
+begin
+  FIsInterrupted := True;
+end;
+
 { TBaseThread }
 
 constructor TBaseThread.Create(CreateSuspended: Boolean; dlg: TfrmWaiting;
@@ -458,6 +467,7 @@ begin
   Self.timeout := timeout;
   FRefundReason := '';
   FIsCmdRet := False;
+  FIsInterrupted := False;
   FreeOnTerminate := True;
 end;
 
@@ -593,7 +603,7 @@ var
 begin
   stime := Now;
   isTimeout := False;
-  while not FIsCmdRet do
+  while not FIsInterrupted and not FIsCmdRet do
   begin
     if SecondsBetween(Now, stime) < Self.timeout then
     begin
@@ -603,7 +613,7 @@ begin
     isTimeout := True;
     Break;
   end;
-  Result := not isTimeout;
+  Result := not isTimeout and not FIsInterrupted;
 end;
 
 { TGetCashAmount }

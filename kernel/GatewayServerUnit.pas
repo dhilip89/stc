@@ -318,6 +318,7 @@ begin
           S2C_PRE_CARD_CHECK_RSP: dealCmdChargeCardCheckRsp(buf);
           S2C_QUERY_QFT_BALANCE: dealCmdQueryQFTBalanceRsp(buf);
           S2C_MODIFY_PASS_RSP: dealCmdModifyZHBPassRsp(buf);
+          S2C_CHECK_CITY_CARD_TYPE_RSP: dealCmdCheckCityCardType(buf);
         else
           begin
             FLog.AddLog('处理数据错误:命令字不正确 ' + bytesToHexStr(wordToBytes(cmdId)));
@@ -464,14 +465,14 @@ end;
 procedure TGateWayServerCom.SendCmdCheckCityCardType(cityCardNo: AnsiString);
 var
   buf: TByteDynArray;
-  cmd: TCmdChargeCardCheckC2S;
+  cmd: TCmdCheckCityCardTypeC2S;
 begin
-  initCmd(cmd.CmdHead, C2S_CHARGE_CARD_CHECK, cmd.CmdEnd, SizeOf(TCmdChargeCardCheckC2S));
+  initCmd(cmd.CmdHead, C2S_CHECK_CITY_CARD_TYPE, cmd.CmdEnd, SizeOf(TCmdCheckCityCardTypeC2S));
 
   buf := hexStrToBytes(cityCardNo);
   CopyMemory(@cmd.CityCardNo[0], @buf[0], Min(Length(buf), Length(cmd.CityCardNo)));
 
-  DirectSend(cmd, SizeOf(TCmdChargeCardCheckC2S));
+  DirectSend(cmd, SizeOf(TCmdCheckCityCardTypeC2S));
 end;
 
 procedure TGateWayServerCom.SendCmdGetMac2(cardNo, password, asn, CardTradeNo: array of Byte;
@@ -734,6 +735,7 @@ var
   pcmd: PCmdCheckCityCardTypeS2C;
   cityCardNo: AnsiString;
 begin
+  addSysLog('recv CmdCheckCityCardType');
   if Length(buf) >= SizeOf(TCmdCheckCityCardTypeS2C) then
   begin
     pcmd := PCmdCheckCityCardTypeS2C(@buf[0]);

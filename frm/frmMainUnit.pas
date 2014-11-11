@@ -789,6 +789,7 @@ begin
     dlg.Free;
     if threadQueryCityCardBalance <> nil then
     begin
+      threadQueryCityCardBalance.stop;
       threadQueryCityCardBalance.Free;
       threadQueryCityCardBalance := nil;
     end;
@@ -1235,6 +1236,10 @@ end;
 
 procedure TfrmMain.btnPrepaidCardAmountConfirmClick(Sender: TObject);
 begin
+  if isTotalAmountOverMax(currCityCardBalance, currPrepaidCardAmount) then
+  begin
+    Exit;
+  end;
   amountCharged := currPrepaidCardAmount;
   doCityCardCharge(nil);
 end;
@@ -1248,7 +1253,9 @@ begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
-    TQueryCityCardBalance.Create(False, dlg, 15);
+    threadQueryCityCardBalance := TQueryCityCardBalance.Create(True, dlg, 15, True);
+    threadQueryCityCardBalance.FreeOnTerminate := False;
+    threadQueryCityCardBalance.Start;
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
@@ -1264,6 +1271,12 @@ begin
     end;
   finally
     dlg.Free;
+    if threadQueryCityCardBalance <> nil then
+    begin
+      threadQueryCityCardBalance.stop;
+      threadQueryCityCardBalance.Free;
+      threadQueryCityCardBalance := nil;
+    end;
   end;
 end;
 
@@ -1493,6 +1506,11 @@ end;
 
 procedure TfrmMain.btnZHBCharge100Click(Sender: TObject);
 begin
+  if isTotalAmountOverMax(currCityCardBalance, AMOUNT_100_YUAN) then
+  begin
+    Exit;
+  end;
+
   if currZHBBalance < AMOUNT_100_YUAN then
     Exit;
 
@@ -1502,6 +1520,11 @@ end;
 
 procedure TfrmMain.btnZHBCharge200Click(Sender: TObject);
 begin
+  if isTotalAmountOverMax(currCityCardBalance, AMOUNT_200_YUAN) then
+  begin
+    Exit;
+  end;
+
   if currZHBBalance < AMOUNT_200_YUAN then
     Exit;
 
@@ -1511,6 +1534,11 @@ end;
 
 procedure TfrmMain.btnZHBCharge30Click(Sender: TObject);
 begin
+  if isTotalAmountOverMax(currCityCardBalance, AMOUNT_30_YUAN) then
+  begin
+    Exit;
+  end;
+
   if currZHBBalance < AMOUNT_30_YUAN then
     Exit;
 
@@ -1520,6 +1548,11 @@ end;
 
 procedure TfrmMain.btnZHBCharge50Click(Sender: TObject);
 begin
+  if isTotalAmountOverMax(currCityCardBalance, AMOUNT_50_YUAN) then
+  begin
+    Exit;
+  end;
+
   if currZHBBalance < AMOUNT_50_YUAN then
     Exit;
 
@@ -1529,6 +1562,11 @@ end;
 
 procedure TfrmMain.btnZHBChargeAllBalanceClick(Sender: TObject);
 begin
+  if isTotalAmountOverMax(currCityCardBalance, currZHBBalance) then
+  begin
+    Exit;
+  end;
+
   if currZHBBalance <= 0 then
     Exit;
 
@@ -1545,7 +1583,8 @@ begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
-    TQueryCityCardBalance.Create(False, dlg, 15);
+    threadQueryCityCardBalance := TQueryCityCardBalance.Create(False, dlg, 15, True);
+    threadQueryCityCardBalance.FreeOnTerminate := False;
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
@@ -1562,6 +1601,12 @@ begin
     end;
   finally
     dlg.Free;
+    if threadQueryCityCardBalance <> nil then
+    begin
+      threadQueryCityCardBalance.stop;
+      threadQueryCityCardBalance.Free;
+      threadQueryCityCardBalance := nil;
+    end;
   end;
 end;
 
@@ -2206,7 +2251,22 @@ begin
     begin
       dlg := TfrmWaiting.Create(nil);
       try
-        dlg.setWaitingTip('记名卡余额加充值金额不能超过1000元');
+        dlg.setWaitingTip('不记名卡余额加充值金额不能超过1000元');
+        dlg.startTimer(4);
+        dlg.ShowModal;
+      finally
+        dlg.Free;
+      end;
+    end;
+  end
+  else if currCityCardType = CITY_CARD_TYPE_INVALID then
+  begin
+    Result := True;
+    if Result then
+    begin
+      dlg := TfrmWaiting.Create(nil);
+      try
+        dlg.setWaitingTip('卡片无效，请确认');
         dlg.startTimer(4);
         dlg.ShowModal;
       finally
