@@ -46,6 +46,7 @@ uses
 
 procedure TfrmWaiting.AdvGlassButton1Click(Sender: TObject);
 begin
+  addSysLog('btnCancel clicked');
   ModalResult := mrCancel;
 end;
 

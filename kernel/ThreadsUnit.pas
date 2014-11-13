@@ -116,6 +116,7 @@ type
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer); virtual;
     destructor Destroy; override;
+    procedure stop;
   end;
 
   //获取市民卡余额
@@ -133,7 +134,7 @@ type
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer;
                         isCheckCityCardType: Boolean = False);//; edtCardInfo, edtCardBalance: TCustomEdit);
     destructor Destroy; override;
-    procedure stop;
+
     procedure noticeCmdRet(ret: Byte);
 
     property OnGetCityCardInfo: TOnGetCityCardInfo read FOnGetCityCardInfo write FOnGetCityCardInfo;
@@ -426,11 +427,11 @@ begin
   Sleep(500);
   sTime := Now;
   isTimeout := False;
-  while not doTask do
+  while not FIsInterrupted and not doTask do
   begin
     if SecondsBetween(now, stime) < timeout then
     begin
-      Sleep(500);
+      Sleep(100);
       Continue;
     end;
     isTimeout := True;
@@ -450,11 +451,6 @@ end;
 procedure TQueryCityCardBalance.noticeCmdRet(ret: Byte);
 begin
   FIsCmdRet := True;
-end;
-
-procedure TQueryCityCardBalance.stop;
-begin
-  FIsInterrupted := True;
 end;
 
 { TBaseThread }
@@ -594,6 +590,11 @@ end;
 procedure TBaseThread.setWaitingTip(tip: string; isHideProgressBar: Boolean; isShowCancelBtn: Boolean);
 begin
   frmWaiting.setWaitingTip(tip, isShowCancelBtn, isHideProgressBar);
+end;
+
+procedure TBaseThread.stop;
+begin
+  FIsInterrupted := True;
 end;
 
 function TBaseThread.waitForCmdRet: Boolean;
@@ -749,6 +750,12 @@ begin
     st := now;
     while (SecondsBetween(st, Now) < Self.timeout) do
     begin
+      if FIsInterrupted then
+      begin
+        taskRet := 2;
+        Exit;
+      end;
+
       if totalAmount div 100 - FAmountRead = 50 then
       begin//设置仅读50的
         sspCmd.CommandData[0] := $02;
@@ -1320,6 +1327,11 @@ begin
   //交易明细  0018H
   for I := 1 to 10 do
   begin
+    if FIsInterrupted then
+    begin
+      taskRet := 2;
+      Exit;
+    end;
     sendHexStr := '00B2' + inttohex(i, 2) +  'C400';//命令组成参见手册7.6.2
     CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
 
@@ -1559,7 +1571,7 @@ var
 begin
   stime := Now;
   isTimeout := False;
-  while not FIsCmdRet do
+  while not FIsInterrupted and not FIsCmdRet do
   begin
     if SecondsBetween(Now, stime) < Self.timeout then
     begin
@@ -1569,7 +1581,7 @@ begin
     isTimeout := True;
     Break;
   end;
-  Result := not isTimeout;
+  Result := not FIsInterrupted and not isTimeout;
 end;
 
 end.

@@ -775,24 +775,27 @@ begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
+    addSysLog('cash charge start');
     threadQueryCityCardBalance := TQueryCityCardBalance.Create(True, dlg, 15, True);
     threadQueryCityCardBalance.FreeOnTerminate := False;
     queryCityCardBalanceFlag := 2;
     threadQueryCityCardBalance.OnGetCardBalance := DoOnGetCityCardBalance;
     threadQueryCityCardBalance.Start;
     mr := dlg.ShowModal;
-    if (mr = mrAbort) or (mr = mrCancel) then
-    begin
-      backToMainFrame;
-    end;
-  finally
-    dlg.Free;
-    if threadQueryCityCardBalance <> nil then
+    if (mr = mrCancel) then
     begin
       threadQueryCityCardBalance.stop;
+      backToMainFrame;
+      addSysLog('cash charge cancel');
+    end;
+  finally
+    if threadQueryCityCardBalance <> nil then
+    begin
       threadQueryCityCardBalance.Free;
       threadQueryCityCardBalance := nil;
+      addSysLog('cash charge free thread');
     end;
+    dlg.Free;
   end;
 end;
 
@@ -859,7 +862,9 @@ begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
+    addSysLog('query city card balance start');
     threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 30);
+    threadQueryCityCard.FreeOnTerminate := False;
     queryCityCardBalanceFlag := 1;
     threadQueryCityCard.OnGetCityCardInfo := DoOnGetCityCardInfo;
     threadQueryCityCard.OnGetCardBalance := DoOnGetCityCardBalance;
@@ -867,9 +872,15 @@ begin
     mr := dlg.ShowModal;
     if (mr = mrAbort) or (mr = mrCancel) then
     begin
+      threadQueryCityCard.stop;
       backToMainFrame;
     end;
   finally
+    if threadQueryCityCard <> nil then
+    begin
+      threadQueryCityCard.Free;
+      threadQueryCityCard := nil;
+    end;
     dlg.Free;
   end;
 end;
@@ -970,6 +981,11 @@ begin
       if mr = mrOk then
       begin
         Notebook1.ActivePage := 'pageModifyZHBPassSuccess';
+      end
+      else if mr = mrCancel then
+      begin
+        threadModifyZHBPass.stop;
+        backToMainFrame;
       end;
     finally
       threadChargeCardCheck.Free;
@@ -984,11 +1000,14 @@ procedure TfrmMain.xbtnModifyZHBPasswordClick(Sender: TObject);
 var
   dlg: Tfrmwaiting;
   mr: TModalResult;
+  threadQueryCityCard: TQueryCityCardBalance;
 begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
-    TQueryCityCardBalance.Create(False, dlg, 15);
+    threadQueryCityCard := TQueryCityCardBalance.Create(True, dlg, 15);
+    threadQueryCityCard.FreeOnTerminate := False;
+    threadQueryCityCard.Start;
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
@@ -1001,9 +1020,14 @@ begin
     end
     else if mr = mrCancel then
     begin
+      threadQueryCityCard.stop;
       backToMainFrame;
     end;
   finally
+    if threadQueryCityCard <> nil then
+    begin
+      threadQueryCityCard.Free;
+    end;
     dlg.Free;
   end;
 end;
@@ -1248,11 +1272,11 @@ procedure TfrmMain.btnPrepaidCardChargeClick(Sender: TObject);
 var
   dlg: Tfrmwaiting;
   mr: TModalResult;
-//  threadQueryCityCard: TQueryCityCardBalance;
 begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
+    addSysLog('prepaid card start');
     threadQueryCityCardBalance := TQueryCityCardBalance.Create(True, dlg, 15, True);
     threadQueryCityCardBalance.FreeOnTerminate := False;
     threadQueryCityCardBalance.Start;
@@ -1265,18 +1289,20 @@ begin
       Notebook1.ActivePage := 'pageInputPrepaidCardPassword';
       edtPrepaidCardPassword.SetFocus;
     end
-    else if mr = mrCancel then
-    begin
-      backToMainFrame;
-    end;
-  finally
-    dlg.Free;
-    if threadQueryCityCardBalance <> nil then
+    else if(mr = mrCancel) then
     begin
       threadQueryCityCardBalance.stop;
+      backToMainFrame;
+      addSysLog('prepaidCard charge cancel');
+    end;
+  finally
+    if threadQueryCityCardBalance <> nil then
+    begin
       threadQueryCityCardBalance.Free;
       threadQueryCityCardBalance := nil;
+      addSysLog('prepaidCard charge free thread');
     end;
+    dlg.Free;
   end;
 end;
 
@@ -1334,14 +1360,20 @@ begin
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
     queryCityCardDetail := TQueryCityCardTransDetail.Create(True, dlg, 30);
+    queryCityCardDetail.FreeOnTerminate := False;
     queryCityCardDetail.OnQueryCityCardDetail := addCityCardTransDetailToGrid;
     queryCityCardDetail.Start;
     mr := dlg.ShowModal;
     if (mr = mrAbort) or (mr = mrCancel) then
     begin
+      queryCityCardDetail.stop;
       backToMainFrame;
     end;
   finally
+    if (queryCityCardDetail <> niL) then
+    begin
+      queryCityCardDetail.Free;
+    end;
     dlg.Free;
   end;
 end;
@@ -1388,8 +1420,9 @@ begin
         lblPrepaidCardAmount.Caption.Text := FormatFloat('0.00', currPrepaidCardAmount * 1.0 / 100) + '元';
         Notebook1.ActivePage := 'pagePrepaidCardAmountConfirm';
       end
-      else
+      else if mr = mrCancel then
       begin
+        threadChargeCardCheck.stop;
         backToMainFrame;
       end;
     finally
@@ -1423,33 +1456,37 @@ begin
     try
       threadQueryQFTBalance.start;
       mr := dlg.ShowModal;
-      if queryZHBBalanceFlag = 1 then
+      if mr = mrCancel then
       begin
-        if mr = mrOk then
-        begin
-          lblBalance.Caption.Text := '账户宝余额：'
-            + FormatFloat('0.00', threadQueryQFTBalance.Balance * 1.0/100) + '元';
-          Notebook1.ActivePage := 'pageZHBBalance';
-        end;
+        threadQueryQFTBalance.stop;
+        backToMainFrame;
       end
-      else if queryZHBBalanceFlag = 2 then
+      else
       begin
-        if mr = mrOk then
+        if queryZHBBalanceFlag = 1 then
         begin
-          bankCardNoOrPassword := password;
-          setBtnZHBBalanceChargeEnabled;
-          lblCityCardBalanceOnPnlZHB.Caption.Text := FormatFloat('0.00', currCityCardBalance * 1.0 / 100) + '元';
-          lblZHBBalance.Caption.Text := FormatFloat('0.00', currZHBBalance * 1.0 / 100) + '元';
-          Notebook1.ActivePage := 'pageZHBBalanceConfirm';
+          if mr = mrOk then
+          begin
+            lblBalance.Caption.Text := '账户宝余额：'
+              + FormatFloat('0.00', threadQueryQFTBalance.Balance * 1.0/100) + '元';
+            Notebook1.ActivePage := 'pageZHBBalance';
+          end;
         end
-        else if mr = mrAbort then
+        else if queryZHBBalanceFlag = 2 then
         begin
-          backToMainFrame;
-        end
-        else if mr = mrRetry then
-        begin
-          edtZHBPassword.Text := '';
-          edtZHBPassword.SetFocus;
+          if mr = mrOk then
+          begin
+            bankCardNoOrPassword := password;
+            setBtnZHBBalanceChargeEnabled;
+            lblCityCardBalanceOnPnlZHB.Caption.Text := FormatFloat('0.00', currCityCardBalance * 1.0 / 100) + '元';
+            lblZHBBalance.Caption.Text := FormatFloat('0.00', currZHBBalance * 1.0 / 100) + '元';
+            Notebook1.ActivePage := 'pageZHBBalanceConfirm';
+          end
+          else if mr = mrRetry then
+          begin
+            edtZHBPassword.Text := '';
+            edtZHBPassword.SetFocus;
+          end;
         end;
       end;
     finally
@@ -1481,11 +1518,15 @@ procedure TfrmMain.btnZHBBalanceQueryClick(Sender: TObject);
 var
   dlg: Tfrmwaiting;
   mr: TModalResult;
+  thread: TQueryCityCardBalance;
 begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
-    TQueryCityCardBalance.Create(False, dlg, 15);
+    addSysLog('zhb balance query start');
+    thread := TQueryCityCardBalance.Create(True, dlg, 15);
+    thread.FreeOnTerminate := False;
+    thread.Start;
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
@@ -1498,9 +1539,15 @@ begin
     else if mr = mrCancel then
     begin
       backToMainFrame;
+      thread.stop;
     end;
   finally
     dlg.Free;
+    if (thread <> nil) then
+    begin
+      thread.Free;
+      thread := nil;
+    end;
   end;
 end;
 
@@ -1583,8 +1630,10 @@ begin
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
-    threadQueryCityCardBalance := TQueryCityCardBalance.Create(False, dlg, 15, True);
+    addSysLog('zhb charge start');
+    threadQueryCityCardBalance := TQueryCityCardBalance.Create(True, dlg, 15, True);
     threadQueryCityCardBalance.FreeOnTerminate := False;
+    threadQueryCityCardBalance.Start;
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
@@ -1597,15 +1646,17 @@ begin
     end
     else if mr = mrCancel then
     begin
+      threadQueryCityCardBalance.stop;
       backToMainFrame;
+      addSysLog('zhb charge cancel');
     end;
   finally
     dlg.Free;
     if threadQueryCityCardBalance <> nil then
     begin
-      threadQueryCityCardBalance.stop;
       threadQueryCityCardBalance.Free;
       threadQueryCityCardBalance := nil;
+      addSysLog('zhb charge free thread');
     end;
   end;
 end;
@@ -1615,13 +1666,16 @@ var
   dlg: TfrmWaiting;
   mr: TModalResult;
   newBalance: Double;
+  thread: TGetCashAmount;
 begin
   currChargeType := 0;
   Notebook1.ActivePage := 'pageCash';
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
-    TGetCashAmount.Create(False, dlg, 55, amountCharged);
+    thread := TGetCashAmount.Create(True, dlg, 55, amountCharged);
+    thread.FreeOnTerminate := False;
+    thread.Start;
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
@@ -1650,9 +1704,14 @@ begin
     end
     else if (mr = mrAbort) or (mr = mrCancel) then
     begin
+      thread.stop;
       backToMainFrame;
     end
   finally
+    if thread <> nil then
+    begin
+      thread.Free;
+    end;
     dlg.Free;
   end;
 end;
