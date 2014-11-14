@@ -1396,6 +1396,7 @@ var
   password: ansistring;
   dlg: TfrmWaiting;
   mr: TModalResult;
+  isOk: Boolean;
 begin
   password := AnsiString(Trim(edtPrepaidCardPassword.Text));
   if (password = '') or (Length(password) <> edtPrepaidCardPassword.MaxLength) then
@@ -1405,6 +1406,7 @@ begin
     Exit;
   end;
 
+  isOk := False;
   //获取面额
   dlg := TfrmWaiting.Create(nil);
   try
@@ -1419,6 +1421,7 @@ begin
         lblCityCardBalanceOnPnlPrepaidCard.Caption.Text := FormatFloat('0.00', currCityCardBalance * 1.0 / 100) + '元';
         lblPrepaidCardAmount.Caption.Text := FormatFloat('0.00', currPrepaidCardAmount * 1.0 / 100) + '元';
         Notebook1.ActivePage := 'pagePrepaidCardAmountConfirm';
+        isOk := True;
       end
       else if mr = mrCancel then
       begin
@@ -1431,6 +1434,11 @@ begin
     end;
   finally
     dlg.Free;
+  end;
+
+  if isOk then
+  begin
+    btnPrepaidCardAmountConfirm.Click;
   end;
 end;
 
@@ -2326,6 +2334,21 @@ begin
       dlg := TfrmWaiting.Create(nil);
       try
         dlg.setWaitingTip('卡片无效，请确认');
+        dlg.startTimer(4);
+        dlg.ShowModal;
+      finally
+        dlg.Free;
+      end;
+    end;
+  end
+  else if currCityCardType = CITY_CARD_TYPE_JFCARD then
+  begin
+    Result := True;
+    if Result then
+    begin
+      dlg := TfrmWaiting.Create(nil);
+      try
+        dlg.setWaitingTip('金福卡无法充值，请确认');
         dlg.startTimer(4);
         dlg.ShowModal;
       finally

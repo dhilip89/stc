@@ -214,10 +214,11 @@ const
   MAX_AMOUNT_NAMED   = 5000 * 100;//记名卡最大金额
   MAX_AMOUNT_UNNAMED = 1000 * 100;//不记名卡最大金额
 
-  CITY_CARD_TYPE_UNKNOWN = 0;//未知
-  CITY_CARD_TYPE_NAMED   = 1;//记名卡
-  CITY_CARD_TYPE_UNNAMED = 2;//不记名卡
-  CITY_CARD_TYPE_INVALID = 3;//无效卡
+  CITY_CARD_TYPE_UNKNOWN = $FF;//未知
+  CITY_CARD_TYPE_NAMED   = $00;//记名卡
+  CITY_CARD_TYPE_UNNAMED = $01;//不记名卡
+  CITY_CARD_TYPE_INVALID = $02;//无效卡
+  CITY_CARD_TYPE_JFCARD  = $03;//金福卡
 
 
   TIP_PUT_CITY_CARD = '请将龙城通卡放置在读卡区...';

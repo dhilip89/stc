@@ -477,7 +477,7 @@ begin
   if errInfo <> '' then
   begin
     setWaitingTip(errInfo, True);
-    Sleep(5000);
+    Sleep(3500);
   end;
   frmWaiting.noticeFail;
 end;
