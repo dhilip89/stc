@@ -1396,7 +1396,6 @@ var
   password: ansistring;
   dlg: TfrmWaiting;
   mr: TModalResult;
-  isOk: Boolean;
 begin
   password := AnsiString(Trim(edtPrepaidCardPassword.Text));
   if (password = '') or (Length(password) <> edtPrepaidCardPassword.MaxLength) then
@@ -1406,7 +1405,6 @@ begin
     Exit;
   end;
 
-  isOk := False;
   //获取面额
   dlg := TfrmWaiting.Create(nil);
   try
@@ -1418,10 +1416,21 @@ begin
       if mr = mrOk then
       begin
         bankCardNoOrPassword := password;
-        lblCityCardBalanceOnPnlPrepaidCard.Caption.Text := FormatFloat('0.00', currCityCardBalance * 1.0 / 100) + '元';
-        lblPrepaidCardAmount.Caption.Text := FormatFloat('0.00', currPrepaidCardAmount * 1.0 / 100) + '元';
-        Notebook1.ActivePage := 'pagePrepaidCardAmountConfirm';
-        isOk := True;
+        if IS_PREPAID_CARD_CHARGE_NEED_CONFIRM then
+        begin
+          lblCityCardBalanceOnPnlPrepaidCard.Caption.Text := FormatFloat('0.00', currCityCardBalance * 1.0 / 100) + '元';
+          lblPrepaidCardAmount.Caption.Text := FormatFloat('0.00', currPrepaidCardAmount * 1.0 / 100) + '元';
+          Notebook1.ActivePage := 'pagePrepaidCardAmountConfirm';
+        end
+        else
+        begin//充值面额验证后，直接进入充值环节，省略确认充值环节
+          if isTotalAmountOverMax(currCityCardBalance, currPrepaidCardAmount) then
+          begin
+            Exit;
+          end;
+          amountCharged := currPrepaidCardAmount;
+          doCityCardCharge(dlg);
+        end;
       end
       else if mr = mrCancel then
       begin
@@ -1434,11 +1443,6 @@ begin
     end;
   finally
     dlg.Free;
-  end;
-
-  if isOk then
-  begin
-    btnPrepaidCardAmountConfirm.Click;
   end;
 end;
 
