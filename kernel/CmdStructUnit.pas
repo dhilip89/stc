@@ -137,6 +137,8 @@ type
     ChargeAmount: LongWord;//充值金额 (单位分)
     Mac1: array[0..3] of Byte;//mac1
     ChargeTime: array[0..6] of Byte;//充值时间 BCD 20 14 07 20 14 45 23
+    Status: byte;//0:第一次获取mac2 1:非第一次
+    TranSNo: array[0..5] of Byte;//交易流水号，供补写卡时采用与第一次获取mac2时采用的流水号
     CmdEnd: TSTEnd;
   end;
   PCmdGetMac2ForChargeC2S = ^TCmdGetMac2ForChargeC2S;
@@ -144,6 +146,7 @@ type
   //充值明细
   TCmdChargeDetailC2S = packed record
     CmdHead: TSTHead;
+    Status: Byte;//1：成功、2：中间状态 3：失败
     ASN: array[0..9] of Byte;//IC应用序列号
     TSN: array[0..1] of Byte;//IC交易序列号
     BankCardNo: array[0..18] of Byte;//没有的话直接填19个空格，如果是充值卡直接填写16位充值卡卡号，后三位补空格

@@ -44,6 +44,7 @@ function getChargeType: AnsiString;//0:现金 1:银联卡  2：充值卡  03企福通充值/专
 procedure initGlobalVar;
 procedure addSysLog(logStr: string);
 function resetD8: Boolean;
+function resetCPUCard: Boolean;
 function bytesToStr(buf: array of Byte): ansistring;
 function bytesToHexStr(buf: array of Byte): AnsiString;
 function hexStrToByteBuf(const hexStr: ansiString; isIncludeFF: Boolean): TByteDynArray;
@@ -202,6 +203,38 @@ begin
     addSysLog('select file err,recvBuf:' + recvBuf);
     Exit;
   end;
+  Result := True;
+end;
+
+function resetCPUCard: Boolean;
+var
+  lw: LongWord;
+  rlen: SmallInt;
+  rdata: array[0..1023] of ansichar;
+
+  sendLen, recvLen: SmallInt;
+  sendBuf: array[0..512] of AnsiChar;
+  recvBuf: array[0..512] of AnsiChar;
+  ret: SmallInt;
+  sendHexStr: ansistring;
+  recvHexStr: AnsiString;
+begin
+  Result := False;
+
+  ret := dc_card(icdev, 1, lw);
+  if ret <> 0 then
+  begin
+    FSysLog.AddLog('no card, ' + IntToStr(ret));
+    Exit;
+  end;
+
+  ret := dc_pro_reset_hex(icdev, rlen, rdata);
+  if ret <> 0 then
+  begin
+    FSysLog.AddLog('dc_pro_reset_hex fail, ' + IntToStr(ret));
+    Exit;
+  end;
+
   Result := True;
 end;
 

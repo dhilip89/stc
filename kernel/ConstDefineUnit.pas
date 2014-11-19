@@ -229,7 +229,8 @@ const
   TIP_GETTING_ZHB_BALANCE             = '正在获取账户宝余额,请稍后...';
   TIP_CITY_CARD_BALANCE               = '龙城通余额：';
   TIP_CITY_CARD_NO                    = '龙城通卡号：';
-  TIP_CITY_CARD_BALANCE_AFTER_CHARGED = '充值后龙城通余额：';
+  TIP_CITY_CARD_BALANCE_AFTER_CHARGED = '龙城通余额：';
+  TIP_CITY_CARD_AMOUNT_CHARGED        = '充 值 金额：';
   TIP_MODIFYING_ZHB_PASS              = '正在修改账户宝密码，请勿移开卡片...';
   TIP_DO_NOT_CHANGE_CARD              = '充值过程中，请勿更换卡片...';
 

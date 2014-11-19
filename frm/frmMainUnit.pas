@@ -47,7 +47,6 @@ type
     RzPanel4: TRzPanel;
     AdvSmoothLabel3: TAdvSmoothLabel;
     AdvSmoothLabel4: TAdvSmoothLabel;
-    btnHome: TAdvGlowButton;
     Timer2: TTimer;
     lblCountdown: TAdvSmoothLabel;
     Timer3: TTimer;
@@ -279,7 +278,6 @@ type
     xbtn5: TAdvSmoothButton;
     xbtn3: TAdvSmoothButton;
     btnLoginStatus: TAdvGlowButton;
-    btnPrevious: TAdvGlowButton;
     btn5: TImage;
     btn3: TImage;
     btn1: TImage;
@@ -326,6 +324,9 @@ type
     Image30: TImage;
     Image31: TImage;
     Image32: TImage;
+    AdvSmoothLabel17: TAdvSmoothLabel;
+    btnHome: TAdvGlowButton;
+    btnPrevious: TAdvGlowButton;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -521,6 +522,8 @@ type
     procedure DoOnPrinterComRecvData(Sender:TObject;Buffer:Pointer;BufferLength:Word);
 
     function isTotalAmountOverMax(currBalance, chargeAmount: Integer): Boolean;
+
+    procedure DoOnAppException(Sender: TObject; E: Exception);
   protected
     procedure CreateParams(var Params: TCreateParams); override;
   public
@@ -734,6 +737,7 @@ begin
           backToMainFrame;
         end;
       finally
+        threadChargeCardCheck.WaitFor;
         threadChargeCardCheck.Free;
         threadChargeCardCheck := nil;
       end;
@@ -754,6 +758,7 @@ begin
           backToMainFrame;
         end;
       finally
+        threadQueryQFTBalance.WaitFor;
         threadQueryQFTBalance.Free;
         threadQueryQFTBalance := nil;
       end;
@@ -791,6 +796,7 @@ begin
   finally
     if threadQueryCityCardBalance <> nil then
     begin
+      threadQueryCityCardBalance.WaitFor;
       threadQueryCityCardBalance.Free;
       threadQueryCityCardBalance := nil;
       addSysLog('cash charge free thread');
@@ -878,6 +884,7 @@ begin
   finally
     if threadQueryCityCard <> nil then
     begin
+      threadQueryCityCard.WaitFor;
       threadQueryCityCard.Free;
       threadQueryCityCard := nil;
     end;
@@ -988,6 +995,7 @@ begin
         backToMainFrame;
       end;
     finally
+      threadChargeCardCheck.WaitFor;
       threadChargeCardCheck.Free;
       threadChargeCardCheck := nil;
     end;
@@ -1026,6 +1034,7 @@ begin
   finally
     if threadQueryCityCard <> nil then
     begin
+      threadQueryCityCard.WaitFor;
       threadQueryCityCard.Free;
     end;
     dlg.Free;
@@ -1137,6 +1146,8 @@ begin
           newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
           AdvSmoothLabel74.Caption.Text := TIP_CITY_CARD_BALANCE_AFTER_CHARGED + FormatFloat('0.0#', newBalance) + '元';
           AdvSmoothLabel74.Visible := True;
+          AdvSmoothLabel17.Caption.Text := TIP_CITY_CARD_AMOUNT_CHARGED + FormatFloat('0.#', amountCharged*1.0 / 100) + '元';
+          AdvSmoothLabel17.Visible := True;
           Notebook1.ActivePage := 'pageMobileTopUpSuccess';
         end
         else if mr = mrAbort then
@@ -1144,6 +1155,7 @@ begin
           backToMainFrame;
         end;
       finally
+        threadCharge.WaitFor;
         threadCharge.Free;
         threadCharge := nil;
       end;
@@ -1298,6 +1310,7 @@ begin
   finally
     if threadQueryCityCardBalance <> nil then
     begin
+      threadQueryCityCardBalance.WaitFor;
       threadQueryCityCardBalance.Free;
       threadQueryCityCardBalance := nil;
       addSysLog('prepaidCard charge free thread');
@@ -1372,6 +1385,7 @@ begin
   finally
     if (queryCityCardDetail <> niL) then
     begin
+      queryCityCardDetail.WaitFor;
       queryCityCardDetail.Free;
     end;
     dlg.Free;
@@ -1438,6 +1452,7 @@ begin
         backToMainFrame;
       end;
     finally
+      threadChargeCardCheck.WaitFor;
       threadChargeCardCheck.Free;
       threadChargeCardCheck := nil;
     end;
@@ -1502,6 +1517,7 @@ begin
         end;
       end;
     finally
+      threadQueryQFTBalance.WaitFor;
       threadQueryQFTBalance.Free;
       threadQueryQFTBalance := nil;
     end;
@@ -1557,6 +1573,7 @@ begin
     dlg.Free;
     if (thread <> nil) then
     begin
+      thread.WaitFor;
       thread.Free;
       thread := nil;
     end;
@@ -1666,6 +1683,7 @@ begin
     dlg.Free;
     if threadQueryCityCardBalance <> nil then
     begin
+      threadQueryCityCardBalance.WaitFor;
       threadQueryCityCardBalance.Free;
       threadQueryCityCardBalance := nil;
       addSysLog('zhb charge free thread');
@@ -1703,6 +1721,8 @@ begin
           newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
           AdvSmoothLabel74.Caption.Text := TIP_CITY_CARD_BALANCE_AFTER_CHARGED + FormatFloat('0.0#', newBalance) + '元';
           AdvSmoothLabel74.Visible := True;
+          AdvSmoothLabel17.Caption.Text := TIP_CITY_CARD_AMOUNT_CHARGED + FormatFloat('0.#', amountCharged*1.0 / 100) + '元';
+          AdvSmoothLabel17.Visible := True;
           Notebook1.ActivePage := 'pageMobileTopUpSuccess';
         end
         else if mr = mrAbort then
@@ -1710,6 +1730,7 @@ begin
           backToMainFrame;
         end;
       finally
+        threadCharge.WaitFor;
         threadCharge.Free;
         threadCharge := nil;
       end;
@@ -1722,6 +1743,7 @@ begin
   finally
     if thread <> nil then
     begin
+      thread.WaitFor;
       thread.Free;
     end;
     dlg.Free;
@@ -1941,6 +1963,8 @@ begin
       newBalance := threadCharge.BalanceAfterCharge * 1.0/100;
       AdvSmoothLabel74.Caption.Text := TIP_CITY_CARD_BALANCE_AFTER_CHARGED + FormatFloat('0.0#', newBalance) + '元';
       AdvSmoothLabel74.Visible := True;
+      AdvSmoothLabel17.Caption.Text := TIP_CITY_CARD_AMOUNT_CHARGED + FormatFloat('0.#', amountCharged*1.0 / 100) + '元';
+      AdvSmoothLabel17.Visible := True;
       Notebook1.ActivePage := 'pageMobileTopUpSuccess';
     end
     else if mr = mrAbort then
@@ -1948,12 +1972,41 @@ begin
       backToMainFrame;
     end;
   finally
+    threadCharge.WaitFor;
     threadCharge.Free;
     threadCharge := nil;
     if isNewDlg then
     begin
       dlg.Free;
     end;
+  end;
+end;
+
+procedure TfrmMain.DoOnAppException(Sender: TObject; E: Exception);
+var
+  s: string;
+begin
+  try
+    s := DatetimeToStr(now) + '未捕获的异常:ExceptionClassName:' + E.ClassName;
+    s := s + '   SenderClassName:' + Sender.ClassName;
+    //判断是不是TComponent,如果是并记录TComponent.Name
+    if Sender is TComponent then
+    begin
+      s := s + '   SendCompName:' + TComponent(Sender).Name;
+        //判断是不是TWinControl,并有Parent,就记录Parent.Name
+      if Sender is TWinControl then
+      begin
+        if TWinControl(Sender).Parent <> nil then
+        begin
+          s := s + '   SendCompNameParent:' + TWinControl(Sender).Parent.Name;
+        end;
+      end;
+    end;
+    s := s + ' E.Message:' + E.Message;
+    s := s + ' HelpContext:' + IntToStr(E.HelpContext);
+    s := s + ' StackTrace:' + E.StackTrace;
+  finally
+    addSysLog(s);
   end;
 end;
 
@@ -2060,6 +2113,7 @@ begin
   FIsPnlPosSet := False;
   FIsPosSet := False;
   setKBReaderOutput(nil);
+  Application.OnException := DoOnAppException;
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
@@ -2145,10 +2199,10 @@ begin
   FIsPosSet := True;
 
   // *************调整返回首页的按钮及倒计时标签的位置
-  btnHome.Left := pnlTop.Width - btnHome.Width - 15;
-  btnHome.Top := pnlTop.Height - btnHome.Height - 5;
-  btnPrevious.Left := btnHome.Left - btnPrevious.Width - 15;
-  btnPrevious.Top := btnHome.Top;
+//  btnHome.Left := pnlTop.Width - btnHome.Width - 15;
+//  btnHome.Top := pnlTop.Height - btnHome.Height - 5;
+//  btnPrevious.Left := btnHome.Left - btnPrevious.Width - 15;
+//  btnPrevious.Top := btnHome.Top;
   lblCountdown.Left := pnlTop.Width - lblCountdown.Width - 30;
   lblCountdown.Top := btnHome.Top - lblCountdown.Height - 5;
   lblCountdown.Parent.DoubleBuffered := True;
@@ -2383,6 +2437,7 @@ begin
     pnlBottom.Visible := True;
     setCountdownTimerEnabled(False);
     AdvSmoothLabel74.Visible := False;
+    AdvSmoothLabel17.Visible := False;
     isCityCardCharging := False;
     isNewCard := False;
     resetPageHistory;
@@ -2627,6 +2682,15 @@ begin
   begin
     btnPrevious.Visible := False;
   end;
+  if isEnabled then
+  begin
+    lblCountdown.Left := 0;
+    btnHome.Left := 0;
+    if btnPrevious.Visible then
+    begin
+      btnPrevious.Left := 0;
+    end;
+  end;
 end;
 
 procedure TfrmMain.setDlgProgressTransparent(isTransparent: Boolean);
@@ -2651,6 +2715,22 @@ begin
   currInputEdit := advEdit;
   componentOK := compOK;
   kbReadTimer.Enabled := (currInputEdit <> nil);
+  if advEdit <> nil then
+  begin
+    addSysLog('setKBReaderOutput, advEdit:' + advEdit.Name );
+  end
+  else
+  begin
+    addSysLog('setKBReaderOutput, advEdit:nil');
+  end;
+  if compOK <> nil then
+  begin
+    addSysLog('setKBReaderOutput, compOK:' + compOK.Name );
+  end
+  else
+  begin
+    addSysLog('setKBReaderOutput, compOK:nil');
+  end;
 end;
 
 procedure TfrmMain.setPanelInitPos;
@@ -2802,7 +2882,9 @@ begin
               okImg := TImage(componentOK);
               if Assigned(okImg.OnClick) then
               begin
+                kbReadTimer.Enabled := False;
                 okImg.OnClick(nil);
+                kbReadTimer.Enabled := True;
               end;
             end;
           end;

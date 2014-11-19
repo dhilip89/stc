@@ -136,7 +136,7 @@ type
     procedure SendHeartbeat;
     procedure SendCmdGetMac2(cardNo, password, asn, CardTradeNo: array of Byte;
                             OperType: Byte; OldBalance, chargeAmount: Integer;
-                            chargeTime, fakeRandom, mac1: array of Byte);
+                            chargeTime, fakeRandom, mac1: array of Byte; status: Byte);
     procedure SendCmdUploadModuleStatus(moduleStatus: array of Byte);
     procedure SendCmdChargeDetail(cmd: TCmdChargeDetailC2S);
     procedure SendCmdRefund(cmd: TCmdRefundC2S);
@@ -477,10 +477,11 @@ end;
 
 procedure TGateWayServerCom.SendCmdGetMac2(cardNo, password, asn, CardTradeNo: array of Byte;
   OperType: Byte; OldBalance, chargeAmount: Integer;
-  chargeTime, fakeRandom, mac1: array of Byte);
+  chargeTime, fakeRandom, mac1: array of Byte; status: Byte);
 var
   cmd: TCmdGetMac2ForChargeC2S;
   terminalIdBuf: TByteDynArray;
+  tempBuf: TByteDynArray;
 begin
   initCmd(cmd.CmdHead, C2S_GET_MAC2, cmd.CmdEnd, SizeOf(TCmdGetMac2ForChargeC2S));
   cmd.OperType := OperType;
@@ -495,6 +496,12 @@ begin
   cmd.ChargeAmount := ByteOderConvert_LongWord(chargeAmount);
   CopyMemory(@cmd.Mac1[0], @mac1[0], Min(Length(cmd.Mac1), Length(mac1)));
   CopyMemory(@cmd.ChargeTime[0], @chargeTime[0], Min(Length(cmd.ChargeTime), Length(chargeTime)));
+  cmd.Status := status;
+  if status = 1 then
+  begin
+    tempBuf := hexStrToBytes(currTranSNoFromServer);
+    CopyMemory(@cmd.TranSNo[0], @tempBuf[0], Min(Length(cmd.TranSNo), Length(tempBuf)));
+  end;
   DirectSend(cmd, SizeOf(TCmdGetMac2ForChargeC2S));
 end;
 

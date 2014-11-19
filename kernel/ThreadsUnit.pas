@@ -81,7 +81,7 @@ unit ThreadsUnit;
 
 interface
 uses
-  System.classes, FrmWaitingUnit;//, Vcl.StdCtrls;
+  System.classes,System.Types, FrmWaitingUnit;//, Vcl.StdCtrls;
 
 type
   TOnGetCityCardInfo = procedure (cardInfo: string) of object;
@@ -111,8 +111,8 @@ type
     procedure DoOnTaskWithRefund;virtual;//需要进行退钱打印凭条
     procedure DoOnTaskRetry; virtual;//需用户重新确认信息，界面不跳转
     procedure printRefundInfo(amount: Integer; cardNo: ansistring);
-
     function waitForCmdRet: Boolean;
+    procedure DoAfterTaskFail;  virtual; abstract;
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer); virtual;
     destructor Destroy; override;
@@ -148,6 +148,7 @@ type
     procedure SetOnQueryCityCardDetail(const Value: TOnQueryCityCardDetail);
   protected
     function doTask: Boolean; override;
+    procedure DoAfterTaskFail; override;
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer);
     destructor Destroy; override;
@@ -163,6 +164,7 @@ type
   protected
     function doTask: Boolean;override;
     procedure DoOnTaskTimeout;override;
+    procedure DoAfterTaskFail; override;
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting;
       timeout: Integer; cashAmount: Integer);
@@ -174,14 +176,22 @@ type
     FChargeAmount: Integer;
     FMac2Ret: Byte;
     FMac2: AnsiString;
-    FErrTip: AnsiString;
+    FErrTip: AnsiString;//服务端返回到的错误提示
     FIsMac2Got: Boolean;
     FBalanceAfterCharge: Integer;
-    FStatus: Byte;//充值过程中的状态  0:未圈存初始化  1:已圈存初始化
+    FStatus: Byte;//获取mac2的状态 0:未获取过mac2  1:已获取过一次Mac2
+
+    cardNo, password, asn, tsn: TByteDynArray;
+    OperType: Byte; //操作类型 00现金充值，01银行卡充值，02充值卡充值，03账户宝充值/专有账户充值
+    oldBalance: Integer;//充值前余额
+    chargeTime, fakeRandom, mac1: TByteDynArray;
+    cardType: Byte;
     function waitForMac2: Boolean;
+    procedure uploadChargeDetail(isSucc: Boolean; tac: TByteDynArray);
   protected
     function doTask: Boolean; override;
     procedure DoOnTaskTimeout; override;
+    procedure DoAfterTaskFail; override;
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout, cashAmount: Integer);
 
@@ -201,6 +211,7 @@ type
   protected
     function doTask: Boolean; override;
     procedure DoOnTaskTimeout; override;//执行超时
+    procedure DoAfterTaskFail; override;
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting; timeout: Integer;
       cityCardNo, password: AnsiString);virtual;
@@ -219,6 +230,7 @@ type
   protected
     function doTask: Boolean; override;
     procedure DoOnTaskTimeout; override;//执行超时
+    procedure DoAfterTaskFail; override;
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting;
       timeout: Integer; cityCardNo, password: string);
@@ -235,6 +247,7 @@ type
     function waitForModifyRet: Boolean;
   protected
     function doTask: Boolean; override;
+    procedure DoAfterTaskFail; override;
   public
     constructor Create(CreateSuspended:Boolean; dlg: TfrmWaiting;
       timeout: Integer; oldPass, newPass: ansistring);
@@ -247,7 +260,7 @@ const
 
 implementation
 uses
-  System.Types, System.SysUtils, System.DateUtils, drv_unit, uGloabVar,
+  System.SysUtils, System.DateUtils, drv_unit, uGloabVar,
   Winapi.Windows, CmdStructUnit, itlssp, System.Math, ConstDefineUnit;
 
 { TQueryCityCardBalance }
@@ -499,6 +512,12 @@ end;
 
 procedure TBaseThread.DoOnTaskTimeout;
 begin
+  if FRefundReason <> '' then
+  begin
+    setWaitingTip(errInfo, True);
+    Sleep(3500);
+  end;
+  printRefundInfo(amountRefund, currCityCardNo);
   frmWaiting.noticeTimeout;
 end;
 
@@ -507,7 +526,7 @@ begin
   if errInfo <> '' then
   begin
     setWaitingTip(errInfo, True);
-    Sleep(5000);
+    Sleep(3500);
   end;
   printRefundInfo(amountRefund, currCityCardNo);
   frmWaiting.noticeFail;
@@ -538,6 +557,12 @@ begin
     isTimeout := True;
     Break;
   end;
+
+  if taskRet <> 0 then
+  begin
+    DoAfterTaskFail;
+  end;
+
   if not isTimeout then
   begin
     if taskRet = 0 then
@@ -624,6 +649,11 @@ constructor TGetCashAmount.Create(CreateSuspended: Boolean; dlg: TfrmWaiting;
 begin
   inherited Create(CreateSuspended, dlg, timeout);
   FCashAmount := cashAmount;
+end;
+
+procedure TGetCashAmount.DoAfterTaskFail;
+begin
+
 end;
 
 procedure TGetCashAmount.DoOnTaskTimeout;
@@ -853,6 +883,17 @@ begin
   FStatus := 0;
 end;
 
+procedure TCityCardCharge.DoAfterTaskFail;
+var
+  tac: TByteDynArray;
+begin
+  if FStatus = 1 then
+  begin
+    tac := hexStrToBytes('00000000');
+    uploadChargeDetail(False, tac);
+  end;
+end;
+
 procedure TCityCardCharge.DoOnTaskTimeout;
 begin
   setWaitingTip('充值交易超时，请取回失败凭证');
@@ -863,10 +904,6 @@ end;
 function TCityCardCharge.doTask: Boolean;
 var
   tip: string;
-  cardNo, password, asn, tsn: TByteDynArray;
-  OperType: Byte; //操作类型 00现金充值，01银行卡充值，02充值卡充值，03账户宝充值/专有账户充值
-  oldBalance: Integer;//充值前余额
-  chargeTime, fakeRandom, mac1: TByteDynArray;
   sendLen, recvLen: SmallInt;
   sendBuf: array[0..512] of AnsiChar;
   recvBuf: array[0..512] of AnsiChar;
@@ -878,10 +915,8 @@ var
   tempBuf: TByteDynArray;
   strChargeAmount: string;
   strTerminalId: string;
-  cardType: Byte;
+
   tac: TByteDynArray;
-  transSNo: TByteDynArray;
-  cmd: TCmdChargeDetailC2S;
   billStatus: AnsiString;
 begin
   {$IFDEF test}
@@ -894,8 +929,7 @@ begin
   Result := False;
   taskRet := 0;
   amountRefund := FChargeAmount;
-//  tip := '正在进行充值处理，请勿移开卡片...';//#13#10 + '卡片读取中...';
-//  setWaitingTip(tip);
+
   if not resetD8 then
   begin
     setWaitingTip(TIP_CAN_NOT_DETECT_CITY_CARD);
@@ -930,144 +964,69 @@ begin
   end;
 
   setWaitingTip(TIP_DO_NOT_MOVE_CITY_CARD);
-  if FStatus = 0 then//未圈存初始化
+  //verify pin
+  sendHexStr := '0020000003951246';
+  CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+
+  sendLen := Length(sendHexStr) div 2;
+  recvLen := 0;
+  ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+  if (ret <> 0) or (checkRecvBufEndWith9000(recvBuf, recvLen) <> '9000') then
   begin
-    //verify pin
-    sendHexStr := '0020000003951246';
-    CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
-
-    sendLen := Length(sendHexStr) div 2;
-    recvLen := 0;
-    ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
-    if (ret <> 0) or (checkRecvBufEndWith9000(recvBuf, recvLen) <> '9000') then
-    begin
-      addSysLog('verify pin err,recvBuf:' + recvBuf);
-      Exit;
-    end;
-
-    //读出卡号和应用序列号
-    sendHexStr := '00B0950000';
-    CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
-
-    sendLen := Length(sendHexStr) div 2;
-    recvLen := 0;
-    ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
-    if ret <> 0 then
-    begin
-      taskRet := 1;
-      errInfo := '充值失败，请注意保留凭条';
-      addSysLog('读卡号和应用序列化失败, recvBuf:' + recvBuf);
-      Exit;
-    end;
-
-    offset := 0;
-    SetLength(tempStr, 8 * 2);
-    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-    cardNo := hexStrToBytes(tempStr);//卡号
-
-    offset := 20;
-    SetLength(tempStr, 10 * 2);
-    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-    asn := hexStrToBytes(tempStr);//应用序列号
-
-    //读出卡类型
-    sendHexStr := '00B0960000';
-    CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
-
-    sendLen := Length(sendHexStr) div 2;
-    recvLen := 0;
-    ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
-    if ret <> 0 then
-    begin
-      taskRet := 1;
-      errInfo := '充值失败，请注意保留凭条';
-      addSysLog('读卡类型失败, recvBuf:' + recvBuf);
-      Exit;
-    end;
-
-    offset := 0;
-    SetLength(tempStr, 1 * 2);
-    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-    cardType := hexStrToBytes(tempStr)[0];//卡类型
-
-    //圈存初始化
-    lw := ByteOderConvert_LongWord(FChargeAmount);
-    strChargeAmount := bytesToHexStr(LongWordToBytes(lw));
-    strTerminalId := getFixedLenStr(GlobalParam.TerminalId, 12, '0');
-    sendHexStr := '805000020B01' + strChargeAmount + strTerminalId + '10';
-    CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
-
-    sendLen := Length(sendHexStr) div 2;
-    recvLen := 0;
-    ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
-    billStatus := checkRecvBufEndWith9000(recvBuf, recvLen);
-    if (ret <> 0) or (billStatus <> BILL_OK) then
-    begin
-      taskRet := 1;
-      errInfo := '充值失败，请注意保留凭条';
-      addSysLog('initialize for load err, recvBuf:' + recvBuf);
-      Exit;
-    end;
-
-    offset := 0;
-    SetLength(tempStr, 4 * 2);
-    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-    oldBalance := bytesToInt(hexStrToBytes(tempStr), 0, False);//充值前余额
-    FBalanceAfterCharge := FChargeAmount + oldBalance;
-
-    offset := 8;
-    SetLength(tempStr, 4);
-    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-    tsn := hexStrToBytes(tempStr);//交易序号
-
-    offset := 16;
-    SetLength(tempStr, 4 * 2);
-    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-    fakeRandom := hexStrToBytes(tempStr);//随机数
-
-    offset := 24;
-    SetLength(tempStr, 4 * 2);
-    CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-    mac1 := hexStrToBytes(tempStr);//mac1
-
-  //  tip := '正在进行充值处理，请勿移开卡片'#13#10 + '卡片联机校验中...';
-  //  setWaitingTip(tip);
-    chargeTime := hexStrToBytes(FormatDateTime('yyyyMMddhhnnss', Now));
-    OperType := currChargeType;
-    SetLength(password, 19);
-    initBytes(password, $00);
-    if (currChargeType <> 0) then
-    begin
-      CopyMemory(@password[0], @BytesOf(bankCardNoOrPassword)[0], Min(Length(password), Length(bankCardNoOrPassword)));
-    end;
-    DataServer.SendCmdGetMac2(cardNo, password, asn, tsn, OperType, oldBalance, FChargeAmount, chargeTime, fakeRandom, mac1);
-    if not waitForMac2  then
-    begin//超时
-      taskRet := 3;
-      errInfo := '充值失败，请注意保留凭条';
-      FRefundReason := '等待mac2超时';
-      addSysLog('等待mac2超时');
-      Exit;
-    end;
-
-    if FMac2Ret = 0 then
-    begin
-      taskRet := 3;
-      errInfo := '充值失败，请注意保留凭条';
-      if FErrTip <> '' then
-      begin
-        errInfo := errInfo + #13#10 + '提示:' + FErrTip;
-      end;
-      FRefundReason := FErrTip;
-      addSysLog('获取mac2失败');
-      Exit;
-    end;
-    FStatus := 1;
+    addSysLog('verify pin err,recvBuf:' + recvBuf);
+    Exit;
   end;
 
-//  tip := '正在进行充值处理，请勿移开卡片'#13#10 + '写卡中...';
-//  setWaitingTip(tip);
-  sendHexStr := '805200000B' + bytesToHexStr(chargeTime) + FMac2 + '04';
+  //读出卡号和应用序列号
+  sendHexStr := '00B0950000';
+  CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+
+  sendLen := Length(sendHexStr) div 2;
+  recvLen := 0;
+  ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+  if ret <> 0 then
+  begin
+    taskRet := 1;
+    errInfo := '充值失败，请注意保留凭条';
+    addSysLog('读卡号和应用序列化失败, recvBuf:' + recvBuf);
+    Exit;
+  end;
+
+  offset := 0;
+  SetLength(tempStr, 8 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  cardNo := hexStrToBytes(tempStr);//卡号
+
+  offset := 20;
+  SetLength(tempStr, 10 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  asn := hexStrToBytes(tempStr);//应用序列号
+
+  //读出卡类型
+  sendHexStr := '00B0960000';
+  CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+
+  sendLen := Length(sendHexStr) div 2;
+  recvLen := 0;
+  ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+  if ret <> 0 then
+  begin
+    taskRet := 1;
+    errInfo := '充值失败，请注意保留凭条';
+    addSysLog('读卡类型失败, recvBuf:' + recvBuf);
+    Exit;
+  end;
+
+  offset := 0;
+  SetLength(tempStr, 1 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  cardType := hexStrToBytes(tempStr)[0];//卡类型
+
+  //圈存初始化
+  lw := ByteOderConvert_LongWord(FChargeAmount);
+  strChargeAmount := bytesToHexStr(LongWordToBytes(lw));
+  strTerminalId := getFixedLenStr(GlobalParam.TerminalId, 12, '0');
+  sendHexStr := '805000020B01' + strChargeAmount + strTerminalId + '10';
   CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
 
   sendLen := Length(sendHexStr) div 2;
@@ -1076,42 +1035,94 @@ begin
   billStatus := checkRecvBufEndWith9000(recvBuf, recvLen);
   if (ret <> 0) or (billStatus <> BILL_OK) then
   begin
+    taskRet := 1;
+    errInfo := '充值失败，请注意保留凭条';
+    addSysLog('initialize for load err, recvBuf:' + recvBuf);
+    Exit;
+  end;
+
+  offset := 0;
+  SetLength(tempStr, 4 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  oldBalance := bytesToInt(hexStrToBytes(tempStr), 0, False);//充值前余额
+  FBalanceAfterCharge := FChargeAmount + oldBalance;
+
+  offset := 8;
+  SetLength(tempStr, 4);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  tsn := hexStrToBytes(tempStr);//交易序号
+
+  offset := 16;
+  SetLength(tempStr, 4 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  fakeRandom := hexStrToBytes(tempStr);//随机数
+
+  offset := 24;
+  SetLength(tempStr, 4 * 2);
+  CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
+  mac1 := hexStrToBytes(tempStr);//mac1
+
+  chargeTime := hexStrToBytes(FormatDateTime('yyyyMMddhhnnss', Now));
+  OperType := currChargeType;
+  SetLength(password, 19);
+  initBytes(password, $00);
+  if (currChargeType <> 0) then
+  begin
+    CopyMemory(@password[0], @BytesOf(bankCardNoOrPassword)[0], Min(Length(password), Length(bankCardNoOrPassword)));
+  end;
+  FIsMac2Got := False;
+  DataServer.SendCmdGetMac2(cardNo, password, asn, tsn, OperType, oldBalance, FChargeAmount, chargeTime, fakeRandom, mac1, FStatus);
+  if not waitForMac2  then
+  begin//超时
     taskRet := 3;
     errInfo := '充值失败，请注意保留凭条';
-    addSysLog('credit for load err, recvBuf:' + recvBuf);
+    FRefundReason := '等待mac2超时';
+    addSysLog('等待mac2超时');
+    Exit;
+  end;
+
+  if FMac2Ret = 0 then
+  begin
+    taskRet := 3;
+    errInfo := '充值失败，请注意保留凭条';
+    if FErrTip <> '' then
+    begin
+      errInfo := errInfo + #13#10 + '提示:' + FErrTip;
+    end;
+    FRefundReason := FErrTip;
+    addSysLog('获取mac2失败');
+    Exit;
+  end;
+
+  if FStatus = 0 then
+  begin
+    FStatus := 1;
+  end;
+
+  sendHexStr := '805200000B' + bytesToHexStr(chargeTime) + FMac2 + '04';
+  CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+  addSysLog('charge write card content:' + sendHexStr);
+
+  sendLen := Length(sendHexStr) div 2;
+  recvLen := 0;
+  ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+  billStatus := checkRecvBufEndWith9000(recvBuf, recvLen);
+
+  if (ret <> 0) or (billStatus <> BILL_OK) then
+  begin
+    taskRet := 1;
+    errInfo := '充值失败，请注意保留凭条';
+    addSysLog('credit for load err, ret:' + inttostr(ret) + ',recvBuf:' + recvBuf);
     FRefundReason := '写卡失败';
     Exit;
   end;
+
   //圈存成功，获取tac值
   offset := 0;
   SetLength(tempStr, 4 * 2);
   CopyMemory(@tempStr[1], @recvBuf[offset], Length(tempStr));
-  tac := hexStrToBytes(tempStr);//随机数
-
-  transSNo := hexStrToBytes(currTranSNoFromServer);// getNextTSN;//获取交易流水号
-
-  //充值成功后，上传交易记录到服务端
-  CopyMemory(@cmd.ASN, @asn[0], Length(asn));
-  CopyMemory(@cmd.TSN, @tsn[0], Length(tsn));
-  initBytes(cmd.BankCardNo, $00);
-  cmd.CardType := cardType;
-  CopyMemory(@cmd.TransDate, @chargeTime[0], Length(cmd.TransDate));
-  CopyMemory(@cmd.TransTime, @chargeTime[4], Length(cmd.TransTime));
-  cmd.TransAmount := ByteOderConvert_LongWord(FChargeAmount);
-  cmd.BalanceBeforeTrans := ByteOderConvert_LongWord(oldBalance);
-  CopyMemory(@cmd.TAC, @tac[0], Length(tac));
-  CopyMemory(@cmd.TransSNo, @transSNo[0], Length(transSNo));
-  //cmd.TransSNo := ByteOderConvert_LongWord(transSNo);
-  //充值类型
-  cmd.ChargeType := currChargeType;
-  if (currChargeType <> 0) then
-  begin
-    CopyMemory(@cmd.BankCardNo[0], @BytesOf(bankCardNoOrPassword)[0], Min(Length(cmd.BankCardNo), Length(bankCardNoOrPassword)));
-  end;
-  CopyMemory(@cmd.CityCardNo, @cardNo[0], Length(cardNo));
-
-  DataServer.SendCmdChargeDetail(cmd);
-
+  tac := hexStrToBytes(tempStr);
+  uploadChargeDetail(True, tac);
   Result := True;
 end;
 
@@ -1123,6 +1134,42 @@ begin
   FErrTip := errTip;
   currTranSNoFromServer := tranSNo;
   FIsMac2Got := True;
+end;
+
+procedure TCityCardCharge.uploadChargeDetail(isSucc: Boolean; tac: TByteDynArray);
+var
+  transSNo: TByteDynArray;
+  cmd: TCmdChargeDetailC2S;
+begin
+  if isSucc then
+  begin
+    cmd.Status := 1;
+  end
+  else
+  begin
+    cmd.Status := 3;
+  end;
+  transSNo := hexStrToBytes(currTranSNoFromServer);//获取交易流水号
+
+  CopyMemory(@cmd.ASN, @asn[0], Length(asn));
+  CopyMemory(@cmd.TSN, @tsn[0], Length(tsn));
+  initBytes(cmd.BankCardNo, $00);
+  cmd.CardType := cardType;
+  CopyMemory(@cmd.TransDate, @chargeTime[0], Length(cmd.TransDate));
+  CopyMemory(@cmd.TransTime, @chargeTime[4], Length(cmd.TransTime));
+  cmd.TransAmount := ByteOderConvert_LongWord(FChargeAmount);
+  cmd.BalanceBeforeTrans := ByteOderConvert_LongWord(oldBalance);
+  CopyMemory(@cmd.TAC, @tac[0], Length(tac));
+  CopyMemory(@cmd.TransSNo, @transSNo[0], Length(transSNo));
+
+  cmd.ChargeType := currChargeType;
+  if (currChargeType <> 0) then
+  begin
+    CopyMemory(@cmd.BankCardNo[0], @BytesOf(bankCardNoOrPassword)[0], Min(Length(cmd.BankCardNo), Length(bankCardNoOrPassword)));
+  end;
+  CopyMemory(@cmd.CityCardNo, @cardNo[0], Length(cardNo));
+
+  DataServer.SendCmdChargeDetail(cmd);
 end;
 
 function TCityCardCharge.waitForMac2: Boolean;
@@ -1155,6 +1202,11 @@ begin
   FCityCardNo := cityCardNo;
   FPassword := password;
   FreeOnTerminate := False;
+end;
+
+procedure TChargeCardCheck.DoAfterTaskFail;
+begin
+
 end;
 
 procedure TChargeCardCheck.DoOnTaskTimeout;
@@ -1203,6 +1255,11 @@ begin
   FCityCardNo := cityCardNo;
   FPassword := password;
   FreeOnTerminate := False;
+end;
+
+procedure TQueryZHBBalance.DoAfterTaskFail;
+begin
+
 end;
 
 procedure TQueryZHBBalance.DoOnTaskTimeout;
@@ -1266,6 +1323,11 @@ end;
 destructor TQueryCityCardTransDetail.Destroy;
 begin
   inherited;
+end;
+
+procedure TQueryCityCardTransDetail.DoAfterTaskFail;
+begin
+
 end;
 
 function TQueryCityCardTransDetail.doTask: Boolean;
@@ -1410,6 +1472,11 @@ begin
   FreeOnTerminate := False;
 end;
 
+procedure TModifyZHBPass.DoAfterTaskFail;
+begin
+
+end;
+
 function TModifyZHBPass.doTask: Boolean;
 var
   tip: string;
@@ -1520,7 +1587,7 @@ begin
   if (ret <> 0) or (billStatus <> BILL_OK) then
   begin
     taskRet := 1;
-    errInfo := '充值失败，请注意保留凭条';
+    //errInfo := '充值失败，请注意保留凭条';
     addSysLog('initialize for load err, recvBuf:' + recvBuf);
     Exit;
   end;
