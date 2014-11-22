@@ -542,7 +542,7 @@ begin
   isTimeout := False;
   taskRet := 0;
   addSysLog(Self.ClassName + ' execute');
-  while not doTask do
+  while not FIsInterrupted and not doTask do
   begin
     if taskRet in [2, 3, 4] then
     begin

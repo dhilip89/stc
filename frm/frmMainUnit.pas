@@ -430,6 +430,7 @@ type
     procedure edtOldPassEnter(Sender: TObject);
     procedure edtNewPass2Enter(Sender: TObject);
     procedure edtNewPass1Enter(Sender: TObject);
+    procedure Image6Click(Sender: TObject);
   private
     { Private declarations }
     FDlgProgress: TfrmProgress;
@@ -524,6 +525,8 @@ type
     function isTotalAmountOverMax(currBalance, chargeAmount: Integer): Boolean;
 
     procedure DoOnAppException(Sender: TObject; E: Exception);
+    procedure doOnFunctionNotReleased;
+    procedure DoOnClickTopLeftToQuit;
   protected
     procedure CreateParams(var Params: TCreateParams); override;
   public
@@ -588,6 +591,11 @@ var
   i: Integer;
   tempStr: AnsiString;
 begin
+  if Notebook1.ActivePage <> 'pageCityCardTransDetail' then
+  begin
+    Notebook1.ActivePage := 'pageCityCardTransDetail';
+  end;
+
   with gridCityCardTransDetail do
   begin
     if (RowCount = 2) and (Cells[0, 1] = '') then
@@ -773,10 +781,6 @@ var
   dlg: Tfrmwaiting;
   mr: TModalResult;
 begin
-  currChargeType := 0;
-  isCityCardCharging := True;
-  Notebook1.ActivePage := 'pageCityCardChooseChargeAmount';
-  cityCardBizType := 0;
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
@@ -787,7 +791,14 @@ begin
     threadQueryCityCardBalance.OnGetCardBalance := DoOnGetCityCardBalance;
     threadQueryCityCardBalance.Start;
     mr := dlg.ShowModal;
-    if (mr = mrCancel) then
+    if mr = mrOk then
+    begin
+      currChargeType := 0;
+      isCityCardCharging := True;
+      Notebook1.ActivePage := 'pageCityCardChooseChargeAmount';
+      cityCardBizType := 0;
+    end
+    else if (mr = mrCancel) then
     begin
       threadQueryCityCardBalance.stop;
       backToMainFrame;
@@ -895,7 +906,6 @@ end;
 procedure TfrmMain.xbtnCityCardChargeClick(Sender: TObject);
 begin
   Notebook1.ActivePage := 'pageSelectChargeType';
-  Exit;
 end;
 
 procedure TfrmMain.AdvSmoothButton27Click(Sender: TObject);
@@ -1368,7 +1378,6 @@ var
   queryCityCardDetail: TQueryCityCardTransDetail;
 begin
   clearCityCardTransDetailGrid;
-  Notebook1.ActivePage := 'pageCityCardTransDetail';
   dlg := TfrmWaiting.Create(nil);
   try
     dlg.setWaitingTip(TIP_PUT_CITY_CARD, True);
@@ -2018,6 +2027,38 @@ begin
   end;
 end;
 
+procedure TfrmMain.DoOnClickTopLeftToQuit;
+begin
+  if MilliSecondsBetween(firstTime, Now) <= 5000 then
+  begin
+    Inc(clickCount);
+  end
+  else
+  begin
+    clickCount := 1;
+    firstTime := Now;
+  end;
+  if (clickCount >= 6) then
+  begin
+    Close;
+  end;
+end;
+
+procedure TfrmMain.doOnFunctionNotReleased;
+var
+  dlg: TfrmWaiting;
+begin
+  dlg := TfrmWaiting.Create(nil);
+  try
+    dlg.setWaitingTip('功能暂未开放，敬请期待...', False, True);
+    dlg.startTimer(2000);
+    dlg.ShowModal;
+  finally
+    dlg.Free;
+  end;
+  Exit;
+end;
+
 procedure TfrmMain.DoOnGetCityCardType(ret: Byte);
 begin
   currCityCardType := ret;
@@ -2191,6 +2232,11 @@ begin
   getPrinterNewStatus;
 end;
 
+procedure TfrmMain.Image6Click(Sender: TObject);
+begin
+  doOnFunctionNotReleased;
+end;
+
 procedure TfrmMain.iniForm;
 begin
   if FIsPosSet then
@@ -2361,8 +2407,8 @@ begin
     begin
       dlg := TfrmWaiting.Create(nil);
       try
-        dlg.setWaitingTip('记名卡余额加充值金额不能超过5000元');
-        dlg.startTimer(4);
+        dlg.setWaitingTip('记名卡余额加充值金额不能超过5000元', False, True);
+        dlg.startTimer(4000);
         dlg.ShowModal;
       finally
         dlg.Free;
@@ -2376,8 +2422,8 @@ begin
     begin
       dlg := TfrmWaiting.Create(nil);
       try
-        dlg.setWaitingTip('不记名卡余额加充值金额不能超过1000元');
-        dlg.startTimer(4);
+        dlg.setWaitingTip('不记名卡余额加充值金额不能超过1000元', False, True);
+        dlg.startTimer(4000);
         dlg.ShowModal;
       finally
         dlg.Free;
@@ -2391,8 +2437,8 @@ begin
     begin
       dlg := TfrmWaiting.Create(nil);
       try
-        dlg.setWaitingTip('卡片无效，请确认');
-        dlg.startTimer(4);
+        dlg.setWaitingTip('卡片无效，请确认', False, True);
+        dlg.startTimer(2000);
         dlg.ShowModal;
       finally
         dlg.Free;
@@ -2407,7 +2453,7 @@ begin
       dlg := TfrmWaiting.Create(nil);
       try
         dlg.setWaitingTip('金福卡无法充值，请确认');
-        dlg.startTimer(4);
+        dlg.startTimer(2500);
         dlg.ShowModal;
       finally
         dlg.Free;
@@ -2539,36 +2585,12 @@ end;
 
 procedure TfrmMain.RzPanel7Click(Sender: TObject);
 begin
-  if MilliSecondsBetween(firstTime, Now) <= 5000 then
-  begin
-    Inc(clickCount);
-  end
-  else
-  begin
-    clickCount := 1;
-    firstTime := Now;
-  end;
-  if (clickCount >= 5) then
-  begin
-    Close;
-  end;
+  DoOnClickTopLeftToQuit;
 end;
 
 procedure TfrmMain.RzPanel7DblClick(Sender: TObject);
 begin
-  if MilliSecondsBetween(firstTime, Now) <= 5000 then
-  begin
-    Inc(clickCount);
-  end
-  else
-  begin
-    clickCount := 1;
-    firstTime := Now;
-  end;
-  if (clickCount >= 5) then
-  begin
-    Close;
-  end;
+  DoOnClickTopLeftToQuit;
 end;
 
 procedure TfrmMain.setTimeInfo();

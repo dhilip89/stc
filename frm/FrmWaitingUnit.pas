@@ -21,6 +21,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure AdvGlassButton1Click(Sender: TObject);
     procedure tmr1Timer(Sender: TObject);
+    procedure AdvSmoothLabel1Click(Sender: TObject);
   private
     { Private declarations }
     procedure resetComponentPos();
@@ -32,7 +33,7 @@ type
     procedure noticeFail;
     procedure noticeMROK;
     procedure noticeRetry;
-    procedure startTimer(delaySeconds: Integer);
+    procedure startTimer(delayMilliseconds: Integer);
   end;
 
 var
@@ -48,6 +49,14 @@ procedure TfrmWaiting.AdvGlassButton1Click(Sender: TObject);
 begin
   addSysLog('btnCancel clicked');
   ModalResult := mrCancel;
+end;
+
+procedure TfrmWaiting.AdvSmoothLabel1Click(Sender: TObject);
+begin
+  if tmr1.Enabled then
+  begin
+    tmr1Timer(nil)
+  end;
 end;
 
 procedure TfrmWaiting.FormCreate(Sender: TObject);
@@ -117,13 +126,13 @@ begin
   AdvSmoothLabel1.Caption.Text := tip;
 end;
 
-procedure TfrmWaiting.startTimer(delaySeconds: Integer);
+procedure TfrmWaiting.startTimer(delayMilliseconds: Integer);
 begin
-  if delaySeconds < 1 then
-  begin
-    delaySeconds := 1;
+  if delayMilliseconds < 500 then
+  begin//时间太短，人看不清界面，就没意义了
+    delayMilliseconds := 500;
   end;
-  tmr1.Interval := delaySeconds * 1000;
+  tmr1.Interval := delayMilliseconds;
   tmr1.Enabled := True;
 end;
 
