@@ -1025,7 +1025,7 @@ begin
   //»¶¥Ê≥ı ºªØ
   lw := ByteOderConvert_LongWord(FChargeAmount);
   strChargeAmount := bytesToHexStr(LongWordToBytes(lw));
-  strTerminalId := getFixedLenStr(GlobalParam.TerminalId, 12, '0');
+  strTerminalId := SAMID;// getFixedLenStr(GlobalParam.TerminalId, 12, '0');
   sendHexStr := '805000020B01' + strChargeAmount + strTerminalId + '10';
   CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
 

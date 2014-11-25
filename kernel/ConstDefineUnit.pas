@@ -220,6 +220,7 @@ const
   CITY_CARD_TYPE_INVALID = $02;//无效卡
   CITY_CARD_TYPE_JFCARD  = $03;//金福卡
 
+  SAMID = '990000000006';
 
   TIP_PUT_CITY_CARD                   = '请将龙城通卡放置在读卡区...';
   TIP_CAN_NOT_DETECT_CITY_CARD        = '未检测到龙城通卡，请将卡放置在读卡区...';
