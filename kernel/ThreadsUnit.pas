@@ -179,7 +179,7 @@ type
     FErrTip: AnsiString;//服务端返回到的错误提示
     FIsMac2Got: Boolean;
     FBalanceAfterCharge: Integer;
-    FStatus: Byte;//获取mac2的状态 0:未获取过mac2  1:已获取过一次Mac2
+    FGetMac2Status: Byte;//获取mac2的状态 0:未获取过mac2  1:已获取过一次Mac2
 
     cardNo, password, asn, tsn: TByteDynArray;
     OperType: Byte; //操作类型 00现金充值，01银行卡充值，02充值卡充值，03账户宝充值/专有账户充值
@@ -880,14 +880,14 @@ begin
   inherited Create(CreateSuspended, dlg, timeout);
   FreeOnTerminate := False;
   FChargeAmount := cashAmount;
-  FStatus := 0;
+  FGetMac2Status := 0;
 end;
 
 procedure TCityCardCharge.DoAfterTaskFail;
 var
   tac: TByteDynArray;
 begin
-  if FStatus = 1 then
+  if FGetMac2Status = 1 then
   begin
     tac := hexStrToBytes('00000000');
     uploadChargeDetail(False, tac);
@@ -929,12 +929,14 @@ begin
   Result := False;
   taskRet := 0;
   amountRefund := FChargeAmount;
+  FRefundReason := '';
 
   if not resetD8 then
   begin
     setWaitingTip(TIP_CAN_NOT_DETECT_CITY_CARD);
     taskRet := 1;
     addSysLog('citycard charge reset d8 fail');
+    FRefundReason := '未检测到卡片';
     Exit;
   end;
 
@@ -949,6 +951,7 @@ begin
   begin
     taskRet := 1;
     addSysLog('read card base info err, recvBuf:' + recvBuf);
+    FRefundReason := '读卡信息失败';
     Exit;
   end;
 
@@ -960,6 +963,7 @@ begin
     setWaitingTip(TIP_DO_NOT_CHANGE_CARD);
     taskRet := 1;
     addSysLog('卡号不一致，原:' + currCityCardNo + ',现' + tempStr);
+    FRefundReason := '检测到卡片与初始卡片不一致';
     Exit;
   end;
 
@@ -974,6 +978,7 @@ begin
   if (ret <> 0) or (checkRecvBufEndWith9000(recvBuf, recvLen) <> '9000') then
   begin
     addSysLog('verify pin err,recvBuf:' + recvBuf);
+    FRefundReason := '校验PIN失败';
     Exit;
   end;
 
@@ -989,6 +994,7 @@ begin
     taskRet := 1;
     errInfo := '充值失败，请注意保留凭条';
     addSysLog('读卡号和应用序列化失败, recvBuf:' + recvBuf);
+    FRefundReason := '读卡号和应用序列号失败';
     Exit;
   end;
 
@@ -1014,6 +1020,7 @@ begin
     taskRet := 1;
     errInfo := '充值失败，请注意保留凭条';
     addSysLog('读卡类型失败, recvBuf:' + recvBuf);
+    FRefundReason := '读卡类型失败';
     Exit;
   end;
 
@@ -1038,6 +1045,7 @@ begin
     taskRet := 1;
     errInfo := '充值失败，请注意保留凭条';
     addSysLog('initialize for load err, recvBuf:' + recvBuf);
+    FRefundReason := '圈存初始化失败';
     Exit;
   end;
 
@@ -1071,7 +1079,7 @@ begin
     CopyMemory(@password[0], @BytesOf(bankCardNoOrPassword)[0], Min(Length(password), Length(bankCardNoOrPassword)));
   end;
   FIsMac2Got := False;
-  DataServer.SendCmdGetMac2(cardNo, password, asn, tsn, OperType, oldBalance, FChargeAmount, chargeTime, fakeRandom, mac1, FStatus);
+  DataServer.SendCmdGetMac2(cardNo, password, asn, tsn, OperType, oldBalance, FChargeAmount, chargeTime, fakeRandom, mac1, FGetMac2Status);
   if not waitForMac2  then
   begin//超时
     taskRet := 3;
@@ -1084,19 +1092,24 @@ begin
   if FMac2Ret = 0 then
   begin
     taskRet := 3;
-    errInfo := '充值失败，请注意保留凭条';
     if FErrTip <> '' then
     begin
-      errInfo := errInfo + #13#10 + '提示:' + FErrTip;
+      FErrTip := '获取mac2失败[' + FErrTip + ']';
+    end
+    else
+    begin
+      FErrTip := '获取mac2失败';
     end;
+
+    errInfo := '充值失败，请注意保留凭条' + #13#10 + '提示:' + FErrTip;
     FRefundReason := FErrTip;
-    addSysLog('获取mac2失败');
+    addSysLog(FErrTip);
     Exit;
   end;
 
-  if FStatus = 0 then
+  if FGetMac2Status = 0 then
   begin
-    FStatus := 1;
+    FGetMac2Status := 1;
   end;
 
   sendHexStr := '805200000B' + bytesToHexStr(chargeTime) + FMac2 + '04';
