@@ -467,6 +467,8 @@ type
     currInputEdit: TAdvEdit;
     componentOK: TControl;
 
+    FPauseServiceFrm: TfrmWaiting;
+
     procedure initMain;
     procedure loadParam;
     procedure connectToGateway;
@@ -527,6 +529,7 @@ type
     procedure DoOnAppException(Sender: TObject; E: Exception);
     procedure doOnFunctionNotReleased;
     procedure DoOnClickTopLeftToQuit;
+    procedure showOutOfServiceFrm(isFrmVisible: Boolean; status: Byte = 0);
   protected
     procedure CreateParams(var Params: TCreateParams); override;
   public
@@ -2109,6 +2112,7 @@ begin
   addSysLog('loginStatus:' + IntToStr(loginStatus));
   btnLoginStatus.Visible := loginStatus <> LOGIN_STATUS_OK;
   btnLoginStatus.Caption := '未登录成功[' + IntToStr(loginStatus) + ']';
+  showOutOfServiceFrm(loginStatus <> LOGIN_STATUS_OK, loginStatus);
 end;
 
 procedure TfrmMain.DoOnModifyZHBPassRsp(ret: Byte);
@@ -2154,11 +2158,19 @@ begin
   FIsPnlPosSet := False;
   FIsPosSet := False;
   setKBReaderOutput(nil);
+  FPauseServiceFrm := TfrmWaiting.Create(nil);
+  FPauseServiceFrm.WindowState := wsMaximized;
+  FPauseServiceFrm.AdvSmoothLabel1.Caption.Font.Size := 60;
   Application.OnException := DoOnAppException;
 end;
 
 procedure TfrmMain.FormDestroy(Sender: TObject);
 begin
+  if FPauseServiceFrm <> nil then
+  begin
+    FPauseServiceFrm.Free;
+  end;
+
   DataServer.Active := False;
   DataServer.Free;
   CloseSSPComPort;
@@ -2608,6 +2620,24 @@ begin
   if btnTime.Caption.Text <> cap then
   begin
     btnTime.Caption.Text := cap;
+  end;
+end;
+
+procedure TfrmMain.showOutOfServiceFrm(isFrmVisible: Boolean; status: Byte);
+var
+  tip: string;
+begin
+  if isFrmVisible then
+  begin
+    tip := '暂  停  服  务';
+    if status > 0 then
+      tip := tip + '[' + IntToStr(status) + ']';
+    FPauseServiceFrm.setWaitingTip(tip, False, True);
+    FPauseServiceFrm.ShowModal;
+  end
+  else
+  begin
+    FPauseServiceFrm.Hide;
   end;
 end;
 

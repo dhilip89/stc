@@ -7551,9 +7551,9 @@ object frmMain: TfrmMain
           ExplicitHeight = 40
         end
         object btnHome: TAdvGlowButton
-          Left = 1071
+          Left = 1082
           Top = 0
-          Width = 105
+          Width = 94
           Height = 33
           Align = alRight
           AutoSize = True
@@ -7634,12 +7634,12 @@ object frmMain: TfrmMain
           Appearance.ColorMirrorDisabled = 11974326
           Appearance.ColorMirrorDisabledTo = 15921906
           Appearance.SystemFont = False
-          ExplicitLeft = 1066
+          ExplicitHeight = 34
         end
         object btnPrevious: TAdvGlowButton
-          Left = 966
+          Left = 988
           Top = 0
-          Width = 105
+          Width = 94
           Height = 33
           Align = alRight
           AutoSize = True
@@ -7718,7 +7718,8 @@ object frmMain: TfrmMain
           Appearance.ColorMirrorDisabled = 11974326
           Appearance.ColorMirrorDisabledTo = 15921906
           Appearance.SystemFont = False
-          ExplicitLeft = 956
+          ExplicitLeft = 977
+          ExplicitHeight = 34
         end
       end
       object Notebook1: TNotebook
@@ -7727,15 +7728,13 @@ object frmMain: TfrmMain
         Width = 1236
         Height = 494
         Align = alClient
-        PageIndex = 28
+        PageIndex = 11
         TabOrder = 1
         OnPageChanged = Notebook1PageChanged
         object TPage
           Left = 0
           Top = 0
           Caption = 'Default_replace_by_pageCityCard'
-          ExplicitWidth = 0
-          ExplicitHeight = 0
           object RzPanel3: TRzPanel
             Left = 0
             Top = 0
@@ -12612,7 +12611,7 @@ object frmMain: TfrmMain
                   00000059080600000058393AAD000000017352474200AECE1CE9000000046741
                   4D410000B18F0BFC6105000000206348524D00007A26000080840000FA000000
                   80E8000075300000EA6000003A98000017709CBA513C00000009704859730000
-                  0AFE00000AFE01E625786600001B8749444154785EED5D0798545596EE1650C4
+                  0AFD00000AFD014B9C590B00001B8749444154785EED5D0798545596EE1650C4
                   1C3180396754D43167679C9D710C9F3BCEBACEECAC3B3AA3E3AE3AB38AA36396
                   35A11224B40449921124884003129B866EA0E9A6E9DCD539E706BA81BBE72FEA
                   569D77EBBDAAF7AAAB57D639F7FB8ED2DD2F9EF7FFF79C7BEEB9E7262AA512EC
@@ -15438,7 +15437,7 @@ object frmMain: TfrmMain
                   0000003C0806000000A328C282000000017352474200AECE1CE9000000046741
                   4D410000B18F0BFC6105000000206348524D00007A26000080840000FA000000
                   80E8000075300000EA6000003A98000017709CBA513C00000009704859730000
-                  0AFE00000AFE01E625786600000B6349444154785EED5D097414E51DDFC87DA8
+                  0AFD00000AFD014B9C590B00000B6349444154785EED5D097414E51DDFC87DA8
                   084F6D6B959B4829EA0329ADA5FA6AD16A6DAD166BDB578F6A7D7DC51E20B6D5
                   8252150495FB90280143426800B98322721F4120093177B259B26776379B6CEE
                   6C6EBEFE7F5F7626339B4D02A1CE8C99F9DEFB27D99DD99DEFFBFF7FF3BFBF49
