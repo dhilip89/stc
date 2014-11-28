@@ -600,6 +600,7 @@ begin
   cmd.Amount := ByteOderConvert_LongWord(amount);
   buf := hexStrToBytes(FormatDateTime('yyyyMMddHHnnss', Now));
   CopyMemory(@cmd.Time[0], @buf[0], Length(buf));
+  cmd.ChargeType := currChargeType;
   DataServer.SendCmdRefund(cmd);
 
   printInfo := ' ¿¨    ºÅ£º' + cardNo + #13#10

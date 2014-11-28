@@ -37,6 +37,7 @@ const
   S2C_QUERY_QFT_BALANCE        = $7009;//企福通余额查询应答
   S2C_MODIFY_PASS_RSP          = $700A;//账户宝密码修改应答
   S2C_CHECK_CITY_CARD_TYPE_RSP = $700B;//检测用户卡类型
+  S2C_ENABLE_STATUS_CHANGED    = $700C;//可用状态变化
 {*****************************服务端发起命令字*****************************}
 
 {*********************************公共常量*********************************}
@@ -312,6 +313,14 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdCheckCityCardTypeS2C = ^TCmdCheckCityCardTypeS2C;
+
+  //服务器通知终端可用状态变化
+  TCmdEnableStatusChangedS2C = packed record
+    CmdHead: TSTHead;
+    Status: Byte;//0:可用 1：停用
+    CmdEnd: TSTEnd;
+  end;
+  PCmdEnableStatusChangedS2C = ^TCmdEnableStatusChangedS2C;
 {*****************************服务端发起命令*****************************}
 
 function PtrAdd(p: pointer; offset: integer): pointer;

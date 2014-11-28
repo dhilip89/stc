@@ -27,7 +27,7 @@ uses
   dxSkinXmas2008Blue, cxRadioGroup, Data.Bind.EngExt, Vcl.Bind.DBEngExt,
   Data.Bind.Components, ThreadsUnit, FrmWaitingUnit, AsgListb, cxGraphics,
   cxControls, cxLookAndFeels, cxLookAndFeelPainters, Vcl.ComCtrls, cxTreeView,
-  cxContainer, cxEdit, cxListBox, RzListVw, RzBmpBtn;
+  cxContainer, cxEdit, cxListBox, RzListVw, RzBmpBtn, AdvSmoothPanel;
 
 type
   TfrmMain = class(TForm)
@@ -327,6 +327,7 @@ type
     AdvSmoothLabel17: TAdvSmoothLabel;
     btnHome: TAdvGlowButton;
     btnPrevious: TAdvGlowButton;
+    pnlOutOfServiceTip: TAdvSmoothPanel;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -530,6 +531,7 @@ type
     procedure doOnFunctionNotReleased;
     procedure DoOnClickTopLeftToQuit;
     procedure showOutOfServiceFrm(isFrmVisible: Boolean; status: Byte = 0);
+    procedure showOutOfServicePanel();
   protected
     procedure CreateParams(var Params: TCreateParams); override;
   public
@@ -1462,6 +1464,10 @@ begin
       begin
         threadChargeCardCheck.stop;
         backToMainFrame;
+      end
+      else if (mr = mrRetry) or (mr = mrAbort) then
+      begin
+        edtPrepaidCardPassword.SetFocus;
       end;
     finally
       threadChargeCardCheck.WaitFor;
@@ -1483,6 +1489,7 @@ begin
   if (password = '') or (Length(password) <> edtZHBPassword.MaxLength) then
   begin
     ShowTips('账户宝密码为' + IntToStr(edtZHBPassword.MaxLength) + '位，请确认输入', edtZHBPassword);
+    edtZHBPassword.Text := '';
     edtZHBPassword.SetFocus;
     Exit;
   end;
@@ -1509,6 +1516,11 @@ begin
             lblBalance.Caption.Text := '账户宝余额：'
               + FormatFloat('0.00', threadQueryQFTBalance.Balance * 1.0/100) + '元';
             Notebook1.ActivePage := 'pageZHBBalance';
+          end
+          else if (mr = mrRetry) or (mr = mrAbort) then
+          begin
+            edtZHBPassword.Text := '';
+            edtZHBPassword.SetFocus;
           end;
         end
         else if queryZHBBalanceFlag = 2 then
@@ -1521,7 +1533,7 @@ begin
             lblZHBBalance.Caption.Text := FormatFloat('0.00', currZHBBalance * 1.0 / 100) + '元';
             Notebook1.ActivePage := 'pageZHBBalanceConfirm';
           end
-          else if mr = mrRetry then
+          else if (mr = mrRetry) or (mr = mrAbort) then
           begin
             edtZHBPassword.Text := '';
             edtZHBPassword.SetFocus;
@@ -2111,8 +2123,9 @@ procedure TfrmMain.DoOnLoginStatusChanged(loginStatus: Byte);
 begin
   addSysLog('loginStatus:' + IntToStr(loginStatus));
   btnLoginStatus.Visible := loginStatus <> LOGIN_STATUS_OK;
-  btnLoginStatus.Caption := '未登录成功[' + IntToStr(loginStatus) + ']';
-  showOutOfServiceFrm(loginStatus <> LOGIN_STATUS_OK, loginStatus);
+  btnLoginStatus.Caption := '错误代码[' + IntToStr(loginStatus) + ']';
+  FLoginStatus := loginStatus;
+  showOutOfServicePanel();
 end;
 
 procedure TfrmMain.DoOnModifyZHBPassRsp(ret: Byte);
@@ -2124,23 +2137,23 @@ begin
 end;
 
 procedure TfrmMain.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
-//var
-//  dlg: TfrmCloseConfirm;
+var
+  dlg: TfrmCloseConfirm;
 begin
-//  dlg := TfrmCloseConfirm.Create(nil);
-//  try
-//    CanClose := dlg.ShowModal = mrOk;
-//  finally
-//    dlg.Free;
-//  end;
-  if MessageBox(Handle, '您确认关闭自助服务系统吗？', '确认', MB_YESNO + MB_ICONQUESTION) = ID_NO then
-  begin
-    CanClose := False;
-  end
-  else
-  begin
-    CanClose := True;
+  dlg := TfrmCloseConfirm.Create(nil);
+  try
+    CanClose := dlg.ShowModal = mrOk;
+  finally
+    dlg.Free;
   end;
+//  if MessageBox(Handle, '您确认关闭自助服务系统吗？', '确认', MB_YESNO + MB_ICONQUESTION) = ID_NO then
+//  begin
+//    CanClose := False;
+//  end
+//  else
+//  begin
+//    CanClose := True;
+//  end;
 end;
 
 procedure TfrmMain.FormCreate(Sender: TObject);
@@ -2195,6 +2208,7 @@ begin
   initMain;
   initDev;
   clearDefaultTip;
+  pnlOutOfServiceTip.Align := alClient;
 end;
 
 function TfrmMain.getBillAcceptorStatus: Byte;
@@ -2499,6 +2513,7 @@ begin
     isCityCardCharging := False;
     isNewCard := False;
     resetPageHistory;
+    showOutOfServicePanel();
   end
   else if (currPageName = 'pageMobileTopUpSuccess')
     or (currPageName = 'pageModifyZHBPassSuccess')
@@ -2638,6 +2653,18 @@ begin
   else
   begin
     FPauseServiceFrm.Hide;
+  end;
+end;
+
+procedure TfrmMain.showOutOfServicePanel;
+begin
+  if Notebook1.ActivePage = 'Default' then
+  begin
+    pnlOutOfServiceTip.Visible := FLoginStatus <> 0;
+    if pnlOutOfServiceTip.Visible then
+    begin
+      pnlOutOfServiceTip.BringToFront;
+    end;
   end;
 end;
 

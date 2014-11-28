@@ -113,6 +113,7 @@ type
     procedure dealCmdQueryQFTBalanceRsp(buf: array of Byte);
     procedure dealCmdModifyZHBPassRsp(buf: array of Byte);
     procedure dealCmdCheckCityCardType(buf: array of Byte);
+    procedure dealCmdEnableStatusChanged(buf: array of Byte);
 
     procedure initCmd(var cmdHead: TSTHead; cmdId: Word; var cmdEnd: TSTEnd; cmdMinSize: Integer);
 
@@ -319,6 +320,7 @@ begin
           S2C_QUERY_QFT_BALANCE: dealCmdQueryQFTBalanceRsp(buf);
           S2C_MODIFY_PASS_RSP: dealCmdModifyZHBPassRsp(buf);
           S2C_CHECK_CITY_CARD_TYPE_RSP: dealCmdCheckCityCardType(buf);
+          S2C_ENABLE_STATUS_CHANGED:dealCmdEnableStatusChanged(buf);
         else
           begin
             FLog.AddLog('处理数据错误:命令字不正确 ' + bytesToHexStr(wordToBytes(cmdId)));
@@ -754,6 +756,29 @@ begin
     if Assigned(FOnGetCityCardType) then
     begin
       FOnGetCityCardType(pcmd^.Ret);
+    end;
+  end;
+end;
+
+procedure TGateWayServerCom.dealCmdEnableStatusChanged(buf: array of Byte);
+var
+  pcmd: PCmdEnableStatusChangedS2C;
+  status: Byte;
+  terminalId: Integer;
+begin
+  if Length(buf) >= SizeOf(TCmdEnableStatusChangedS2C) then
+  begin
+    pcmd := PCmdEnableStatusChangedS2C(@buf[0]);
+    terminalId := ByteOderConvert_LongWord(pcmd^.CmdHead.TerminalId);
+    if GlobalParam.TerminalId = IntToStr(terminalId) then
+    begin
+      if Assigned(FOnLoginStatusChanged) then
+      begin
+        case pcmd^.Status of
+          0: FOnLoginStatusChanged(0);//启用
+          1: FOnLoginStatusChanged(3);//暂停
+        end;
+      end;
     end;
   end;
 end;

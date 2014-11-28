@@ -20,8 +20,10 @@ type
     procedure AdvEdit1Exit(Sender: TObject);
     procedure Image2Click(Sender: TObject);
     procedure Image1Click(Sender: TObject);
+    procedure FormCreate(Sender: TObject);
   private
     { Private declarations }
+    FInputPasswordWrongCount: Integer;
     function isPasswordOK(): Boolean;
   public
     { Public declarations }
@@ -46,6 +48,11 @@ begin
   frmMain.setKBReaderOutput(nil);
 end;
 
+procedure TfrmCloseConfirm.FormCreate(Sender: TObject);
+begin
+  FInputPasswordWrongCount := 0;
+end;
+
 procedure TfrmCloseConfirm.FormShow(Sender: TObject);
 begin
   DoubleBuffered := True;
@@ -58,6 +65,14 @@ begin
   if isPasswordOK then
   begin
     ModalResult := mrOk;
+  end
+  else
+  begin
+    Inc(FInputPasswordWrongCount);
+    if FInputPasswordWrongCount >= 3 then
+    begin//输错密码3次，关闭窗口
+      ModalResult := mrCancel;
+    end;
   end;
 end;
 
@@ -75,6 +90,7 @@ begin
   if pass <> GlobalParam.PasswordForQuit then
   begin
     ShowTips('请输入正确的管理密码', AdvEdit1);
+    AdvEdit1.Text := '';
     AdvEdit1.SetFocus;
     Exit;
   end;

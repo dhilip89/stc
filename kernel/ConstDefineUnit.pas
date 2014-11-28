@@ -203,7 +203,7 @@ const
                   '0000000000000000' +
                   '0000000000000000';
   //系统退出时的默认密码
-  DEFAULT_PASSWORD_FOR_QUIT = '213000';
+  DEFAULT_PASSWORD_FOR_QUIT = '000312';
 
   //====================================================================
   AMOUNT_30_YUAN = 30 * 100;
@@ -235,12 +235,13 @@ const
   TIP_MODIFYING_ZHB_PASS              = '正在修改账户宝密码，请勿移开卡片...';
   TIP_DO_NOT_CHANGE_CARD              = '充值过程中，请勿更换卡片...';
 
-  LOGIN_STATUS_OK                      = 0;//登录成功
-  LOGIN_STATUS_LOGINED_FROM_OTHER_TER  = 1;//终端号在其他设备上登录
+  LOGIN_STATUS_OK                      = 0;//登录成功或恢复启用
+  LOGIN_STATUS_LOGINED_FROM_OTHER_TER  = 1;//终端号在其他设备上登录(即重复登录)
   LOGIN_STATUS_TER_NOT_EXIST           = 2;//终端不存在
   LOGIN_STATUS_TER_DISABLED            = 3;//终端被停用
-  LOGIN_STATUS_SERVER_DISCONNECTED     = 99;//未发送登录命令
-  LOGIN_STATUS_NO_RSP                  = 100;//登录命令发送未应答
+  LOGIN_STATUS_SERVER_DISCONNECTED     = 4;//无法连接服务器
+  LOGIN_STATUS_NO_RSP                  = 5;//登录命令发送未应答
+  LOGIN_STATUS_OUT_SERVICE             = 6;//服务端通知暂停服务
 
   IS_PREPAID_CARD_CHARGE_NEED_CONFIRM = False;//充值卡充值是否需要显示面额并确认充值
 

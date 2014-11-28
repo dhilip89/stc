@@ -35,6 +35,7 @@ var
   bankCardNoOrPassword: ansistring;//充值时使用的银行卡号或者充值卡卡号
 
   FGlobalTip: TMyHintWindow;
+  FLoginStatus: Byte = 4;//登录状态
 
 function PopMsg(Title: string; Msg: string): boolean;
 function split(src,dec : string):TStringList;
