@@ -532,6 +532,9 @@ type
     procedure DoOnClickTopLeftToQuit;
     procedure showOutOfServiceFrm(isFrmVisible: Boolean; status: Byte = 0);
     procedure showOutOfServicePanel();
+
+    procedure DoOnClearCashBox;
+    procedure DoOnPauseService;
   protected
     procedure CreateParams(var Params: TCreateParams); override;
   public
@@ -1715,6 +1718,12 @@ begin
   end;
 end;
 
+procedure TfrmMain.DoOnPauseService;
+begin
+  FIsPausingService := not FIsPausingService;
+  DoOnLoginStatusChanged(FLoginStatus);
+end;
+
 procedure TfrmMain.DoOnPayCash;
 var
   dlg: TfrmWaiting;
@@ -2042,6 +2051,11 @@ begin
   end;
 end;
 
+procedure TfrmMain.DoOnClearCashBox;
+begin
+  DataServer.SendCmdClearCashBox(0);
+end;
+
 procedure TfrmMain.DoOnClickTopLeftToQuit;
 begin
   if MilliSecondsBetween(firstTime, Now) <= 5000 then
@@ -2119,12 +2133,33 @@ begin
   end;
 end;
 
+{
+  没有人工干预暂停的情况下，就按loginStatus的0-5的值显示
+  如果有人工干预暂停的情况下，loginStatus只有为0的时候，才显示人工干预的痕迹，
+  否则
+}
 procedure TfrmMain.DoOnLoginStatusChanged(loginStatus: Byte);
 begin
   addSysLog('loginStatus:' + IntToStr(loginStatus));
-  btnLoginStatus.Visible := loginStatus <> LOGIN_STATUS_OK;
-  btnLoginStatus.Caption := '错误代码[' + IntToStr(loginStatus) + ']';
   FLoginStatus := loginStatus;
+
+  if not FIsPausingService then
+  begin
+    btnLoginStatus.Visible := loginStatus <> LOGIN_STATUS_OK;
+    btnLoginStatus.Caption := '错误代码[' + IntToStr(loginStatus) + ']';
+  end
+  else
+  begin
+    btnLoginStatus.Visible := True;
+    if loginStatus = LOGIN_STATUS_OK then
+    begin
+      btnLoginStatus.Caption := '错误代码[6]';
+    end
+    else
+    begin
+      btnLoginStatus.Caption := '错误代码[' + IntToStr(loginStatus) + ']';
+    end;
+  end;
   showOutOfServicePanel();
 end;
 
@@ -2142,6 +2177,8 @@ var
 begin
   dlg := TfrmCloseConfirm.Create(nil);
   try
+    dlg.OnPauseService := DoOnPauseService;
+    dlg.OnClearCashBox := DoOnClearCashBox;
     CanClose := dlg.ShowModal = mrOk;
   finally
     dlg.Free;
@@ -2660,7 +2697,7 @@ procedure TfrmMain.showOutOfServicePanel;
 begin
   if Notebook1.ActivePage = 'Default' then
   begin
-    pnlOutOfServiceTip.Visible := FLoginStatus <> 0;
+    pnlOutOfServiceTip.Visible := (FLoginStatus <> 0) or FIsPausingService;
     if pnlOutOfServiceTip.Visible then
     begin
       pnlOutOfServiceTip.BringToFront;

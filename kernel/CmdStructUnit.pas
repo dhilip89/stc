@@ -25,6 +25,7 @@ const
   C2S_QUERY_QFT_BALANCE        = $0009;//企福通余额查询
   C2S_MODIFY_PASS              = $000A;//账户宝密码修改
   C2S_CHECK_CITY_CARD_TYPE     = $000B;//检测用户卡类型
+  C2S_CLEAR_CASHBOX            = $000D;//清空钱箱
 {******************************终端发起命令字******************************}
 
 {*****************************服务端发起命令字*****************************}
@@ -219,6 +220,14 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdCheckCityCardTypeC2S = ^TCmdCheckCityCardTypeC2S;
+
+  //通知服务端清空钱箱命令
+  TCmdClearCashBoxC2S = packed record
+    CmdHead: TSTHead;
+    CashAmount: Integer;
+    CmdEnd: TSTEnd;
+  end;
+  PCmdClearCashBoxC2S = ^TCmdClearCashBoxC2S;
 {******************************终端发起命令******************************}
 
 

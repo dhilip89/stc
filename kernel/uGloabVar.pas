@@ -36,6 +36,7 @@ var
 
   FGlobalTip: TMyHintWindow;
   FLoginStatus: Byte = 4;//µÇÂ¼×´Ì¬
+  FIsPausingService: Boolean = False;//ÊÇ·ñÔÝÍ£·þÎñ
 
 function PopMsg(Title: string; Msg: string): boolean;
 function split(src,dec : string):TStringList;
@@ -65,6 +66,7 @@ function getNextTSN():Integer;
 function getInitTSNFromFile: Integer;
 function writeTSNToFile(tsn: Integer): Boolean;
 procedure ShowTips(aTip: string; aCom: TControl);
+procedure SetSystemDateTime(vDateTime: TDateTime);
 
 implementation
 uses
@@ -602,6 +604,16 @@ end;
 procedure ShowTips(aTip: string; aCom: TControl);
 begin
   FGlobalTip.ShowHint(aTip, aCom);
+end;
+
+procedure SetSystemDateTime(vDateTime: TDateTime);
+var
+  vSysTime: TSystemTime;
+begin
+  DateTimeToSystemTime(vDateTime, vSysTime);
+  SetSystemTime(vSysTime);
+  //SetLocalTime(vSysTime);
+  SendMessage(HWND_BROADCAST,WM_TIMECHANGE,0,0) ;
 end;
 
 initialization
