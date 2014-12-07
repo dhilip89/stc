@@ -225,6 +225,7 @@ type
   TCmdClearCashBoxC2S = packed record
     CmdHead: TSTHead;
     CashAmount: Integer;
+    OperTime: array[0..5] of Byte;//YYMMDDHHMISS
     CmdEnd: TSTEnd;
   end;
   PCmdClearCashBoxC2S = ^TCmdClearCashBoxC2S;

@@ -53,7 +53,7 @@ var
 
 implementation
 uses
-  uGloabVar, frmMainUnit;
+  uGloabVar, frmMainUnit, FrmWaitingUnit;
 
 {$R *.dfm}
 
@@ -68,11 +68,36 @@ begin
 end;
 
 procedure TfrmCloseConfirm.btnClearCashBoxClick(Sender: TObject);
+var
+  dlg: TfrmWaiting;
+  tip: string;
 begin
-  if MessageBox(Handle, '您确认清空钱箱操作吗？', '确认', MB_YESNO + MB_ICONQUESTION) = ID_Yes then
+  if CurrCashBoxAmount = 0 then
   begin
-    if Assigned(FOnClearCashBox) then
-      FOnClearCashBox;
+    tip := '当前钱箱现金额为0，请确认';
+  end
+  else
+  begin
+    if MessageBox(Handle, PChar('当前钱箱现金额为' + IntToStr(CurrCashBoxAmount) + '元，您确认进行提款操作吗？'), '确认', MB_YESNO + MB_ICONQUESTION) = ID_Yes then
+    begin
+      if Assigned(FOnClearCashBox) then
+      begin
+        FOnClearCashBox;
+        tip := '提款操作成功，请取走提款凭条';
+      end;
+    end;
+  end;
+
+  if tip <> '' then
+  begin
+    dlg := TfrmWaiting.Create(nil);
+    try
+      dlg.setWaitingTip(tip, False, True);
+      dlg.startTimer(2000);
+      dlg.ShowModal;
+    finally
+      dlg.Free;
+    end;
   end;
 end;
 

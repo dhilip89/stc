@@ -37,6 +37,8 @@ var
   FGlobalTip: TMyHintWindow;
   FLoginStatus: Byte = 4;//登录状态
   FIsPausingService: Boolean = False;//是否暂停服务
+  CurrCashBoxAmount: Integer;//当前钱箱现金金额  单位：元
+  LastClearCashBoxTime: TDateTime;//上次清空钱箱的时间
 
 function PopMsg(Title: string; Msg: string): boolean;
 function split(src,dec : string):TStringList;
@@ -67,10 +69,14 @@ function getInitTSNFromFile: Integer;
 function writeTSNToFile(tsn: Integer): Boolean;
 procedure ShowTips(aTip: string; aCom: TControl);
 procedure SetSystemDateTime(vDateTime: TDateTime);
+procedure updateCurrCashBoxAmount(newAmount: Integer);
+procedure getCashBoxDatatFromFile();
+procedure updateCurrCashBoxAmountToFile();
+procedure updateLastClearCashBoxTime(dt: TDateTime);
 
 implementation
 uses
-  Dialogs, drv_unit;
+  Dialogs, drv_unit, System.IniFiles;
 
 function split(src,dec : string):TStringList;
 var
@@ -139,10 +145,10 @@ end;
 function getChargeType: AnsiString;//0:现金 1:银联卡  2：充值卡  03企福通充值/专有账户充值
 begin
   case currChargeType  of
-    0: Result := '现金';
-    1: Result := '银联卡';
-    2: Result := '充值卡';
-    3: Result := '账户宝';
+    CHARGE_TYPE_CASH:         Result := '现金';
+    CHARGE_TYPE_BANK:         Result := '银联卡';
+    CHARGE_TYPE_PREPAID_CARD: Result := '充值卡';
+    CHARGE_TYPE_ZHB:          Result := '账户宝';
   end;
 end;
 
@@ -616,8 +622,63 @@ begin
   SendMessage(HWND_BROADCAST,WM_TIMECHANGE,0,0) ;
 end;
 
+procedure updateCurrCashBoxAmount(newAmount: Integer);
+begin
+  CurrCashBoxAmount := newAmount;
+  updateCurrCashBoxAmountToFile;
+end;
+
+procedure getCashBoxDatatFromFile();
+var
+  iniFile: TIniFile;
+  sectionName, keyName: string;
+begin
+  iniFile := TIniFile.Create(ExePath + 'data.ini');
+  try
+    sectionName := 'CashBox';
+    keyName := 'CashBoxAmount';
+    CurrCashBoxAmount := iniFile.ReadInteger(sectionName, keyName, 0);
+
+    keyName := 'ClearCashBoxTime';
+    LastClearCashBoxTime := iniFile.ReadDateTime(sectionName, keyName, 0);
+  finally
+    iniFile.Free;
+  end;
+end;
+
+procedure updateCurrCashBoxAmountToFile();
+var
+  iniFile: TIniFile;
+  sectionName, keyName: string;
+begin
+  iniFile := TIniFile.Create(ExePath + 'data.ini');
+  try
+    sectionName := 'CashBox';
+    keyName := 'CashBoxAmount';
+    iniFile.WriteInteger(sectionName, keyName, CurrCashBoxAmount);
+  finally
+    iniFile.Free;
+  end;
+end;
+
+procedure updateLastClearCashBoxTime(dt: TDateTime);
+var
+  iniFile: TIniFile;
+  sectionName, keyName: string;
+begin
+  iniFile := TIniFile.Create(ExePath + 'data.ini');
+  try
+    sectionName := 'CashBox';
+    keyName := 'ClearCashBoxTime';
+    iniFile.WriteDateTime(sectionName, keyName, dt);
+  finally
+    iniFile.Free;
+  end;
+end;
+
 initialization
   DateSeparator := '-';
+  ExePath := ExtractFilePath(Application.ExeName);
   GlobalParam := TSystemParam.Create;
   ACmdManage := TCmdManage.create;
 

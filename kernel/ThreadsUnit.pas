@@ -512,12 +512,6 @@ end;
 
 procedure TBaseThread.DoOnTaskTimeout;
 begin
-  if FRefundReason <> '' then
-  begin
-    setWaitingTip(errInfo, True);
-    Sleep(3500);
-  end;
-  printRefundInfo(amountRefund, currCityCardNo);
   frmWaiting.noticeTimeout;
 end;
 
@@ -824,6 +818,9 @@ begin
             $CC:;//stacking
             $EB:
               begin
+                //更新钱箱金额
+                updateCurrCashBoxAmount(CurrCashBoxAmount + FAmountRead);
+
                 addSysLog('CityCardNo:' + currCityCardNo + ', Current Stacked: ' + IntToStr(tempAmount) + 'RMB, Total Stacked:' + IntToStr(FAmountRead) + 'RMB');
                 Inc(FAmountRead, tempAmount);//stacked;
                 tempAmount := 0;
@@ -897,8 +894,17 @@ end;
 
 procedure TCityCardCharge.DoOnTaskTimeout;
 begin
-  setWaitingTip('充值交易超时，请取回失败凭证');
-  Sleep(3000);
+  //只针对现金充值或已成功获取过mac2的充值进行退款凭条打印
+  if (currChargeType = CHARGE_TYPE_CASH) or (FGetMac2Status = 1) then
+  begin
+    printRefundInfo(amountRefund, currCityCardNo);
+    setWaitingTip('充值交易超时，请取回退款凭证', True);
+  end
+  else
+  begin
+    setWaitingTip('充值交易超时失败' + #13#10 + '原因:' + FRefundReason);
+  end;
+  Sleep(3500);
   inherited;
 end;
 

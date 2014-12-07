@@ -147,7 +147,7 @@ type
                 cardNo, asn, CardTradeNo: array of Byte; OldBalance: Integer;
                 chargeTime, fakeRandom, mac1: array of Byte);
     procedure SendCmdCheckCityCardType(cityCardNo: AnsiString);
-    procedure SendCmdClearCashBox(cashAmount: Integer);
+    procedure SendCmdClearCashBox(cashAmount: Integer; operTime: TDateTime);
 
     procedure SetFTimerEnabled(enabled: Boolean);
 
@@ -478,12 +478,15 @@ begin
   DirectSend(cmd, SizeOf(TCmdCheckCityCardTypeC2S));
 end;
 
-procedure TGateWayServerCom.SendCmdClearCashBox(cashAmount: Integer);
+procedure TGateWayServerCom.SendCmdClearCashBox(cashAmount: Integer; operTime: TDateTime);
 var
   cmd: TCmdClearCashBoxC2S;
+  tempBuf: TByteDynArray;
 begin
   initCmd(cmd.CmdHead, C2S_CLEAR_CASHBOX, cmd.CmdEnd, SizeOf(TCmdClearCashBoxC2S));
   cmd.CashAmount := ByteOderConvert_LongWord(cashAmount);
+  tempBuf := hexStrToBytes(FormatDateTime('yyMMddhhnnss', operTime));
+  CopyMemory(@cmd.OperTime[0], @tempBuf[0], Min(Length(tempBuf), Length(cmd.OperTime)));
   DirectSend(cmd, SizeOf(TCmdClearCashBoxC2S));
 end;
 

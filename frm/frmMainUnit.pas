@@ -533,6 +533,7 @@ type
     procedure showOutOfServiceFrm(isFrmVisible: Boolean; status: Byte = 0);
     procedure showOutOfServicePanel();
 
+    procedure printWithdrawMoneyInfo;
     procedure DoOnClearCashBox;
     procedure DoOnPauseService;
   protected
@@ -737,7 +738,7 @@ var
 begin
   dlg := TfrmWaiting.Create(nil);
   try
-    if currChargeType = 2 then
+    if currChargeType = CHARGE_TYPE_PREPAID_CARD then
     begin
       dlg.setWaitingTip(TIP_CHECKING_PREPAID_CARD);
       threadChargeCardCheck := TChargeCardCheck.Create(True, dlg, 10, currCityCardNo, Trim(edtPasswordForChargeCard.Text));
@@ -801,7 +802,7 @@ begin
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
-      currChargeType := 0;
+      currChargeType := CHARGE_TYPE_CASH;
       isCityCardCharging := True;
       Notebook1.ActivePage := 'pageCityCardChooseChargeAmount';
       cityCardBizType := 0;
@@ -826,7 +827,7 @@ end;
 
 procedure TfrmMain.btnChargeCardClick(Sender: TObject);
 begin
-  currChargeType := 2;
+  currChargeType := CHARGE_TYPE_PREPAID_CARD;
   initPnlPassword4ChargeCard(0, 16);
   Notebook1.ActivePage := 'pagePasswordForChargeCardOrQFT';
 end;
@@ -1061,7 +1062,7 @@ end;
 
 procedure TfrmMain.btnQFTCardClick(Sender: TObject);
 begin
-  currChargeType := 3;
+  currChargeType := CHARGE_TYPE_ZHB;
   initPnlPassword4ChargeCard(1, 6);
   Notebook1.ActivePage := 'pagePasswordForChargeCardOrQFT';
 end;
@@ -1135,7 +1136,7 @@ procedure TfrmMain.btnPayBankCardClick(Sender: TObject);
 begin
   AdvEdit2.Text := '';
   Notebook1.ActivePage := 'pagePayTypeBank';
-  currChargeType := 1;
+  currChargeType := CHARGE_TYPE_BANK;
 end;
 
 procedure TfrmMain.btnPayCashClick(Sender: TObject);
@@ -1144,7 +1145,7 @@ var
   mr: TModalResult;
   newBalance: Double;
 begin
-  currChargeType := 0;
+  currChargeType := CHARGE_TYPE_CASH;
   Notebook1.ActivePage := 'pageCash';
   dlg := TfrmWaiting.Create(nil);
   try
@@ -1313,7 +1314,7 @@ begin
     mr := dlg.ShowModal;
     if mr = mrOk then
     begin
-      currChargeType := 2;
+      currChargeType := CHARGE_TYPE_PREPAID_CARD;
       btnInputPrepaidCardPasswordOk.Enabled := False;
       edtPrepaidCardPassword.Text := '';
       Notebook1.ActivePage := 'pageInputPrepaidCardPassword';
@@ -1694,7 +1695,7 @@ begin
     if mr = mrOk then
     begin
       queryZHBBalanceFlag := 2;
-      currChargeType := 3;
+      currChargeType := CHARGE_TYPE_ZHB;
       btnZHBPasswordOk.Enabled := False;
       edtZHBPassword.Text := '';
       Notebook1.ActivePage := 'pageInputZHBPassword';
@@ -1731,7 +1732,7 @@ var
   newBalance: Double;
   thread: TGetCashAmount;
 begin
-  currChargeType := 0;
+  currChargeType := CHARGE_TYPE_CASH;
   Notebook1.ActivePage := 'pageCash';
   dlg := TfrmWaiting.Create(nil);
   try
@@ -2053,7 +2054,9 @@ end;
 
 procedure TfrmMain.DoOnClearCashBox;
 begin
-  DataServer.SendCmdClearCashBox(0);
+  printWithdrawMoneyInfo;
+  DataServer.SendCmdClearCashBox(CurrCashBoxAmount, LastClearCashBoxTime);
+  updateCurrCashBoxAmount(0);
 end;
 
 procedure TfrmMain.DoOnClickTopLeftToQuit;
@@ -2211,6 +2214,7 @@ begin
   FPauseServiceFrm := TfrmWaiting.Create(nil);
   FPauseServiceFrm.WindowState := wsMaximized;
   FPauseServiceFrm.AdvSmoothLabel1.Caption.Font.Size := 60;
+  getCashBoxDatatFromFile;
   Application.OnException := DoOnAppException;
 end;
 
@@ -2577,6 +2581,31 @@ begin
 
   resetBackgroudImg;
   setPanelInitPos;
+end;
+
+procedure TfrmMain.printWithdrawMoneyInfo;
+var
+  printInfo, strLastWithDrawTime: AnsiString;
+begin
+  if lastClearCashBoxTime = 0 then
+  begin
+    strLastWithDrawTime := '-';
+  end
+  else
+  begin
+    strLastWithDrawTime := FormatDateTime('HH:nn:ss', Now);
+  end;
+
+  LastClearCashBoxTime := Now;
+  updateLastClearCashBoxTime(LastClearCashBoxTime);
+
+  printInfo := ' 终端编号：' + GlobalParam.TerminalId + #13#10
+             + ' 交易类型：提款'#13#10
+             + ' 提款金额：' + IntToStr(CurrCashBoxAmount) + '元' + #13#10
+             + ' 提款时间：' + FormatDateTime('HH:nn:ss', LastClearCashBoxTime) + #13#10
+             + ' 上次提款时间：' + strLastWithDrawTime;
+
+  printContent('提款凭证', printInfo);
 end;
 
 procedure TfrmMain.resetBackgroudImg;

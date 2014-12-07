@@ -205,6 +205,10 @@ const
   //系统退出时的默认密码
   DEFAULT_PASSWORD_FOR_QUIT = '000312';
 
+  CHARGE_TYPE_CASH          = 0;//现金充值
+  CHARGE_TYPE_BANK          = 1;//银行卡充值
+  CHARGE_TYPE_PREPAID_CARD  = 2;//充值卡充值
+  CHARGE_TYPE_ZHB           = 3;//账户宝充值
   //====================================================================
   AMOUNT_30_YUAN = 30 * 100;
   AMOUNT_50_YUAN = 50 * 100;
