@@ -187,7 +187,7 @@ begin
         fs := TFileStream.Create(FileName, WriteMode)
       else
       begin
-        Dir := ExtractFilePath(Application.ExeName) + '\' + ExtractFileDir(FileName);
+        Dir := ExtractFilePath(Application.ExeName) + ExtractFileDir(FileName);
         if not DirectoryExists(Dir) then
           if not ForceDirectories(Dir) then
             raise Exception.Create('Cannot create ' + Dir + '. ');

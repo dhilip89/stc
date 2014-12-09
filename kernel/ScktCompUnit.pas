@@ -321,7 +321,7 @@ begin
       //sleep
       if FSocket.Active then
       begin
-        Sleep(ActiveSleepTime)
+        Sleep(ActiveSleepTime);
       end
       else
       begin
@@ -621,24 +621,24 @@ begin
     //如果20遍(秒)收不到数据,则发一次心跳。发过心跳后再有5遍收不到数据，则断开网关。
       Inc(FErrorCount);
       if FErrorCount >= 20 then
-      begin
-        if (FErrorCount >= 50) then
+      begin                          //   operTimeout + activeSleepTime
+        if (FErrorCount >= 400) then //300 * (100 + 50)=45000 ms 即没数据时每45秒发送一次心跳数据
         begin
           FLog.AddLog('发心跳');
           SendHeartBeat;
           isRecData := false; //发完一个心跳后,把就变量设为FASLE,如果五秒后还没有收到数据,则断开网关,重新连接
           FErrorCount := 0;
-        end else
-          if not isRecData then //发过心跳五秒后没有收到数据情况下,断开网关重连.
-          begin
+        end
+        else if not isRecData then //发过心跳五秒后没有收到数据情况下,断开网关重连.
+        begin
 {$IFDEF For_HeartToGateway}
-            FSocket.Active := false;
-            Sleep(1000);
-            DoSocketDisConnectEvent;
-            FLog.AddLog('断开网关');
-            FErrorCount := 0;
+          FSocket.Active := false;
+          Sleep(1000);
+          DoSocketDisConnectEvent;
+          FLog.AddLog('断开网关');
+          FErrorCount := 0;
 {$ENDIF}
-          end;
+        end;
       end;
     end;
   except on E: Exception do

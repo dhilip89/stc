@@ -633,7 +633,7 @@ var
   iniFile: TIniFile;
   sectionName, keyName: string;
 begin
-  iniFile := TIniFile.Create(ExePath + 'data.ini');
+  iniFile := TIniFile.Create(ExtractFilePath(Application.ExeName) + 'data.ini');
   try
     sectionName := 'CashBox';
     keyName := 'CashBoxAmount';
@@ -651,7 +651,7 @@ var
   iniFile: TIniFile;
   sectionName, keyName: string;
 begin
-  iniFile := TIniFile.Create(ExePath + 'data.ini');
+  iniFile := TIniFile.Create(ExtractFilePath(Application.ExeName) + 'data.ini');
   try
     sectionName := 'CashBox';
     keyName := 'CashBoxAmount';
@@ -666,7 +666,7 @@ var
   iniFile: TIniFile;
   sectionName, keyName: string;
 begin
-  iniFile := TIniFile.Create(ExePath + 'data.ini');
+  iniFile := TIniFile.Create(ExtractFilePath(Application.ExeName) + 'data.ini');
   try
     sectionName := 'CashBox';
     keyName := 'ClearCashBoxTime';
@@ -678,7 +678,7 @@ end;
 
 initialization
   DateSeparator := '-';
-  ExePath := ExtractFilePath(Application.ExeName);
+  //ExePath := ExtractFilePath(Application.ExeName);
   GlobalParam := TSystemParam.Create;
   ACmdManage := TCmdManage.create;
 
