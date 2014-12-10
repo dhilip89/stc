@@ -114,6 +114,7 @@ type
     procedure dealCmdModifyZHBPassRsp(buf: array of Byte);
     procedure dealCmdCheckCityCardType(buf: array of Byte);
     procedure dealCmdEnableStatusChanged(buf: array of Byte);
+    procedure dealCmdGetCashBoxAmount(buf: array of Byte);
 
     procedure initCmd(var cmdHead: TSTHead; cmdId: Word; var cmdEnd: TSTEnd; cmdMinSize: Integer);
 
@@ -148,6 +149,7 @@ type
                 chargeTime, fakeRandom, mac1: array of Byte);
     procedure SendCmdCheckCityCardType(cityCardNo: AnsiString);
     procedure SendCmdClearCashBox(cashAmount: Integer; operTime: TDateTime);
+    procedure SendCmdAddCashBoxAmount(amountAdd: Integer);
 
     procedure SetFTimerEnabled(enabled: Boolean);
 
@@ -322,6 +324,7 @@ begin
           S2C_MODIFY_PASS_RSP: dealCmdModifyZHBPassRsp(buf);
           S2C_CHECK_CITY_CARD_TYPE_RSP: dealCmdCheckCityCardType(buf);
           S2C_ENABLE_STATUS_CHANGED:dealCmdEnableStatusChanged(buf);
+          S2C_ADD_CASH_BOX_AMOUNT: dealCmdGetCashBoxAmount(buf);
         else
           begin
             FLog.AddLog('处理数据错误:命令字不正确 ' + bytesToHexStr(wordToBytes(cmdId)));
@@ -488,6 +491,15 @@ begin
   tempBuf := hexStrToBytes(FormatDateTime('yyMMddhhnnss', operTime));
   CopyMemory(@cmd.OperTime[0], @tempBuf[0], Min(Length(tempBuf), Length(cmd.OperTime)));
   DirectSend(cmd, SizeOf(TCmdClearCashBoxC2S));
+end;
+
+procedure TGateWayServerCom.SendCmdAddCashBoxAmount(amountAdd: Integer);
+var
+  cmd: TCmdAddCashBoxAmountC2S;
+begin
+  initCmd(cmd.CmdHead, C2S_ADD_CASH_BOX_AMOUNT, cmd.CmdEnd, SizeOf(TCmdAddCashBoxAmountC2S));
+  cmd.AmountAdded := ByteOderConvert_LongWord(amountAdd);
+  DirectSend(cmd, SizeOf(TCmdAddCashBoxAmountC2S));
 end;
 
 procedure TGateWayServerCom.SendCmdGetMac2(cardNo, password, asn, CardTradeNo: array of Byte;
@@ -792,6 +804,24 @@ begin
           1: FOnLoginStatusChanged(3);//暂停
         end;
       end;
+    end;
+  end;
+end;
+
+procedure TGateWayServerCom.dealCmdGetCashBoxAmount(buf: array of Byte);
+var
+  pcmd: PCmdAddCashBoxAmountS2C;
+  cashBoxTotalAmount: Integer;
+begin
+  if Length(buf) >= SizeOf(TCmdAddCashBoxAmountS2C) then
+  begin
+    pcmd := PCmdAddCashBoxAmountS2C(@buf[0]);
+    cashBoxTotalAmount := ByteOderConvert_LongWord(pcmd^.CashBoxTotalAmount);
+    if cashBoxTotalAmount > CurrCashBoxAmount then
+    begin//如果服务端返回的钱箱总额大于本机的数据，则证明设备端数据需与服务端保持一致
+      addSysLog('cashbox amount from server[' + IntToStr(cashBoxTotalAmount) + '] is greater than cashbox amount from local[' + IntToStr(CurrCashBoxAmount) + ']');
+      CurrCashBoxAmount := cashBoxTotalAmount;
+      updateCurrCashBoxAmountToFile;
     end;
   end;
 end;

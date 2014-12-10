@@ -11,8 +11,6 @@ uses
   Windows, winsock, Types;
 
 const
-  VER = $0100;
-
 {******************************终端发起命令字******************************}
   C2S_TYRET                    = $0001;//终端通用应答
   C2S_HEARTBEAT                = $0002;//终端心跳
@@ -26,6 +24,7 @@ const
   C2S_MODIFY_PASS              = $000A;//账户宝密码修改
   C2S_CHECK_CITY_CARD_TYPE     = $000B;//检测用户卡类型
   C2S_CLEAR_CASHBOX            = $000D;//清空钱箱
+  C2S_ADD_CASH_BOX_AMOUNT      = $000E;//从服务端获取现金额
 {******************************终端发起命令字******************************}
 
 {*****************************服务端发起命令字*****************************}
@@ -39,6 +38,7 @@ const
   S2C_MODIFY_PASS_RSP          = $700A;//账户宝密码修改应答
   S2C_CHECK_CITY_CARD_TYPE_RSP = $700B;//检测用户卡类型
   S2C_ENABLE_STATUS_CHANGED    = $700C;//可用状态变化
+  S2C_ADD_CASH_BOX_AMOUNT      = $700E;//服务端返回现金额
 {*****************************服务端发起命令字*****************************}
 
 {*********************************公共常量*********************************}
@@ -229,6 +229,14 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdClearCashBoxC2S = ^TCmdClearCashBoxC2S;
+
+  //从服务端获取钱箱现金
+  TCmdAddCashBoxAmountC2S = packed record
+    CmdHead: TSTHead;
+    AmountAdded: Integer;
+    CmdEnd: TSTEnd;
+  end;
+  PCmdAddCashBoxAmountC2S = ^TCmdAddCashBoxAmountC2S;
 {******************************终端发起命令******************************}
 
 
@@ -331,6 +339,14 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdEnableStatusChangedS2C = ^TCmdEnableStatusChangedS2C;
+
+  //服务端现金总额
+  TCmdAddCashBoxAmountS2C = packed record
+    CmdHead: TSTHead;
+    CashBoxTotalAmount: Integer;//服务端现金总额
+    CmdEnd: TSTEnd;
+  end;
+  PCmdAddCashBoxAmountS2C = ^TCmdAddCashBoxAmountS2C;
 {*****************************服务端发起命令*****************************}
 
 function PtrAdd(p: pointer; offset: integer): pointer;
