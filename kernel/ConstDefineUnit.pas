@@ -245,7 +245,7 @@ const
   LOGIN_STATUS_TER_DISABLED            = 3;//终端被停用
   LOGIN_STATUS_SERVER_DISCONNECTED     = 4;//无法连接服务器
   LOGIN_STATUS_NO_RSP                  = 5;//登录命令发送未应答
-  LOGIN_STATUS_OUT_SERVICE             = 6;//服务端通知暂停服务
+  LOGIN_STATUS_OUT_SERVICE             = 6;//服务端通知暂停服务或人工暂停服务
 
   IS_PREPAID_CARD_CHARGE_NEED_CONFIRM = False;//充值卡充值是否需要显示面额并确认充值
 

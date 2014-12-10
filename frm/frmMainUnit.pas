@@ -325,9 +325,9 @@ type
     Image31: TImage;
     Image32: TImage;
     AdvSmoothLabel17: TAdvSmoothLabel;
+    pnlOutOfServiceTip: TAdvSmoothPanel;
     btnHome: TAdvGlowButton;
     btnPrevious: TAdvGlowButton;
-    pnlOutOfServiceTip: TAdvSmoothPanel;
     procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure Timer1Timer(Sender: TObject);
@@ -2305,6 +2305,8 @@ begin
 end;
 
 procedure TfrmMain.iniForm;
+var
+  dis: Integer;
 begin
   if FIsPosSet then
     Exit;
@@ -2312,12 +2314,14 @@ begin
   FIsPosSet := True;
 
   // *************调整返回首页的按钮及倒计时标签的位置
-//  btnHome.Left := pnlTop.Width - btnHome.Width - 15;
-//  btnHome.Top := pnlTop.Height - btnHome.Height - 5;
-//  btnPrevious.Left := btnHome.Left - btnPrevious.Width - 15;
-//  btnPrevious.Top := btnHome.Top;
-  lblCountdown.Left := pnlTop.Width - lblCountdown.Width - 30;
-  lblCountdown.Top := btnHome.Top - lblCountdown.Height - 5;
+  dis := 30;
+  btnHome.Left := dis;
+  btnHome.Top := btnHome.Parent.Height - dis - btnHome.Height;
+  btnPrevious.Top := btnHome.Top;
+  btnPrevious.Left := btnHome.Parent.Width - dis - btnPrevious.Width;
+
+//  lblCountdown.Left := pnlTop.Width - lblCountdown.Width - 30;
+//  lblCountdown.Top := btnHome.Top - lblCountdown.Height - 5;
   lblCountdown.Parent.DoubleBuffered := True;
   // *************调整返回首页的按钮及倒计时标签的位置
 
@@ -2827,15 +2831,23 @@ begin
   begin
     btnPrevious.Visible := False;
   end;
-  if isEnabled then
+  if btnHome.Visible then
   begin
-    lblCountdown.Left := 0;
-    btnHome.Left := 0;
-    if btnPrevious.Visible then
-    begin
-      btnPrevious.Left := 0;
-    end;
+    btnHome.BringToFront;
   end;
+  if btnPrevious.Visible then
+  Begin
+    btnPrevious.BringToFront;
+  End;
+//  if isEnabled then
+//  begin
+//    lblCountdown.Left := 0;
+//    btnHome.Left := 0;
+//    if btnPrevious.Visible then
+//    begin
+//      btnPrevious.Left := 0;
+//    end;
+//  end;
 end;
 
 procedure TfrmMain.setDlgProgressTransparent(isTransparent: Boolean);

@@ -819,7 +819,7 @@ begin
             $EB:
               begin
                 //¸üÐÂÇ®Ïä½ð¶î
-                updateCurrCashBoxAmount(CurrCashBoxAmount + FAmountRead);
+                updateCurrCashBoxAmount(CurrCashBoxAmount + tempAmount);
 
                 addSysLog('CityCardNo:' + currCityCardNo + ', Current Stacked: ' + IntToStr(tempAmount) + 'RMB, Total Stacked:' + IntToStr(FAmountRead) + 'RMB');
                 Inc(FAmountRead, tempAmount);//stacked;
