@@ -114,7 +114,7 @@ type
     procedure dealCmdModifyZHBPassRsp(buf: array of Byte);
     procedure dealCmdCheckCityCardType(buf: array of Byte);
     procedure dealCmdEnableStatusChanged(buf: array of Byte);
-    procedure dealCmdGetCashBoxAmount(buf: array of Byte);
+    procedure dealCmdAddCashBoxAmount(buf: array of Byte);
 
     procedure initCmd(var cmdHead: TSTHead; cmdId: Word; var cmdEnd: TSTEnd; cmdMinSize: Integer);
 
@@ -324,7 +324,7 @@ begin
           S2C_MODIFY_PASS_RSP: dealCmdModifyZHBPassRsp(buf);
           S2C_CHECK_CITY_CARD_TYPE_RSP: dealCmdCheckCityCardType(buf);
           S2C_ENABLE_STATUS_CHANGED:dealCmdEnableStatusChanged(buf);
-          S2C_ADD_CASH_BOX_AMOUNT: dealCmdGetCashBoxAmount(buf);
+          S2C_ADD_CASH_BOX_AMOUNT: dealCmdAddCashBoxAmount(buf);
         else
           begin
             FLog.AddLog('处理数据错误:命令字不正确 ' + bytesToHexStr(wordToBytes(cmdId)));
@@ -808,7 +808,7 @@ begin
   end;
 end;
 
-procedure TGateWayServerCom.dealCmdGetCashBoxAmount(buf: array of Byte);
+procedure TGateWayServerCom.dealCmdAddCashBoxAmount(buf: array of Byte);
 var
   pcmd: PCmdAddCashBoxAmountS2C;
   cashBoxTotalAmount: Integer;

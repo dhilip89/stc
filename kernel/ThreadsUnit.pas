@@ -1551,6 +1551,21 @@ begin
     Exit;
   end;
 
+  //verify pin
+  sendHexStr := '0020000003951246';
+  CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));
+
+  sendLen := Length(sendHexStr) div 2;
+  recvLen := 0;
+  ret := dc_pro_commandlink_hex(icdev, sendLen, sendBuf, recvLen, recvBuf, 7, 56);
+  if (ret <> 0) or (checkRecvBufEndWith9000(recvBuf, recvLen) <> '9000') then
+  begin
+    taskRet := 2;
+    errInfo := '卡片校验PIN失败';
+    addSysLog('verify pin err,recvBuf:' + recvBuf);
+    Exit;
+  end;
+
   //读出卡号和应用序列号
   sendHexStr := '00B0950000';
   CopyMemory(@sendBuf[0], @sendHexStr[1], Length(sendHexStr));

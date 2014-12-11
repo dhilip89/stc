@@ -12,7 +12,7 @@ interface
 uses Messages;
 const
 
-  VER = $0100;
+  VER = $0101;
 
   //市民卡LOGO图案的数据
   LOGO_BIT_DATA = '0000000000000000' +
