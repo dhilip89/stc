@@ -534,7 +534,7 @@ begin
   Sleep(10);
   sTime := Now;
   isTimeout := False;
-  taskRet := 0;
+  taskRet := TASK_RET_OK;
   addSysLog(Self.ClassName + ' execute');
   while not FIsInterrupted and not doTask do
   begin
@@ -672,6 +672,8 @@ var
   tempAmount: Integer;
   totalAmount: Integer;
   st: TDateTime;
+  isExceptionExists: Boolean;//纸币机是否有卡住
+  respCode: Byte;//应答码
 begin
   Result := False;
   tip := '需 付 款 金 额:%-3d元'#13#10 +
@@ -685,7 +687,7 @@ begin
     setWaitingTip(Format(tip, [FCashAmount div 100, FAmountRead]));
     Sleep(2000);
     Result := True;
-    taskRet := 0;
+    taskRet := TASK_RET_OK;
     Exit;
   {$ENDIF}
 
@@ -704,14 +706,16 @@ begin
 
   //打开串口
   try
-
     //发送 0x11 号命令查找识币器是否连接
     sspCmd.CommandData[0] := $11;
     sspCmd.CommandDataLength := 1;
-    if SSPSendCommand(@sspCmd, @sspCmdInfo) = 0then
+    SSPSendCommand(@sspCmd, @sspCmdInfo);
+    respCode := sspCmd.ResponseData[0];
+    if respCode <> BILL_VALIDATOR_CMD_OK then
     begin
-      taskRet := 2;
-      errInfo := '纸币器无法正常工作';
+      taskRet := TASK_RET_QUIT_LOOP;
+      errInfo := TIP_BILL_VALIDATOR_NOT_WORKING;
+      addSysLog('sspcmd send 0x11, response not ok,code:' + byteToHexStr(respCode));
       //ShowMessage('查找识币器是否连接命令执行失败');
       Exit;
     end;
@@ -719,30 +723,34 @@ begin
     //读取通道配置
     sspCmd.CommandData[0] := $0E;
     sspCmd.CommandDataLength := 1;
-    if (SSPSendCommand(@sspCmd, @sspCmdInfo) = 0) then
+    SSPSendCommand(@sspCmd, @sspCmdInfo);
+    respCode := sspCmd.ResponseData[0];
+    if respCode <> BILL_VALIDATOR_CMD_OK then
     begin
-      taskRet := 2;
-      errInfo := '纸币器无法正常工作';
+      taskRet := TASK_RET_QUIT_LOOP;
+      errInfo := TIP_BILL_VALIDATOR_NOT_WORKING;
+      addSysLog('sspcmd send 0x0E, response not ok,code:' + byteToHexStr(respCode));
       //ShowMessage('读取通道配置命令执行失败');
       Exit;
     end;
-    if sspCmd.ResponseData[0] = $F0 then
+
+    channelCount := sspCmd.ResponseData[1];
+    for I := 2 to 2 + channelCount - 1 do
     begin
-      channelCount := sspCmd.ResponseData[1];
-      for I := 2 to 2 + channelCount - 1 do
-      begin
-        cashAmount[i - 1] := sspCmd.ResponseData[I];
-      end;
+      cashAmount[i - 1] := sspCmd.ResponseData[I];
     end;
     //Memo1.Lines.Add(BufferToHex(@(cashAmount[1]), 6));
 
     //disable
     sspCmd.CommandData[0] := $09;
     sspCmd.CommandDataLength := 1;
-    if (SSPSendCommand(@sspCmd, @sspCmdInfo) = 0) then
+    SSPSendCommand(@sspCmd, @sspCmdInfo);
+    respCode := sspCmd.ResponseData[0];
+    if respCode <> BILL_VALIDATOR_CMD_OK then
     begin
-      taskRet := 2;
-      errInfo := '纸币器无法正常工作';
+      taskRet := TASK_RET_QUIT_LOOP;
+      errInfo := TIP_BILL_VALIDATOR_NOT_WORKING;
+      addSysLog('sspcmd send 0x09, response not ok,code:' + byteToHexStr(respCode));
       //ShowMessage('disable失败');
       Exit;
     end;
@@ -752,10 +760,13 @@ begin
     sspCmd.CommandData[1] := $B0;
     sspCmd.CommandData[2] := $00;
     sspCmd.CommandDataLength := 3;
-    if (SSPSendCommand(@sspCmd, @sspCmdInfo) = 0) then
+    SSPSendCommand(@sspCmd, @sspCmdInfo);
+    respCode := sspCmd.ResponseData[0];
+    if respCode <> BILL_VALIDATOR_CMD_OK then
     begin
-      taskRet := 2;
-      errInfo := '纸币器无法正常工作';
+      taskRet := TASK_RET_QUIT_LOOP;
+      errInfo := TIP_BILL_VALIDATOR_NOT_WORKING;
+      addSysLog('sspcmd send 0x02 0xB0 0x00, response not ok,code:' + byteToHexStr(respCode));
       //ShowMessage('启用通道设置失败');
       Exit;
     end;
@@ -763,10 +774,13 @@ begin
     //enable
     sspCmd.CommandData[0] := $0A;
     sspCmd.CommandDataLength := 1;
-    if (SSPSendCommand(@sspcmd, @sspCmdInfo) = 0) then
+    SSPSendCommand(@sspCmd, @sspCmdInfo);
+    respCode := sspCmd.ResponseData[0];
+    if respCode <> BILL_VALIDATOR_CMD_OK then
     begin
-      taskRet := 2;
-      errInfo := '纸币器无法正常工作';
+      taskRet := TASK_RET_QUIT_LOOP;
+      errInfo := TIP_BILL_VALIDATOR_NOT_WORKING;
+      addSysLog('sspcmd send 0x0A, response not ok,code:' + byteToHexStr(respCode));
       //ShowMessage('enable失败');
       Exit;
     end;
@@ -777,7 +791,7 @@ begin
     begin
       if FIsInterrupted then
       begin
-        taskRet := 2;
+        taskRet := TASK_RET_QUIT_LOOP;
         Exit;
       end;
 
@@ -787,11 +801,14 @@ begin
         sspCmd.CommandData[1] := $90;
         sspCmd.CommandData[2] := $00;
         sspCmd.CommandDataLength := 3;
-        if (SSPSendCommand(@sspCmd, @sspCmdInfo) = 0) then
+        SSPSendCommand(@sspCmd, @sspCmdInfo);
+        respCode := sspCmd.ResponseData[0];
+        if respCode <> BILL_VALIDATOR_CMD_OK then
         begin
-          taskRet := 3;
-          errInfo := '纸币器无法正常工作';
-          FRefundReason := '纸币机无法正常工作';
+          taskRet := TASK_RET_REFUND;
+          errInfo := TIP_BILL_VALIDATOR_NOT_WORKING;
+          FRefundReason := REFUND_REASON_VALIDATOR_SET_CHL_ERR;
+          addSysLog('sspcmd send 0x02 0x90 0x00, response not ok,code:' + byteToHexStr(respCode));
           //ShowMessage('设置50元通道失败');
           Exit;
         end;
@@ -799,47 +816,113 @@ begin
 
       sspCmd.CommandData[0] := $07;
       sspCmd.CommandDataLength := 1;
-      if (SSPSendCommand(@sspcmd, @sspCmdInfo) = 0) then
+      SSPSendCommand(@sspCmd, @sspCmdInfo);
+      respCode := sspCmd.ResponseData[0];
+      if respCode <> BILL_VALIDATOR_CMD_OK then
       begin
-        taskRet := 3;
-        errInfo := '纸币器无法正常工作';
-        FRefundReason := errInfo;
+        taskRet := TASK_RET_REFUND;
+        errInfo := TIP_BILL_VALIDATOR_NOT_WORKING;
+        FRefundReason := REFUND_REASON_VALIDATOR_NOT_WORKING;
+        addSysLog('sspcmd send 0x07, response not ok,code:' + byteToHexStr(respCode));
         //ShowMessage('poll 失败');
         Exit;
       end;
   //    Memo1.Lines.Add(IntToStr(sspCmd.ResponseDataLength));
   //    Memo1.Lines.Add(BufferToHex(@(sspCmd.ResponseData[0]), sspCmd.ResponseDataLength));
-      if sspCmd.ResponseData[0] = $F0 then
+      j := 1;
+      isExceptionExists := False;
+      while j < sspCmd.ResponseDataLength do
       begin
-        j := 1;
-        while j < sspCmd.ResponseDataLength do
-        begin
-          case sspCmd.ResponseData[j] of
-            $CC:;//stacking
-            $EB:
-              begin
-                //更新钱箱金额
-                updateCurrCashBoxAmount(CurrCashBoxAmount + tempAmount);
-                DataServer.SendCmdAddCashBoxAmount(tempAmount);
+        case sspCmd.ResponseData[j] of
+          $CC://stacking
+            begin
+            end;
+//          $E3://钱箱被取走
+//            begin
+//              isExceptionExists := True;
+//              errInfo := TIP_BILL_VALIDATOR_CASHBOX_GONE;
+//              addSysLog('检测到钱箱被取走');
+//              Break;
+//            end;
+//          $E4://钱箱已放回
+//            begin
+//
+//            end;
+//          $E6://发现有欺骗行为
+//            begin
+//
+//            end;
+          $E7://钱箱满
+            begin
+              isExceptionExists := True;
+              taskRet := TASK_RET_REFUND;
+              errInfo := TIP_BILL_VALIDATOR_CASHBOX_FULL;
+              FRefundReason := REFUND_REASON_CASHBOX_FULL;
+              addSysLog('validator detectes cash box is full');
+              Break;
+            end;
+//          $E8://识币器处于关闭状态，需要发送enable指令
+//            begin
+//
+//            end;
+          $E9://识币器非安全卡币
+            begin
+              isExceptionExists := True;
+              taskRet := TASK_RET_REFUND;
+              errInfo := TIP_BILL_VALIDATOR_IS_STUCKED;
+              FRefundReason := REFUND_REASON_VALIDATOR_STUCKED;
+              addSysLog('validator may be stucked unsafe');
+              Break;
+            end;
+          $EA://识币器安全卡币
+            begin
+              isExceptionExists := True;
+              taskRet := TASK_RET_REFUND;
+              errInfo := TIP_BILL_VALIDATOR_IS_STUCKED;
+              FRefundReason := REFUND_REASON_VALIDATOR_STUCKED;
+              addSysLog('validator may be stucked safe');
+              Break;
+            end;
+          $EB: //成功收币
+            begin
+              //更新钱箱金额
+              updateCurrCashBoxAmount(CurrCashBoxAmount + tempAmount);
+              DataServer.SendCmdAddCashBoxAmount(tempAmount);
 
-                addSysLog('CityCardNo:' + currCityCardNo + ', Current Stacked: ' + IntToStr(tempAmount) + 'RMB, Total Stacked:' + IntToStr(FAmountRead) + 'RMB');
-                Inc(FAmountRead, tempAmount);//stacked;
-                tempAmount := 0;
-                setWaitingTip(Format(tip, [FCashAmount div 100, FAmountRead]));
-                //Memo1.Lines.Add('totalAmount:' + IntToStr(amountRead));
-              end;
-            $EC: tempAmount := 0;
-            $ED: tempAmount := 0;
-            $EE://detecting cash
-              begin
-                tempAmount := cashAmount[sspCmd.ResponseData[j + 1]];
-                Inc(j);
-              end;
-            $EF:;//reading
+              addSysLog('CityCardNo:' + currCityCardNo + ', Current Stacked: ' + IntToStr(tempAmount) + 'RMB, Total Stacked:' + IntToStr(FAmountRead) + 'RMB');
+              Inc(FAmountRead, tempAmount);//stacked;
+              tempAmount := 0;
+              setWaitingTip(Format(tip, [FCashAmount div 100, FAmountRead]));
+              //Memo1.Lines.Add('totalAmount:' + IntToStr(amountRead));
+            end;
+          $EC://rejected
+            begin
+              tempAmount := 0;
+            end;
+          $ED://rejecting
+            begin
+              tempAmount := 0;
+            end;
+          $EE://detecting cash
+            begin
+              tempAmount := cashAmount[sspCmd.ResponseData[j + 1]];
+              Inc(j);
+            end;
+          $EF:
+            begin
+            end;//reading
+        else
+          begin
+            addSysLog('validator response other cmd');
           end;
-          Inc(j);
         end;
+        Inc(j);
       end;
+      if isExceptionExists then
+      begin
+        Break;
+      end;
+
       if (FAmountRead * 100 >= totalAmount) then
       begin
         Sleep(100);
@@ -851,7 +934,7 @@ begin
   finally
 //    addSysLog('close ssp com');
 //    CloseSSPComPort;
-    if taskRet = 3 then
+    if taskRet = TASK_RET_REFUND then
     begin
       if FAmountRead > 0 then
       begin//在读钞过程中出现错误
@@ -859,7 +942,7 @@ begin
       end
       else
       begin//还没有吞过钞票则将状态改为2
-        taskRet := 2;
+        taskRet := TASK_RET_QUIT_LOOP;
       end;
     end;
   end;
@@ -867,7 +950,7 @@ begin
   begin//timeout and amount is not enough
     Exit;
   end;
-  taskRet := 0;
+  taskRet := TASK_RET_OK;
   Result := True;
 end;
 

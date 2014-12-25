@@ -50,6 +50,7 @@ procedure addSysLog(logStr: string);
 function resetD8: Boolean;
 function resetCPUCard: Boolean;
 function bytesToStr(buf: array of Byte): ansistring;
+function byteToHexStr(b: Byte): AnsiString;
 function bytesToHexStr(buf: array of Byte): AnsiString;
 function hexStrToByteBuf(const hexStr: ansiString; isIncludeFF: Boolean): TByteDynArray;
 function bytesToInt(buf: array of byte; sIndex: Integer; isLittleEndian: Boolean = true): Integer;
@@ -261,6 +262,11 @@ begin
   SetLength(str, Length(buf));
   CopyMemory(@str[1], @buf[0], Length(buf));
   Result := str;
+end;
+
+function byteToHexStr(b: Byte): AnsiString;
+begin
+  Result := AnsiString(IntToHex(b, 2));
 end;
 
 function bytesToHexStr(buf: array of Byte): AnsiString;

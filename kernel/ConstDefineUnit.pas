@@ -241,6 +241,16 @@ const
   TIP_MODIFYING_ZHB_PASS              = '正在修改账户宝密码，请勿移开卡片...';
   TIP_DO_NOT_CHANGE_CARD              = '充值过程中，请勿更换卡片...';
 
+  TIP_BILL_VALIDATOR_NOT_WORKING      = '纸币器无法正常工作，请联系管理人员';
+  TIP_BILL_VALIDATOR_IS_STUCKED       = '纸币器可能发生卡钞，请联系管理人员';
+  TIP_BILL_VALIDATOR_CASHBOX_GONE     = '纸币器未检测到钱箱，请联系管理人员';
+  TIP_BILL_VALIDATOR_CASHBOX_FULL     = '纸币器检测到钱箱已满，请联系管理人员';
+
+  REFUND_REASON_VALIDATOR_NOT_WORKING = '纸币器异常';
+  REFUND_REASON_VALIDATOR_SET_CHL_ERR = '设置识别纸币类型异常';
+  REFUND_REASON_VALIDATOR_STUCKED     = '纸币器卡钞';
+  REFUND_REASON_CASHBOX_FULL          = '纸币器钱箱满';
+
   LOGIN_STATUS_OK                      = 0;//登录成功或恢复启用
   LOGIN_STATUS_LOGINED_FROM_OTHER_TER  = 1;//终端号在其他设备上登录(即重复登录)
   LOGIN_STATUS_TER_NOT_EXIST           = 2;//终端不存在
@@ -250,6 +260,14 @@ const
   LOGIN_STATUS_OUT_SERVICE             = 6;//服务端通知暂停服务或人工暂停服务
 
   IS_PREPAID_CARD_CHARGE_NEED_CONFIRM = False;//充值卡充值是否需要显示面额并确认充值
+
+  BILL_VALIDATOR_CMD_OK = $F0;//纸币器已成功执行命令
+
+  TASK_RET_OK             = 0;//正常
+  TASK_RET_CONTINUE_LOOP  = 1;//返回继续循环执行
+  TASK_RET_QUIT_LOOP      = 2;//关键操作非等待可解决的直接退出，不继续
+  TASK_RET_REFUND         = 3;//执行失败，且需退钱
+  TASK_RET_PASSWORD_WRONG = 4;//充值卡、账户宝密码错误，退出需用户重新确认
 
 implementation
 

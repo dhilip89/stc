@@ -25,6 +25,7 @@ const
   C2S_CHECK_CITY_CARD_TYPE     = $000B;//检测用户卡类型
   C2S_CLEAR_CASHBOX            = $000D;//清空钱箱
   C2S_ADD_CASH_BOX_AMOUNT      = $000E;//从服务端获取现金额
+  C2S_OPER_LOG                 = $000F;//管理人员操作日志
 {******************************终端发起命令字******************************}
 
 {*****************************服务端发起命令字*****************************}
@@ -237,6 +238,14 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdAddCashBoxAmountC2S = ^TCmdAddCashBoxAmountC2S;
+
+  //管理人员操作日志
+  TCmdOperLogC2S = packed record
+    CmdHead: TSTHead;
+    OperType: Byte;
+    CmdEnd: TSTEnd;
+  end;
+  PCmdOperLogC2S = ^TCmdOperLogC2S;
 {******************************终端发起命令******************************}
 
 

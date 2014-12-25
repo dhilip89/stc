@@ -150,6 +150,7 @@ type
     procedure SendCmdCheckCityCardType(cityCardNo: AnsiString);
     procedure SendCmdClearCashBox(cashAmount: Integer; operTime: TDateTime);
     procedure SendCmdAddCashBoxAmount(amountAdd: Integer);
+    procedure SendCmdOperLog(operType: Byte);
 
     procedure SetFTimerEnabled(enabled: Boolean);
 
@@ -554,6 +555,15 @@ begin
   CopyMemory(@cmd.Mac1[0], @mac1[0], Min(Length(cmd.Mac1), Length(mac1)));
   CopyMemory(@cmd.ChargeTime[0], @chargeTime[0], Min(Length(cmd.ChargeTime), Length(chargeTime)));
   DirectSend(cmd, SizeOf(TCmdModifyZHBPassC2S));
+end;
+
+procedure TGateWayServerCom.SendCmdOperLog(operType: Byte);
+var
+  cmd: TCmdOperLogC2S;
+begin
+  initCmd(cmd.CmdHead, C2S_OPER_LOG, cmd.CmdEnd, SizeOf(TCmdOperLogC2S));
+  cmd.OperType := operType;
+  DirectSend(cmd, SizeOf(TCmdOperLogC2S));
 end;
 
 procedure TGateWayServerCom.SendCmdQueryQFTBalance(cityCardNo,
