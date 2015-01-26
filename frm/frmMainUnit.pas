@@ -2359,6 +2359,7 @@ begin
     i := OpenSSPComPort(@sspCmd);
     if (i = 0) then
     begin
+      addSysLog('fail to open ssp com');
       Exit;
     end;
 
@@ -2407,6 +2408,15 @@ begin
   i := kb_openCom(GlobalParam.KeyBoardComPort, 9600);
   isKeyBoardComOpen := i >= 0;
   Result := isKeyBoardComOpen;
+  if isKeyBoardComOpen then
+  begin
+    addSysLog('succeed to open keyboardCom');
+  end
+  else
+  begin
+    addSysLog('fail to open keyboard com');
+  end;
+
 end;
 
 procedure TfrmMain.initPnlPassword4ChargeCard(flag: Byte; maxLength: Integer);

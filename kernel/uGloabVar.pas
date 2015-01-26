@@ -444,7 +444,7 @@ begin
       printerCom.WriteCommData(pansichar(@buf[0]), Length(buf));
     except
       isPrinterComOpen := False;
-      addSysLog('start printer comm fail');
+      addSysLog('fail to start printer com');
     end;
   end;
   Result := True;

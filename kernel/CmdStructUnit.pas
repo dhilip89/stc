@@ -66,6 +66,7 @@ type
     TerminalId: LongWord;
     BodySize: Short;
     CmdSNo: Short;
+    CmdSNoResp: Word;
   end;
   PSTHead = ^TSTHead;
 

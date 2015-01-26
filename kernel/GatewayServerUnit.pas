@@ -21,18 +21,13 @@ type
   TOnGetCityCardType = procedure(ret: Byte) of object;
 
   TCmdInfo = record //命令信息
-    Id: integer; //命令ID
+    Id: integer; //命令流水号
     Flag: integer; //这是什么命令;
     DevId: integer; //车机ID
-    State: Byte; //0表示已发送未执行，1表示已执行，2表示执行出错，3表示被用户取消 , 4表示已取消,5表示取消失败，6表示重发  7-被删除，8-被替代 9-超时 10-表示已经发送到SMS发送服务器
-    Desc: string; //命令描述
+    State: Byte; //0
     SendTime: Tdatetime; //发出时间
-    Replytime: Tdatetime; //执行完时间
-    CancelTime: Tdatetime; //被取消时间
     Content: TByteDynArray; //命令体的内容
-    ContentSize: Integer;
-    addesc: integer; //广告状态
-    IsNeedResend: Boolean;//是否需要重发
+    IsNeedPersistence: Boolean;//是否需要持久化
     CheckCount: Byte;//命令管理器中定时500ms检查一次可以重发的命令，当checkcount=4时可以重发 保证在2~3秒内下发
   end;
   PCmdInfo = ^TCmdInfo;
@@ -118,6 +113,9 @@ type
 
     procedure initCmd(var cmdHead: TSTHead; cmdId: Word; var cmdEnd: TSTEnd; cmdMinSize: Integer);
 
+    procedure AddCmdToList(cmdHead: TSTHead; cmdData: TByteDynArray; isNeedPersistence: Boolean = false);
+    procedure DeleteCmdFromList(cmdSNo: Integer);
+
     function LoginToServer: Boolean;
     procedure SetOnGetMac2(const Value: TOnGetMac2);
     procedure SetOnChargeDetailRsp(const Value: TOnChargeDetailRsp);
@@ -194,6 +192,22 @@ const
 
 
 { TGateWayServerCom }
+
+procedure TGateWayServerCom.AddCmdToList(cmdHead: TSTHead; cmdData: TByteDynArray;
+  isNeedPersistence: Boolean);
+var
+  cmdInfo: PCmdInfo;
+begin
+  cmdInfo := ACmdManage.Add(cmdHead.CmdSNo);
+  cmdInfo^.Flag := cmdHead.CmdId;
+  cmdInfo^.DevId := cmdHead.TerminalId;
+  cmdInfo^.State := 0;
+  cmdInfo^.SendTime := Now;
+  cmdInfo^.IsNeedPersistence := isNeedPersistence;
+  SetLength(cmdinfo^.Content, Length(cmdData));
+  CopyMemory(@cmdInfo^.Content[0], @cmdData[0], Length(cmdData));
+  addSysLog('add a new cmd, cmdSNo:' + IntToStr(cmdHead.CmdSNo));
+end;
 
 constructor TGateWayServerCom.Create;
 begin
@@ -342,6 +356,12 @@ begin
   finally
     UnLockRead;
   end;
+end;
+
+procedure TGateWayServerCom.DeleteCmdFromList(cmdSNo: Integer);
+begin
+  ACmdManage.Delete(cmdSNo);
+  addSysLog('delete a responsed cmd, cmdSNo:' + IntToStr(cmdSNo));
 end;
 
 destructor TGateWayServerCom.Destroy;
@@ -958,7 +978,6 @@ begin
   p^.Id := ACmdID;
   FList.AddData(ACmdID, p);
   Result := p;
-  p^.IsNeedResend := False;
   p^.CheckCount := 0;
   //如果多于SAVE_CMD_COUNT条，就删掉前面的。
   if FList.Count > SAVE_CMD_COUNT then
@@ -1031,7 +1050,7 @@ begin
     while FList.Count > i do
     begin
       pcmd := Items[i];
-      if (pcmd <> nil) and pcmd^.IsNeedResend then
+      if (pcmd <> nil) then
       begin
         if pcmd^.CheckCount < 4 then
           pcmd^.CheckCount := pcmd^.CheckCount + 1
