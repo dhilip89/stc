@@ -7,7 +7,8 @@ uses
   classes, SystemLog, SyncObjs;
 
 const
-  SAVE_CMD_COUNT = 500; //保存多少条最近执行的命令信息
+  SAVE_CMD_COUNT = 1000; //保存多少条最近执行的命令信息
+  CMD_RESEND_INTERVAL = 10;//命令重发间隔
 
 type
 
@@ -25,10 +26,10 @@ type
     Flag: integer; //这是什么命令;
     DevId: integer; //车机ID
     State: Byte; //0
-    SendTime: Tdatetime; //发出时间
+    LastSendTime: Tdatetime; //发出时间
     Content: TByteDynArray; //命令体的内容
     IsNeedPersistence: Boolean;//是否需要持久化
-    CheckCount: Byte;//命令管理器中定时500ms检查一次可以重发的命令，当checkcount=4时可以重发 保证在2~3秒内下发
+    ResendCount: Byte;//命令管理器中定时500ms检查一次可以重发的命令，当checkcount=4时可以重发 保证在2~3秒内下发
   end;
   PCmdInfo = ^TCmdInfo;
 
@@ -65,7 +66,7 @@ type
     FUserPass: string;
     FUserId: Integer;
     FHost: string;
-    FMaxCmdSNo: SHORT;
+    FMaxCmdSNo: Word;
     FReadBuf: TSocketBuffer;
     FTimer: TTimer;
     FLog: TSystemLog;
@@ -114,7 +115,8 @@ type
     procedure initCmd(var cmdHead: TSTHead; cmdId: Word; var cmdEnd: TSTEnd; cmdMinSize: Integer);
 
     procedure AddCmdToList(cmdHead: TSTHead; cmdData: TByteDynArray; isNeedPersistence: Boolean = false);
-    procedure DeleteCmdFromList(cmdSNo: Integer);
+    procedure AddCmdVoidToList(cmdHead: TSTHead; var cmd; cmdSize: Integer; isNeedPersistence: Boolean = false);
+    procedure DeleteCmdFromList(cmdHead: TSTHead);
 
     function LoginToServer: Boolean;
     procedure SetOnGetMac2(const Value: TOnGetMac2);
@@ -129,10 +131,10 @@ type
     function DirectSend(var buf; ABufSize: Integer): Boolean; //调用内部的发送函数直接发送数据
     function GetMaxCmdSNo: Word;
     procedure DealReceiveData; virtual; //处理 接收到的服务器数据,这里主要是分检工作
+    procedure resendData(buf: TByteDynArray);
   public
     constructor Create;
     destructor Destroy; override;
-    procedure ResendData(var buf; ABufSize: Integer; tip: string);
     procedure SendHeartbeat;
     procedure SendCmdGetMac2(cardNo, password, asn, CardTradeNo: array of Byte;
                             OperType: Byte; OldBalance, chargeAmount: Integer;
@@ -146,7 +148,7 @@ type
                 cardNo, asn, CardTradeNo: array of Byte; OldBalance: Integer;
                 chargeTime, fakeRandom, mac1: array of Byte);
     procedure SendCmdCheckCityCardType(cityCardNo: AnsiString);
-    procedure SendCmdClearCashBox(cashAmount: Integer; operTime: TDateTime);
+    procedure SendCmdClearCashBox(cashAmount: Integer);
     procedure SendCmdAddCashBoxAmount(amountAdd: Integer);
     procedure SendCmdOperLog(operType: Byte);
 
@@ -197,16 +199,28 @@ procedure TGateWayServerCom.AddCmdToList(cmdHead: TSTHead; cmdData: TByteDynArra
   isNeedPersistence: Boolean);
 var
   cmdInfo: PCmdInfo;
+  cmdSNo: Integer;
 begin
-  cmdInfo := ACmdManage.Add(cmdHead.CmdSNo);
+  cmdSNo := ByteOderConvert_Word(cmdHead.CmdSNo);
+  cmdInfo := ACmdManage.Add(cmdSno);
   cmdInfo^.Flag := cmdHead.CmdId;
   cmdInfo^.DevId := cmdHead.TerminalId;
   cmdInfo^.State := 0;
-  cmdInfo^.SendTime := Now;
+  cmdInfo^.LastSendTime := Now;
   cmdInfo^.IsNeedPersistence := isNeedPersistence;
   SetLength(cmdinfo^.Content, Length(cmdData));
   CopyMemory(@cmdInfo^.Content[0], @cmdData[0], Length(cmdData));
-  addSysLog('add a new cmd, cmdSNo:' + IntToStr(cmdHead.CmdSNo));
+  addSysLog('add a new cmd, cmdSNo:' + IntToStr(cmdSNo));
+end;
+
+procedure TGateWayServerCom.AddCmdVoidToList(cmdHead: TSTHead; var cmd; cmdSize: Integer;
+  isNeedPersistence: Boolean);
+var
+  byteBuf: TByteDynArray;
+begin
+  SetLength(byteBuf, cmdSize);
+  CopyMemory(@byteBuf[0], @cmd, cmdSize);
+  AddCmdToList(cmdHead, byteBuf, isNeedPersistence);
 end;
 
 constructor TGateWayServerCom.Create;
@@ -235,6 +249,8 @@ begin
   ReallocMem(FReadBuf.Data, MAX_BUFF_SIZE);
   FReadBuf.Size := MAX_BUFF_SIZE;
   FLoginStatus := LOGIN_STATUS_SERVER_DISCONNECTED;
+
+  FMaxCmdSNo := 0;
 end;
 
 procedure TGateWayServerCom.DealReceiveData; // 处理接收到的服务器数据,这里主要是分检工作
@@ -358,10 +374,13 @@ begin
   end;
 end;
 
-procedure TGateWayServerCom.DeleteCmdFromList(cmdSNo: Integer);
+procedure TGateWayServerCom.DeleteCmdFromList(cmdHead: TSTHead);
+var
+  cmdSNoResp: Word;
 begin
-  ACmdManage.Delete(cmdSNo);
-  addSysLog('delete a responsed cmd, cmdSNo:' + IntToStr(cmdSNo));
+  cmdSNoResp := ByteOderConvert_Word(cmdHead.CmdSNoResp);
+  ACmdManage.Delete(cmdSNoResp);
+  addSysLog('delete a responsed cmd, cmdSNo:' + IntToStr(cmdSNoResp));
 end;
 
 destructor TGateWayServerCom.Destroy;
@@ -387,7 +406,7 @@ begin
   CopyMemory(@byteBuf[0], @buf, bufLen);
   byteBuf := GetEscapedBuf(byteBuf);
   bufLen := Length(byteBuf);
-  if FActive then
+  if FActive and FSocket.Active then
     Result := send(FSocket.SocketHandle, byteBuf[0], bufLen, 0) = bufLen
   else
     Result := false;
@@ -466,6 +485,11 @@ begin
   Result := Pointer(Integer(p) + offset);
 end;
 
+procedure TGateWayServerCom.resendData(buf: TByteDynArray);
+begin
+  DirectSend(buf[0], Length(buf));
+end;
+
 procedure TGateWayServerCom.SendCmdChargeCardCheck(cityCardNo,
   password: AnsiString);
 var
@@ -481,12 +505,14 @@ begin
   CopyMemory(@cmd.Password[0], @buf[0], Min(Length(buf), Length(cmd.Password)));
 
   DirectSend(cmd, SizeOf(TCmdChargeCardCheckC2S));
+  AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdChargeCardCheckC2S));
 end;
 
 procedure TGateWayServerCom.SendCmdChargeDetail(cmd: TCmdChargeDetailC2S);
 begin
   initCmd(cmd.CmdHead, C2S_CHARGE_DETAIL, cmd.CmdEnd, SizeOf(TCmdChargeDetailC2S));
   DirectSend(cmd, SizeOf(TCmdChargeDetailC2S));
+  AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdChargeDetailC2S), True);
 end;
 
 procedure TGateWayServerCom.SendCmdCheckCityCardType(cityCardNo: AnsiString);
@@ -500,18 +526,22 @@ begin
   CopyMemory(@cmd.CityCardNo[0], @buf[0], Min(Length(buf), Length(cmd.CityCardNo)));
 
   DirectSend(cmd, SizeOf(TCmdCheckCityCardTypeC2S));
+  AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdCheckCityCardTypeC2S));
 end;
 
-procedure TGateWayServerCom.SendCmdClearCashBox(cashAmount: Integer; operTime: TDateTime);
+procedure TGateWayServerCom.SendCmdClearCashBox(cashAmount: Integer);
 var
   cmd: TCmdClearCashBoxC2S;
   tempBuf: TByteDynArray;
 begin
   initCmd(cmd.CmdHead, C2S_CLEAR_CASHBOX, cmd.CmdEnd, SizeOf(TCmdClearCashBoxC2S));
   cmd.CashAmount := ByteOderConvert_LongWord(cashAmount);
-  tempBuf := hexStrToBytes(FormatDateTime('yyMMddhhnnss', operTime));
+  tempBuf := hexStrToBytes(FormatDateTime('yyMMddhhnnss', Now));
   CopyMemory(@cmd.OperTime[0], @tempBuf[0], Min(Length(tempBuf), Length(cmd.OperTime)));
+  tempBuf := hexStrToBytes(FormatDateTime('yyMMddhhnnss', LastClearCashBoxTime));
+  CopyMemory(@cmd.LastOperTime[0], @tempBuf[0], Min(Length(tempBuf), Length(cmd.LastOperTime)));
   DirectSend(cmd, SizeOf(TCmdClearCashBoxC2S));
+  AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdClearCashBoxC2S), True);
 end;
 
 procedure TGateWayServerCom.SendCmdAddCashBoxAmount(amountAdd: Integer);
@@ -521,6 +551,7 @@ begin
   initCmd(cmd.CmdHead, C2S_ADD_CASH_BOX_AMOUNT, cmd.CmdEnd, SizeOf(TCmdAddCashBoxAmountC2S));
   cmd.AmountAdded := ByteOderConvert_LongWord(amountAdd);
   DirectSend(cmd, SizeOf(TCmdAddCashBoxAmountC2S));
+  AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdAddCashBoxAmountC2S), True);
 end;
 
 procedure TGateWayServerCom.SendCmdGetMac2(cardNo, password, asn, CardTradeNo: array of Byte;
@@ -551,6 +582,7 @@ begin
     CopyMemory(@cmd.TranSNo[0], @tempBuf[0], Min(Length(cmd.TranSNo), Length(tempBuf)));
   end;
   DirectSend(cmd, SizeOf(TCmdGetMac2ForChargeC2S));
+  AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdGetMac2ForChargeC2S));
 end;
 
 procedure TGateWayServerCom.SendCmdModifyZHBPass(oldPass, newPass: AnsiString;
@@ -575,6 +607,7 @@ begin
   CopyMemory(@cmd.Mac1[0], @mac1[0], Min(Length(cmd.Mac1), Length(mac1)));
   CopyMemory(@cmd.ChargeTime[0], @chargeTime[0], Min(Length(cmd.ChargeTime), Length(chargeTime)));
   DirectSend(cmd, SizeOf(TCmdModifyZHBPassC2S));
+  AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdModifyZHBPassC2S));
 end;
 
 procedure TGateWayServerCom.SendCmdOperLog(operType: Byte);
@@ -584,6 +617,7 @@ begin
   initCmd(cmd.CmdHead, C2S_OPER_LOG, cmd.CmdEnd, SizeOf(TCmdOperLogC2S));
   cmd.OperType := operType;
   DirectSend(cmd, SizeOf(TCmdOperLogC2S));
+  AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdOperLogC2S));
 end;
 
 procedure TGateWayServerCom.SendCmdQueryQFTBalance(cityCardNo,
@@ -600,12 +634,14 @@ begin
   CopyMemory(@cmd.Password[0], @buf[0], Min(Length(buf), Length(cmd.Password)));
 
   DirectSend(cmd, SizeOf(TCmdQueryQFTBalanceC2S));
+  AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdQueryQFTBalanceC2S));
 end;
 
 procedure TGateWayServerCom.SendCmdRefund(cmd: TCmdRefundC2S);
 begin
   initCmd(cmd.CmdHead, C2S_REFUND, cmd.CmdEnd, SizeOf(TCmdRefundC2S));
   DirectSend(cmd, SizeOf(TCmdRefundC2S));
+  AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdRefundC2S), true);
 end;
 
 procedure TGateWayServerCom.SendCmdUploadModuleStatus(
@@ -631,6 +667,7 @@ begin
   tempBuf[index] := $00;
   tempBuf[index + 1] := CMD_END_FLAG;
   DirectSend(tempBuf[0], Length(tempBuf));
+  AddCmdToList(cmd.CmdHead, tempBuf);
 end;
 
 procedure TGateWayServerCom.SetActive(const Value: Boolean);
@@ -787,6 +824,7 @@ begin
   if Length(buf) >= SizeOf(TCmdChargeDetailRspS2C) then
   begin
     pcmd := PCmdChargeDetailRspS2C(@buf[0]);
+    DeleteCmdFromList(pcmd^.CmdHead);
     if Assigned(FOnChargeDetailRsp) then
     begin
       FOnChargeDetailRsp(pcmd^.Ret, pcmd^.RecordId);
@@ -803,6 +841,7 @@ begin
   if Length(buf) >= SizeOf(TCmdCheckCityCardTypeS2C) then
   begin
     pcmd := PCmdCheckCityCardTypeS2C(@buf[0]);
+    DeleteCmdFromList(pcmd^.CmdHead);
     cityCardNo := bytesToHexStr(pcmd^.CityCardNo);
     if cityCardNo <> currCityCardNo then
     begin//如果服务端返回卡号与当前检测到的卡号不一致，则可能是之前的命令返回，此处直接不处理了
@@ -824,6 +863,7 @@ begin
   if Length(buf) >= SizeOf(TCmdEnableStatusChangedS2C) then
   begin
     pcmd := PCmdEnableStatusChangedS2C(@buf[0]);
+    DeleteCmdFromList(pcmd^.CmdHead);
     terminalId := ByteOderConvert_LongWord(pcmd^.CmdHead.TerminalId);
     if GlobalParam.TerminalId = IntToStr(terminalId) then
     begin
@@ -846,6 +886,7 @@ begin
   if Length(buf) >= SizeOf(TCmdAddCashBoxAmountS2C) then
   begin
     pcmd := PCmdAddCashBoxAmountS2C(@buf[0]);
+    DeleteCmdFromList(pcmd^.CmdHead);
     cashBoxTotalAmount := ByteOderConvert_LongWord(pcmd^.CashBoxTotalAmount);
     if cashBoxTotalAmount > CurrCashBoxAmount then
     begin//如果服务端返回的钱箱总额大于本机的数据，则证明设备端数据需与服务端保持一致
@@ -865,6 +906,7 @@ begin
   if Length(buf) >= SizeOf(TCmdGetMac2ForChargeS2C) then
   begin
     pcmd := PCmdGetMac2ForChargeS2C(@buf[0]);
+    DeleteCmdFromList(pcmd^.CmdHead);
     mac2 := bytesToHexStr(pcmd^.Mac2);
     tranSNo := bytesToHexStr(pcmd^.TranSNo);
     errTipLen := pcmd^.ErrTipLen;
@@ -889,6 +931,7 @@ begin
   if Length(buf) >= SizeOf(TCmdLoginRspS2C) then
   begin
     pcmd := PCmdLoginRspS2C(@buf[0]);
+    DeleteCmdFromList(pcmd^.CmdHead);
     FLoginStatus := pcmd^.Ret;
     if Assigned(FOnLoginStatusChanged) then
       FOnLoginStatusChanged(FLoginStatus);
@@ -902,6 +945,7 @@ begin
   if Length(buf) >= SizeOf(TCmdModifyZHBPassRsp) then
   begin
     pcmd := PCmdModifyZHBPassRsp(@buf[0]);
+    DeleteCmdFromList(pcmd^.CmdHead);
     if Assigned(FOnModifyZHBPassRsp) then
       FOnModifyZHBPassRsp(pcmd^.Ret);
   end;
@@ -914,6 +958,7 @@ begin
   if Length(buf) >= SizeOf(TCmdChargeCardCheckS2C) then
   begin
     pcmd := PCmdChargeCardCheckS2C(@buf[0]);
+    DeleteCmdFromList(pcmd^.CmdHead);
     if Assigned(FOnChargeCardCheckRsp) then
       FOnChargeCardCheckRsp(pcmd^.CheckRet, ByteOderConvert_LongWord(pcmd^.Amount));
   end;
@@ -926,6 +971,7 @@ begin
   if Length(buf) >= SizeOf(TCmdQueryQFTBalanceS2C) then
   begin
     pcmd := PCmdQueryQFTBalanceS2C(@buf[0]);
+    DeleteCmdFromList(pcmd^.CmdHead);
     if Assigned(FOnQueryQFTBalanceRsp) then
       FOnQueryQFTBalanceRsp(pcmd^.CheckRet, ByteOderConvert_LongWord(pcmd^.Balance));
   end;
@@ -938,6 +984,7 @@ begin
   if Length(buf) >= SizeOf(TCmdRefundRspS2C) then
   begin
     pcmd := PCmdRefundRspS2C(@buf[0]);
+    DeleteCmdFromList(pcmd^.CmdHead);
     if Assigned(FOnRefundRsp) then
       FOnRefundRsp(pcmd^.Ret, pcmd^.RecordId);
   end;
@@ -950,22 +997,13 @@ begin
   if Length(buf) >= SizeOf(TCmdTYRetS2C) then
   begin
     pCmd := PCmdTYRetS2C(@buf[0]);
-    //FSysLog.AddLog(IntToStr(pCmd^.Ret));
+    DeleteCmdFromList(pcmd^.CmdHead);
   end
 end;
 
 procedure TGateWayServerCom.SetFTimerEnabled(enabled: Boolean);
 begin
   FTimer.Enabled := enabled;
-end;
-
-procedure TGateWayServerCom.ResendData(var buf; ABufSize: Integer; tip: string);
-begin
-  try
-    DirectSend(buf, ABufSize);
-  except
-
-  end;
 end;
 
 { TCmdManage }
@@ -978,7 +1016,8 @@ begin
   p^.Id := ACmdID;
   FList.AddData(ACmdID, p);
   Result := p;
-  p^.CheckCount := 0;
+  p^.ResendCount := 0;
+  p^.LastSendTime := Now;
   //如果多于SAVE_CMD_COUNT条，就删掉前面的。
   if FList.Count > SAVE_CMD_COUNT then
     delete(Items[0].Id);
@@ -1011,6 +1050,7 @@ begin
     p := FList.Datas[i];
     FList.Delete(i);
     Dispose(p);
+    addSysLog('succeed to delete a cmd from cmdmanage:' + IntToStr(ACmdID));
   end;
 end;
 
@@ -1044,23 +1084,53 @@ procedure TCmdManage.FTimerTimer(Sender: TObject);
 var
   i: Integer;
   pcmd: PCmdInfo;
+  curTime: TDateTime;
 begin
   i := 0;
   try
+    curTime := Now;
     while FList.Count > i do
     begin
       pcmd := Items[i];
       if (pcmd <> nil) then
       begin
-        if pcmd^.CheckCount < 4 then
-          pcmd^.CheckCount := pcmd^.CheckCount + 1
+        if not pcmd^.IsNeedPersistence then
+        begin//非长期保存的命令
+          if pcmd^.ResendCount < 3 then
+          begin
+            if SecondsBetween(pcmd^.LastSendTime, curTime) >= CMD_RESEND_INTERVAL then
+            begin//达到重发的时间
+              pcmd^.LastSendTime := curTime;
+              DataServer.resendData(pcmd^.Content);
+              pcmd^.ResendCount := pcmd^.ResendCount + 3;
+              addSysLog('resend cmd:' + IntToStr(pcmd^.Id));
+            end;
+          end
+          else
+          begin
+            Delete(pcmd^.Id);
+            Continue;
+          end;
+        end
         else
-        begin//如果已经达到4，则重发
-//          if Assigned(FOnResendData) then
-//            FOnResendData(pcmd^.content[0], pcmd^.ContentSize, pcmd^.Desc);
-          Delete(pcmd^.Id);
-          Continue;
+        begin
+          if SecondsBetween(pcmd^.LastSendTime, curTime) >= CMD_RESEND_INTERVAL then
+          begin//达到重发的时间
+            pcmd^.LastSendTime := curTime;
+            DataServer.resendData(pcmd^.Content);
+            //pcmd^.ResendCount := pcmd^.ResendCount + 3;
+            addSysLog('resend cmd:' + IntToStr(pcmd^.Id));
+          end;
         end;
+//        if pcmd^.CheckCount < 4 then
+//          pcmd^.CheckCount := pcmd^.CheckCount + 1
+//        else
+//        begin//如果已经达到4，则重发
+////          if Assigned(FOnResendData) then
+////            FOnResendData(pcmd^.content[0], pcmd^.ContentSize, pcmd^.Desc);
+//          Delete(pcmd^.Id);
+//          Continue;
+//        end;
       end;
       i := i + 1;
     end;

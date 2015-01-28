@@ -72,20 +72,27 @@ var
   dlg: TfrmWaiting;
   tip: string;
 begin
-  if CurrCashBoxAmount = 0 then
+  if DataServer.Active then
   begin
-    tip := '当前钱箱现金额为0，请确认';
+    if CurrCashBoxAmount = 0 then
+    begin
+      tip := '当前钱箱现金额为0，请确认';
+    end
+    else
+    begin
+      if MessageBox(Handle, PChar('当前钱箱现金额为' + IntToStr(CurrCashBoxAmount) + '元，您确认进行提款操作吗？'), '确认', MB_YESNO + MB_ICONQUESTION) = ID_Yes then
+      begin
+        if Assigned(FOnClearCashBox) then
+        begin
+          FOnClearCashBox;
+          tip := '提款操作成功，请取走提款凭条';
+        end;
+      end;
+    end;
   end
   else
   begin
-    if MessageBox(Handle, PChar('当前钱箱现金额为' + IntToStr(CurrCashBoxAmount) + '元，您确认进行提款操作吗？'), '确认', MB_YESNO + MB_ICONQUESTION) = ID_Yes then
-    begin
-      if Assigned(FOnClearCashBox) then
-      begin
-        FOnClearCashBox;
-        tip := '提款操作成功，请取走提款凭条';
-      end;
-    end;
+    tip := '终端与服务器连接断开，请确认连接后再进行该操作';
   end;
 
   if tip <> '' then

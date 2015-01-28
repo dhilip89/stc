@@ -228,6 +228,7 @@ type
     CmdHead: TSTHead;
     CashAmount: Integer;
     OperTime: array[0..5] of Byte;//YYMMDDHHMISS
+    LastOperTime: array[0..5] of Byte;//YYMMDDHHMISS
     CmdEnd: TSTEnd;
   end;
   PCmdClearCashBoxC2S = ^TCmdClearCashBoxC2S;

@@ -2054,8 +2054,8 @@ end;
 
 procedure TfrmMain.DoOnClearCashBox;
 begin
+  DataServer.SendCmdClearCashBox(CurrCashBoxAmount);
   printWithdrawMoneyInfo;
-  DataServer.SendCmdClearCashBox(CurrCashBoxAmount, LastClearCashBoxTime);
   updateCurrCashBoxAmount(0);
 end;
 
@@ -2607,7 +2607,7 @@ begin
   end
   else
   begin
-    strLastWithDrawTime := FormatDateTime('HH:nn:ss', Now);
+    strLastWithDrawTime := FormatDateTime('yyyy-MM-dd HH:nn:ss', LastClearCashBoxTime);
   end;
 
   LastClearCashBoxTime := Now;
