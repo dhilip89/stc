@@ -1723,6 +1723,14 @@ procedure TfrmMain.DoOnPauseService;
 begin
   FIsPausingService := not FIsPausingService;
   DoOnLoginStatusChanged(FLoginStatus);
+  if FIsPausingService then
+  begin
+    DataServer.SendCmdOperLog(4);
+  end
+  else
+  begin
+    DataServer.SendCmdOperLog(9);
+  end;
 end;
 
 procedure TfrmMain.DoOnPayCash;
