@@ -1725,11 +1725,11 @@ begin
   DoOnLoginStatusChanged(FLoginStatus);
   if FIsPausingService then
   begin
-    DataServer.SendCmdOperLog(4);
+    DataServer.SendCmdOperLog(OPER_LOG_TYPE_PAUSE_SERVICE);
   end
   else
   begin
-    DataServer.SendCmdOperLog(9);
+    DataServer.SendCmdOperLog(OPER_LOG_TYPE_RECOVER_SERVICE);
   end;
 end;
 

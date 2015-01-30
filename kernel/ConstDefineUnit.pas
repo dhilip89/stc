@@ -269,6 +269,10 @@ const
   TASK_RET_REFUND         = 3;//执行失败，且需退钱
   TASK_RET_PASSWORD_WRONG = 4;//充值卡、账户宝密码错误，退出需用户重新确认
 
+  OPER_LOG_TYPE_PAUSE_SERVICE   = 4;//暂停服务
+  OPER_LOG_TYPE_RECOVER_SERVICE = 9;//恢复服务
+
+
 implementation
 
 
