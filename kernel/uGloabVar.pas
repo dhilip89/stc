@@ -623,8 +623,8 @@ var
   vSysTime: TSystemTime;
 begin
   DateTimeToSystemTime(vDateTime, vSysTime);
-  SetSystemTime(vSysTime);
-  //SetLocalTime(vSysTime);
+//  SetSystemTime(vSysTime);
+  SetLocalTime(vSysTime);
   SendMessage(HWND_BROADCAST,WM_TIMECHANGE,0,0) ;
 end;
 

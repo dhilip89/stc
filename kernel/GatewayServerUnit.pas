@@ -111,6 +111,7 @@ type
     procedure dealCmdCheckCityCardType(buf: array of Byte);
     procedure dealCmdEnableStatusChanged(buf: array of Byte);
     procedure dealCmdAddCashBoxAmount(buf: array of Byte);
+    procedure dealCmdGetServerRsp(buf: array of Byte);
 
     procedure initCmd(var cmdHead: TSTHead; cmdId: Word; var cmdEnd: TSTEnd; cmdMinSize: Integer);
 
@@ -151,6 +152,7 @@ type
     procedure SendCmdClearCashBox(cashAmount: Integer);
     procedure SendCmdAddCashBoxAmount(amountAdd: Integer);
     procedure SendCmdOperLog(operType: Byte);
+    procedure SendCmdGetServerTime();
 
     procedure SetFTimerEnabled(enabled: Boolean);
 
@@ -356,6 +358,7 @@ begin
           S2C_CHECK_CITY_CARD_TYPE_RSP: dealCmdCheckCityCardType(buf);
           S2C_ENABLE_STATUS_CHANGED:dealCmdEnableStatusChanged(buf);
           S2C_ADD_CASH_BOX_AMOUNT: dealCmdAddCashBoxAmount(buf);
+          S2C_GET_SERVER_TIME: dealCmdGetServerRsp(buf);
         else
           begin
             FLog.AddLog('处理数据错误:命令字不正确 ' + bytesToHexStr(wordToBytes(cmdId)));
@@ -427,6 +430,8 @@ begin
         FLoginStatus := LOGIN_STATUS_NO_RSP;
         if Assigned(FOnLoginStatusChanged) then
           FOnLoginStatusChanged(FLoginStatus);
+
+        SendCmdGetServerTime;
       end;
     seDisconnect:
       begin
@@ -583,6 +588,15 @@ begin
   end;
   DirectSend(cmd, SizeOf(TCmdGetMac2ForChargeC2S));
   AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdGetMac2ForChargeC2S));
+end;
+
+procedure TGateWayServerCom.SendCmdGetServerTime;
+var
+  cmd: TCmdGetServerTimeC2S;
+begin
+  initCmd(cmd.CmdHead, C2S_GET_SERVER_TIME, cmd.CmdEnd, SizeOf(TCmdGetServerTimeC2S));
+  DirectSend(cmd, SizeOf(TCmdGetServerTimeC2S));
+  AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdGetServerTimeC2S));
 end;
 
 procedure TGateWayServerCom.SendCmdModifyZHBPass(oldPass, newPass: AnsiString;
@@ -921,6 +935,37 @@ begin
     addSysLog('recv mac2 rsp, ret:' + IntToStr(pcmd^.Ret) + ',mac2:' + mac2 + ',tranSNo:' + tranSNo + ',errTip:[' + errTip + ']');
     if Assigned(FOnGetMac2) then
       FOnGetMac2(pcmd^.Ret, mac2, tranSNo, errTip);
+  end;
+end;
+
+procedure TGateWayServerCom.dealCmdGetServerRsp(buf: array of Byte);
+var
+  pcmd: PCmdGetServerTimeS2C;
+  sDate: string;
+  dt: TDateTime;
+begin
+  if Length(buf) >= SizeOf(TCmdGetServerTimeS2C) then
+  begin
+    pcmd := PCmdGetServerTimeS2C(@buf[0]);
+    DeleteCmdFromList(pcmd^.CmdHead);
+    sDate := byteToHexStr(pcmd^.ServerTime[0]) + byteToHexStr(pcmd^.ServerTime[1]) + '-'
+           + byteToHexStr(pcmd^.ServerTime[2]) + '-'
+           + byteToHexStr(pcmd^.ServerTime[3]) + ' '
+           + byteToHexStr(pcmd^.ServerTime[4]) + ':'
+           + byteToHexStr(pcmd^.ServerTime[5]) + ':'
+           + byteToHexStr(pcmd^.ServerTime[6]);
+    try
+      dt := StrToDateTime(sDate);
+      if MinutesBetween(dt, Now) > 10 then
+      begin
+        SetSystemDateTime(dt);
+      end;
+    except
+      on E: Exception do
+      begin
+
+      end;
+    end;
   end;
 end;
 

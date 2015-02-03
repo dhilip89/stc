@@ -26,6 +26,7 @@ const
   C2S_CLEAR_CASHBOX            = $000D;//清空钱箱
   C2S_ADD_CASH_BOX_AMOUNT      = $000E;//从服务端获取现金额
   C2S_OPER_LOG                 = $000F;//管理人员操作日志
+  C2S_GET_SERVER_TIME          = $0010;//获取服务器时间
 {******************************终端发起命令字******************************}
 
 {*****************************服务端发起命令字*****************************}
@@ -40,6 +41,7 @@ const
   S2C_CHECK_CITY_CARD_TYPE_RSP = $700B;//检测用户卡类型
   S2C_ENABLE_STATUS_CHANGED    = $700C;//可用状态变化
   S2C_ADD_CASH_BOX_AMOUNT      = $700E;//服务端返回现金额
+  S2C_GET_SERVER_TIME          = $7010;//服务端返回服务端当前时间
 {*****************************服务端发起命令字*****************************}
 
 {*********************************公共常量*********************************}
@@ -248,6 +250,13 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdOperLogC2S = ^TCmdOperLogC2S;
+
+  //获取服务端时间
+  TCmdGetServerTimeC2S = packed record
+    CmdHead: TSTHead;
+    CmdEnd: TSTEnd;
+  end;
+  PCmdGetServerTimeC2S = ^TCmdGetServerTimeC2S;
 {******************************终端发起命令******************************}
 
 
@@ -358,6 +367,14 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdAddCashBoxAmountS2C = ^TCmdAddCashBoxAmountS2C;
+
+    //获取服务端时间
+  TCmdGetServerTimeS2C = packed record
+    CmdHead: TSTHead;
+    ServerTime: array[0..6] of Byte;//服务器时间  2014-12-24 12:34:55  0x20 0x14 0x12 0x24 0x12 0x34 0x55
+    CmdEnd: TSTEnd;
+  end;
+  PCmdGetServerTimeS2C = ^TCmdGetServerTimeS2C;
 {*****************************服务端发起命令*****************************}
 
 function PtrAdd(p: pointer; offset: integer): pointer;
