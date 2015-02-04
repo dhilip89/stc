@@ -584,7 +584,7 @@ end;
 
 procedure TBaseThread.printRefundInfo(amount: Integer; cardNo: ansistring);
 var
-  cmd: TCmdRefundC2S;
+  cmd: TCmdRefundWithReasonC2S;
   buf: TByteDynArray;
 
   printInfo: AnsiString;
@@ -595,7 +595,7 @@ begin
   buf := hexStrToBytes(FormatDateTime('yyyyMMddHHnnss', Now));
   CopyMemory(@cmd.Time[0], @buf[0], Length(buf));
   cmd.ChargeType := currChargeType;
-  DataServer.SendCmdRefund(cmd);
+  DataServer.SendCmdRefundWithReason(cmd, FRefundReason);
 
   printInfo := ' 卡    号：' + cardNo + #13#10
              + ' 交易类型：' + getChargeType + '充值'#13#10

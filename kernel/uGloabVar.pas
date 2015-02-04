@@ -7,7 +7,7 @@ uses
   SystemLog, ConstDefineUnit, system.Types, SPCOMM, BeansUnit, Vcl.Controls;
 
 var
-  current_user: TUser;
+  lastGetServerTime: TDateTime;
   Bs: TBusinessSeverCom; //业务服务器
   DataServer: TGateWayServerCom; //网关服务器
 
@@ -685,6 +685,7 @@ end;
 initialization
   DateSeparator := '-';
   //ExePath := ExtractFilePath(Application.ExeName);
+  lastGetServerTime := 0;
   GlobalParam := TSystemParam.Create;
   ACmdManage := TCmdManage.create;
 

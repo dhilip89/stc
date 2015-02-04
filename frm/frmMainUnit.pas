@@ -3004,19 +3004,29 @@ procedure TfrmMain.Timer3Timer(Sender: TObject);
 var
   moduleStatus: array of Byte;
 begin
-  if DataServer.Active and isCheckModuleStatusOk then
+  if DataServer.Active then
   begin
-    SetLength(moduleStatus, 3 * 2);
-    moduleStatus[0] := $01;
-    moduleStatus[1] := getD8Status;
-    moduleStatus[2] := $02;
-    moduleStatus[3] := getBillAcceptorStatus;
-    moduleStatus[4] := $04;
-    moduleStatus[5] := getPrinterStatus;
-    moduleStatus[6] := $06;
-    moduleStatus[7] := getKeyboardStatus;
-    DataServer.SendCmdUploadModuleStatus(moduleStatus);
+    if isCheckModuleStatusOk then
+    begin
+      SetLength(moduleStatus, 3 * 2);
+      moduleStatus[0] := $01;
+      moduleStatus[1] := getD8Status;
+      moduleStatus[2] := $02;
+      moduleStatus[3] := getBillAcceptorStatus;
+      moduleStatus[4] := $04;
+      moduleStatus[5] := getPrinterStatus;
+      moduleStatus[6] := $06;
+      moduleStatus[7] := getKeyboardStatus;
+      DataServer.SendCmdUploadModuleStatus(moduleStatus);
+    end;
+
+    if MinutesBetween(lastGetServerTime, Now) >= 120 then
+    begin
+      DataServer.SendCmdGetServerTime;
+    end;
   end;
+
+
 end;
 
 procedure TfrmMain.kbReadTimerTimer(Sender: TObject);

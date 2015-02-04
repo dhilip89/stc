@@ -120,6 +120,7 @@ type
     procedure DeleteCmdFromList(cmdHead: TSTHead);
 
     function LoginToServer: Boolean;
+
     procedure SetOnGetMac2(const Value: TOnGetMac2);
     procedure SetOnChargeDetailRsp(const Value: TOnChargeDetailRsp);
     procedure SetOnRefundRsp(const Value: TOnRefundRsp);
@@ -143,6 +144,7 @@ type
     procedure SendCmdUploadModuleStatus(moduleStatus: array of Byte);
     procedure SendCmdChargeDetail(cmd: TCmdChargeDetailC2S);
     procedure SendCmdRefund(cmd: TCmdRefundC2S);
+    procedure SendCmdRefundWithReason(cmd: TCmdRefundWithReasonC2S; reason: AnsiString);
     procedure SendCmdChargeCardCheck(cityCardNo, password: AnsiString);
     procedure SendCmdQueryQFTBalance(cityCardNo, password: AnsiString);
     procedure SendCmdModifyZHBPass(oldPass, newPass: AnsiString;
@@ -473,6 +475,8 @@ function TGateWayServerCom.LoginToServer: Boolean; // 用户登录网关服务器
 var
   cmd: TCmdLoginC2S;
   buf: TByteDynArray;
+
+  cmdRefund: TCmdRefundWithReasonC2S;
 begin
   initCmd(cmd.CmdHead, C2S_LOGIN, cmd.CmdEnd, SizeOf(TCmdLoginC2S));
   cmd.Ver := ByteOderConvert_Word(VER);
@@ -597,6 +601,7 @@ begin
   initCmd(cmd.CmdHead, C2S_GET_SERVER_TIME, cmd.CmdEnd, SizeOf(TCmdGetServerTimeC2S));
   DirectSend(cmd, SizeOf(TCmdGetServerTimeC2S));
   AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdGetServerTimeC2S));
+  lastGetServerTime := Now;
 end;
 
 procedure TGateWayServerCom.SendCmdModifyZHBPass(oldPass, newPass: AnsiString;
@@ -656,6 +661,32 @@ begin
   initCmd(cmd.CmdHead, C2S_REFUND, cmd.CmdEnd, SizeOf(TCmdRefundC2S));
   DirectSend(cmd, SizeOf(TCmdRefundC2S));
   AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdRefundC2S), true);
+end;
+
+procedure TGateWayServerCom.SendCmdRefundWithReason(
+  cmd: TCmdRefundWithReasonC2S; reason: AnsiString);
+var
+  buf: TByteDynArray;
+  bufSize: Integer;
+begin
+  bufSize := SizeOf(TCmdRefundWithReasonC2S) + Length(reason);
+  initCmd(cmd.CmdHead, C2S_REFUND_WITH_REASON, cmd.CmdEnd, bufSize);
+  cmd.ReasonLen := Length(reason);
+  if cmd.ReasonLen > 0 then
+  begin//原因不为空时，在校验码前插入原因，最后两个字节重写
+    SetLength(buf, bufSize);
+    CopyMemory(@buf[0], @cmd, SizeOf(TCmdRefundWithReasonC2S));
+    CopyMemory(@buf[SizeOf(TCmdRefundWithReasonC2S)-2], @reason[1], Length(reason));
+    buf[bufSize - 2] := 0;
+    buf[bufSize - 1] := CMD_END_FLAG;
+    DirectSend(buf[0], bufSize);
+    AddCmdToList(cmd.CmdHead, buf, true);
+  end
+  else
+  begin
+    DirectSend(cmd, SizeOf(TCmdRefundWithReasonC2S));
+    AddCmdVoidToList(cmd.CmdHead, cmd, SizeOf(TCmdRefundWithReasonC2S), true);
+  end;
 end;
 
 procedure TGateWayServerCom.SendCmdUploadModuleStatus(
@@ -742,6 +773,7 @@ begin
   cmdHead.TerminalId := ByteOderConvert_LongWord(StrToInt(GlobalParam.TerminalId));
   cmdHead.BodySize := ByteOderConvert_Word(cmdMinSize - SizeOf(TSTHead) - SizeOf(TSTEnd));
   cmdHead.CmdSNo := ByteOderConvert_Word(cmdSNo);
+
   cmdEnd.CheckSum := 0;
   cmdEnd.EndFlag := CMD_END_FLAG;
 end;

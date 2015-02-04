@@ -27,6 +27,7 @@ const
   C2S_ADD_CASH_BOX_AMOUNT      = $000E;//从服务端获取现金额
   C2S_OPER_LOG                 = $000F;//管理人员操作日志
   C2S_GET_SERVER_TIME          = $0010;//获取服务器时间
+  C2S_REFUND_WITH_REASON       = $0011;//退款记录登记含退款原因
 {******************************终端发起命令字******************************}
 
 {*****************************服务端发起命令字*****************************}
@@ -66,8 +67,8 @@ type
     CmdId: Word;
     ClientType: Byte;
     TerminalId: LongWord;
-    BodySize: Short;
-    CmdSNo: Short;
+    BodySize: Word;
+    CmdSNo: Word;
     CmdSNoResp: Word;
   end;
   PSTHead = ^TSTHead;
@@ -179,6 +180,19 @@ type
     CmdEnd: TSTEnd;
   end;
   PCmdRefundC2S = ^TCmdRefundC2S;
+
+  //退款记录请求含退款原因
+  TCmdRefundWithReasonC2S = packed record
+    CmdHead: TSTHead;
+    CityCardNo: array[0..7] of Byte;//市民卡卡号
+    Amount: Integer;//充值金额
+    Time: array[0..6] of Byte;//退款时间
+    ChargeType: Byte;//充值类型 0:现金 1:银联卡  2：充值卡  03企福通充值/专有账户充值
+    ReasonLen: Byte;
+    //Reason: TByteDynArray;
+    CmdEnd: TSTEnd;
+  end;
+  PCmdRefundWithReasonC2S = ^TCmdRefundWithReasonC2S;
 
   //充值卡校验请求
   TCmdChargeCardCheckC2S = packed record
