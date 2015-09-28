@@ -831,12 +831,13 @@ begin
   //    Memo1.Lines.Add(BufferToHex(@(sspCmd.ResponseData[0]), sspCmd.ResponseDataLength));
       j := 1;
       isExceptionExists := False;
+      addSysLog('begin to check sspCmd.ResponseData:' + bytesToHexStr(sspCmd.ResponseData));
       while j < sspCmd.ResponseDataLength do
       begin
         case sspCmd.ResponseData[j] of
-          $CC://stacking
-            begin
-            end;
+//          $CC://stacking
+//            begin
+//            end;
 //          $E3://钱箱被取走
 //            begin
 //              isExceptionExists := True;
@@ -848,10 +849,12 @@ begin
 //            begin
 //
 //            end;
-//          $E6://发现有欺骗行为
-//            begin
-//
-//            end;
+          $E6://发现有欺骗行为   E6作为盗币信号也作为收币成功信号(否则会出现用户投币，但检测的金额为0)
+            begin
+              tempAmount := cashAmount[sspCmd.ResponseData[j + 1]];
+              addSysLog('CityCardNo:' + currCityCardNo + ', detecting cash: ' + IntToStr(tempAmount) + 'RMB, signal:$E6');
+              Inc(j);
+            end;
           $E7://钱箱满
             begin
               isExceptionExists := True;
@@ -898,22 +901,22 @@ begin
           $EC://rejected
             begin
               tempAmount := 0;
+              addSysLog('CityCardNo:' + currCityCardNo + ',rejected signal($EC)');
             end;
           $ED://rejecting
             begin
               tempAmount := 0;
+              addSysLog('CityCardNo:' + currCityCardNo + ',rejecting signal($ED)');
             end;
           $EE://detecting cash
             begin
               tempAmount := cashAmount[sspCmd.ResponseData[j + 1]];
+              addSysLog('CityCardNo:' + currCityCardNo + ', detecting cash: ' + IntToStr(tempAmount) + 'RMB');
               Inc(j);
             end;
-          $EF:
-            begin
-            end;//reading
         else
           begin
-            addSysLog('validator response other cmd');
+            addSysLog('validator response other cmd:' + IntToHex(sspCmd.ResponseData[j], 2));
           end;
         end;
         Inc(j);
@@ -930,7 +933,6 @@ begin
       end;
       Sleep(400);
     end;
-    //Memo1.Lines.Add('totalAmount:' + IntToStr(amountRead));
   finally
 //    addSysLog('close ssp com');
 //    CloseSSPComPort;
