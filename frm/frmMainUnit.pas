@@ -1168,6 +1168,7 @@ begin
           AdvSmoothLabel17.Caption.Text := TIP_CITY_CARD_AMOUNT_CHARGED + FormatFloat('0.#', amountCharged*1.0 / 100) + 'Ԫ';
           AdvSmoothLabel17.Visible := True;
           Notebook1.ActivePage := 'pageMobileTopUpSuccess';
+          AdvSmoothButton3Click(Sender);
         end
         else if mr = mrAbort then
         begin
@@ -1766,6 +1767,7 @@ begin
           AdvSmoothLabel17.Caption.Text := TIP_CITY_CARD_AMOUNT_CHARGED + FormatFloat('0.#', amountCharged*1.0 / 100) + 'Ԫ';
           AdvSmoothLabel17.Visible := True;
           Notebook1.ActivePage := 'pageMobileTopUpSuccess';
+          AdvSmoothButton3Click(nil);
         end
         else if mr = mrAbort then
         begin
@@ -2008,6 +2010,7 @@ begin
       AdvSmoothLabel17.Caption.Text := TIP_CITY_CARD_AMOUNT_CHARGED + FormatFloat('0.#', amountCharged*1.0 / 100) + 'Ԫ';
       AdvSmoothLabel17.Visible := True;
       Notebook1.ActivePage := 'pageMobileTopUpSuccess';
+      AdvSmoothButton3Click(nil);
     end
     else if mr = mrAbort then
     begin
