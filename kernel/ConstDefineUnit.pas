@@ -250,6 +250,7 @@ const
   REFUND_REASON_VALIDATOR_SET_CHL_ERR = '设置识别纸币类型异常';
   REFUND_REASON_VALIDATOR_STUCKED     = '纸币器卡钞';
   REFUND_REASON_CASHBOX_FULL          = '纸币器钱箱满';
+  REFUND_REASON_USER_CANCEL           = '用户取消';
 
   LOGIN_STATUS_OK                      = 0;//登录成功或恢复启用
   LOGIN_STATUS_LOGINED_FROM_OTHER_TER  = 1;//终端号在其他设备上登录(即重复登录)

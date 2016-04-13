@@ -651,11 +651,14 @@ begin
 
 end;
 
+//在读取纸币过程中被取消任务，向纸币机发送拒收命令
 procedure TGetCashAmount.DoOnTaskTimeout;
 begin
   if FAmountRead > 0 then
   begin
     setWaitingTip('等待超时，请取回失败凭证');
+    FRefundReason := '等待后续入钞超时';
+    printRefundInfo(FAmountRead, currCityCardNo);
     Sleep(3000);
   end;
   inherited;
@@ -791,7 +794,8 @@ begin
     begin
       if FIsInterrupted then
       begin
-        taskRet := TASK_RET_QUIT_LOOP;
+        taskRet := TASK_RET_REFUND;
+        FRefundReason := REFUND_REASON_USER_CANCEL;
         Exit;
       end;
 
@@ -934,8 +938,19 @@ begin
       Sleep(400);
     end;
   finally
-//    addSysLog('close ssp com');
-//    CloseSSPComPort;
+    if FIsInterrupted then
+    begin//如果是被取消了，则需向纸币器发送拒收命令，防止有纸币正在处理压栈中
+      sspCmd.CommandData[0] := $08;
+      sspCmd.CommandDataLength := 1;
+      SSPSendCommand(@sspCmd, @sspCmdInfo);
+      addSysLog('send reject cmd');
+    end;
+
+    //disable
+    sspCmd.CommandData[0] := $09;
+    sspCmd.CommandDataLength := 1;
+    SSPSendCommand(@sspCmd, @sspCmdInfo);
+
     if taskRet = TASK_RET_REFUND then
     begin
       if FAmountRead > 0 then
